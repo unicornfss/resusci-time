@@ -39,6 +39,7 @@ import { VascularAccessFlow } from './components/VascularAccessFlow'
 import { ResuscitationQualityChecklist } from './components/ResuscitationQualityChecklist'
 import { InitialAssessmentPanel } from './components/InitialAssessmentPanel'
 import { ReversibleCausesModal } from './components/ReversibleCausesModal'
+import { AboutModal } from './components/AboutModal'
 import { RoscChecklist } from './components/RoscChecklist'
 import { TimerRxSection } from './components/TimerRxSection'
 import { TimerRoscRxSection } from './components/TimerRoscRxSection'
@@ -162,6 +163,7 @@ function App() {
     Set<ReversibleCauseId>
   >(() => new Set())
   const [showReversibleCausesModal, setShowReversibleCausesModal] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(false)
   const preRhythmModalsRef = useRef<PreRhythmModalState | null>(null)
   const prevRhythmCheckAlertOpenRef = useRef(false)
   const pendingContinuousCompressionsFromChecklistRef = useRef(false)
@@ -272,6 +274,15 @@ function App() {
     showReversibleCausesModal,
     timerView,
   ])
+
+  useEffect(() => {
+    if (!aboutOpen) return
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setAboutOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [aboutOpen])
 
   useEffect(() => {
     if (step !== 'post-tor' || vodCountdownRemaining <= 0) return
@@ -987,6 +998,9 @@ function App() {
     <div className="app">
       <header className="header">
         <div className="header-toolbar">
+          <button type="button" className="header-link-btn" onClick={() => setAboutOpen(true)}>
+            About
+          </button>
           <ThemeToggle />
         </div>
         <h1>Resusci-Time</h1>
@@ -1476,7 +1490,14 @@ function App() {
 
       <footer className="footer">
         <p>Refer to guideline for details. This tool supports clinical decision-making — it does not replace local protocols or senior clinical judgement.</p>
+        <p>
+          <button type="button" className="footer-link-btn" onClick={() => setAboutOpen(true)}>
+            About &amp; contact
+          </button>
+        </p>
       </footer>
+
+      {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
 
       {showInterventions && (
         <div

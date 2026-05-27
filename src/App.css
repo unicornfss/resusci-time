@@ -111,8 +111,28 @@ body::before {
 
 .header-toolbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
   margin-bottom: 0.35rem;
+}
+
+.header-link-btn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  min-height: 2.25rem;
+  box-shadow: var(--shadow);
+}
+
+.header-link-btn:hover {
+  color: var(--green-800);
+  border-color: var(--green-600);
 }
 
 .theme-toggle {
@@ -1368,6 +1388,104 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
   padding-top: calc(var(--timer-bar-offset, 0px) + 1rem);
   overflow-y: auto;
   background: rgba(15, 23, 42, 0.55);
+}
+
+.about-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem;
+  padding-top: calc(var(--timer-bar-offset, 0px) + 1rem);
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.about-panel {
+  width: 100%;
+  max-width: 32rem;
+  max-height: calc(100vh - var(--timer-bar-offset, 0px) - 2rem);
+  overflow-y: auto;
+  margin: 0;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+}
+
+.about-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.about-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.about-section {
+  margin-bottom: 1rem;
+}
+
+.about-section h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+  color: var(--green-800);
+}
+
+.about-section p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.about-contact {
+  margin: 1.25rem 0 0.75rem;
+  text-align: center;
+}
+
+.about-email-link {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--green-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.about-email-link:hover {
+  color: var(--green-800);
+}
+
+.about-note {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+  padding: 0.75rem;
+  background: var(--green-50);
+  border-radius: 8px;
+  border-left: 3px solid var(--green-600);
+}
+
+.footer-link-btn {
+  margin-top: 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--green-700);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.footer-link-btn:hover {
+  color: var(--green-800);
 }
 
 .reversible-causes-panel {
