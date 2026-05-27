@@ -12,7 +12,7 @@ interface VodTimestampsSummaryProps {
 }
 
 export function VodTimestampsSummary({ entries, vodAtLabel, compact = false }: VodTimestampsSummaryProps) {
-  const criteriaEntries = filterVodCriteriaLogEntries(sortDisplayLogEntries(entries))
+  const criteriaEntries = filterVodCriteriaLogEntries(sortDisplayLogEntries([...entries]))
 
   return (
     <div className={`vod-timestamps-summary${compact ? ' vod-timestamps-summary-compact' : ''}`}>

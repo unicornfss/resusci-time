@@ -1,5 +1,5 @@
 /** Set to 1 for production protocol times. 0.1 = 10% for testing. */
-export const TIME_SCALE = 0.1
+export const TIME_SCALE: number = 0.1
 
 export const RHYTHM_CHECK_INTERVAL = Math.round(120 * TIME_SCALE)
 export const ADRENALINE_INTERVAL_SECONDS = Math.round(240 * TIME_SCALE)

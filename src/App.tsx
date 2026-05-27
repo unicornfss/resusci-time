@@ -48,6 +48,7 @@ import { TimerVodCompleteStamp, TimerVodSection } from './components/TimerVodSec
 import { VodTimestampsSummary } from './components/VodTimestampsSummary'
 import { PulseRateReminderPanel } from './components/PulseRateReminderPanel'
 import { SbpReminderPanel } from './components/SbpReminderPanel'
+import { TerminationReview } from './components/TerminationReview'
 import { ThemeToggle } from './components/ThemeToggle'
 import {
   getRoscCommencedLogLabel,
