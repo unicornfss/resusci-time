@@ -6,7 +6,6 @@ html[data-theme='day'] {
   --green-800: #163816;
   --text: #1a2e1a;
   --bg: #dfe8df;
-  --brand-bg-image: url('/ambulance-service-logo.png');
   --brand-bg-opacity: 0.24;
   --brand-bg-filter: none;
 }

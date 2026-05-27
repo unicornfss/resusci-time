@@ -992,7 +992,7 @@ function App() {
         <p className="als-guide-link-wrap">
           <a
             className="als-guide-link"
-            href="/als-alogorhythm.png"
+            href={`${import.meta.env.BASE_URL}als-alogorhythm.png`}
             target="_blank"
             rel="noopener noreferrer"
           >

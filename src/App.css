@@ -19,7 +19,6 @@ html[data-theme='day'] {
   --surface-muted: #e2ebe2;
   --border: #b0c4b0;
   --shadow: 0 2px 8px rgba(31, 79, 31, 0.12);
-  --brand-bg-image: url('/ambulance-service-logo.png');
   --brand-bg-opacity: 0.24;
   --brand-bg-filter: none;
 }
