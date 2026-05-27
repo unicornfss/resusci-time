@@ -50,6 +50,7 @@ import { PulseRateReminderPanel } from './components/PulseRateReminderPanel'
 import { SbpReminderPanel } from './components/SbpReminderPanel'
 import { TerminationReview } from './components/TerminationReview'
 import { ThemeToggle } from './components/ThemeToggle'
+import { publicAssetUrl } from './publicAssetUrl'
 import {
   getRoscCommencedLogLabel,
   getRoscPhaseLabel,
@@ -993,7 +994,7 @@ function App() {
         <p className="als-guide-link-wrap">
           <a
             className="als-guide-link"
-            href={`${import.meta.env.BASE_URL}als-alogorhythm.png`}
+            href={publicAssetUrl('als-alogorhythm.png')}
             target="_blank"
             rel="noopener noreferrer"
           >
