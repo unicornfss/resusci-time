@@ -1,0 +1,3775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    try {
+      var t = localStorage.getItem('resusci-time-theme');
+      document.documentElement.dataset.theme = t === 'night' ? 'night' : 'day';
+    } catch (e) {}
+  </script>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Resusci-Time</title>
+  <style>
+    :root,
+    html[data-theme='day'] {
+      --green-50: #e8f0e8; --green-100: #d0e0d0; --green-200: #a8c8a8;
+      --green-600: #2d6a2d; --green-700: #1f4f1f; --green-800: #163816;
+      --amber-100: #f5eacd; --amber-600: #d97706;
+      --red-100: #f5dede; --red-600: #dc2626; --red-700: #b91c1c;
+      --text: #1a2e1a; --text-muted: #4a5f4a; --bg: #dfe8df;
+      --brand-bg-image: url('ambulance-service-logo.png');
+      --brand-bg-opacity: 0.24;
+      --brand-bg-filter: none;
+      --card-bg: #ebf2eb; --surface: #ebf2eb; --border: #b0c4b0;
+      --touch-min: 3.25rem;
+      --touch-gap: 0.85rem;
+    }
+    html[data-theme='night'] {
+      --green-50: #1a241a; --green-100: #243024; --green-200: #324432;
+      --green-600: #5a9a5a; --green-700: #3d7a3d; --green-800: #c8dcc8;
+      --amber-100: #3d3018; --amber-600: #f59e0b;
+      --red-100: #3d1818; --red-600: #ef4444; --red-700: #fca5a5;
+      --text: #e2eae2; --text-muted: #94a894; --bg: #111612;
+      --brand-bg-opacity: 0.18;
+      --brand-bg-filter: brightness(1.35);
+      --card-bg: #1a221a; --surface: #1a221a; --border: #2f4030;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin: 0; font-family: system-ui, 'Segoe UI', Roboto, sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.5; touch-action: manipulation; position: relative; min-height: 100svh; }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: var(--brand-bg-image) center / min(85vw, 540px) no-repeat;
+      opacity: var(--brand-bg-opacity);
+      filter: var(--brand-bg-filter);
+    }
+    .app { max-width: 720px; margin: 0 auto; padding: 1rem 1.25rem 2rem; min-height: 100svh; display: flex; flex-direction: column; position: relative; z-index: 1; }
+    .header { text-align: center; padding: 1.5rem 0 1rem; position: relative; }
+    .header-toolbar { display: flex; justify-content: flex-end; margin-bottom: 0.35rem; }
+    .theme-toggle {
+      font-size: 0.8rem; font-weight: 600; padding: 0.35rem 0.85rem; border-radius: 999px;
+      border: 1px solid var(--border); background: var(--card-bg); color: var(--text-muted);
+      cursor: pointer; min-height: 2.25rem;
+    }
+    .theme-toggle[aria-pressed='true'] { background: var(--green-700); color: #e8f0e8; border-color: var(--green-600); }
+    html[data-theme='night'] .theme-toggle[aria-pressed='true'] { background: var(--green-200); color: var(--green-800); border-color: var(--green-600); }
+    .header h1 { margin: 0; font-size: 1.5rem; color: var(--green-800); }
+    .subtitle { margin: 0.25rem 0 0; color: var(--text-muted); font-size: 0.95rem; }
+    .als-guide-link-wrap { margin: 0.5rem 0 0; }
+    .als-guide-link { font-size: 0.9rem; font-weight: 600; color: var(--green-700); text-decoration: underline; text-underline-offset: 2px; }
+    .als-guide-link:hover { color: var(--green-800); }
+    .test-banner { margin: 0; font-size: 0.8rem; font-weight: 600; color: var(--amber-600); background: var(--amber-100); display: inline-block; padding: 0.25rem 0.6rem; border-radius: 4px; }
+    .test-mode-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; }
+    .test-timer-jump-btn { min-height: 2rem; font-weight: 600; color: var(--amber-600); background: var(--amber-100); border: 1px solid var(--amber-600); border-radius: 8px; cursor: pointer; padding: 0.25rem 0.6rem; }
+    .timer-bar {
+      display: none;
+      position: sticky;
+      top: 0;
+      z-index: 1200;
+      flex-direction: column;
+      gap: 0.5rem;
+      background: var(--green-700);
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+    .timer-bar.visible { display: flex; }
+    .metronome-bar { display: flex; justify-content: flex-end; margin-bottom: 0.5rem; }
+    .metronome-bar.hidden { display: none; }
+    .metronome-toggle {
+      min-height: 2.5rem; font-weight: 600; padding: 0.75rem 1rem;
+      background: var(--card-bg); color: var(--green-800); border: 2px solid var(--border);
+      border-radius: 8px; cursor: pointer;
+    }
+    .metronome-toggle.active {
+      background: var(--green-700); color: #fff; border-color: var(--green-800);
+    }
+    .timer-bar-top { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .timer-bar.warning { background: var(--amber-600); }
+    .timer-bar.critical { background: var(--red-600); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.85} }
+    .timer-value { font-size: 2rem; font-weight: 700; font-family: ui-monospace, Consolas, monospace; }
+    .timer-mins { font-size: 0.85rem; opacity: 0.85; }
+    .timer-stat-label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.85; }
+    .timer-stat-value { font-size: 1.75rem; font-weight: 700; font-family: ui-monospace, Consolas, monospace; }
+    .timer-rx {
+      display: flex; flex-direction: column; gap: 0.35rem; width: 100%;
+      padding: 0.5rem 0.75rem; border-radius: 8px;
+      border: 2px solid rgba(255,255,255,.45); background-color: rgba(255,255,255,.12); color: white;
+    }
+    .timer-rx.timer-rx-idle { border-color: rgba(255,255,255,.45); background-color: rgba(255,255,255,.12); color: white; }
+    .timer-rx.timer-rx-warning { border-color: #ea580c; background-color: #fed7aa; color: #7c2d12; }
+    .timer-rx.timer-rx-due { border-color: #dc2626; background-color: #fecaca; color: #7f1d1d; }
+    .timer-rx-title { font-size: 0.75rem; text-transform: uppercase; font-weight: 700; }
+    .timer-rx-header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+    .timer-rx-totals { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; justify-content: flex-end; }
+    .timer-rx-drug-total { font-size: 0.8rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .timer-rx.timer-rx-idle .timer-rx-drug-total { color: rgba(255,255,255,.92); }
+    .timer-rx.timer-rx-warning .timer-rx-drug-total,
+    .timer-rx.timer-rx-due .timer-rx-drug-total { color: inherit; opacity: 0.9; }
+    .timer-rx.timer-rx-idle .timer-rx-title { color: rgba(255,255,255,.85); }
+    .timer-rx.timer-rx-warning .timer-rx-title,
+    .timer-rx.timer-rx-due .timer-rx-title { color: inherit; opacity: 0.85; }
+    .timer-rx-row { display: flex; align-items: center; gap: 0.65rem; flex-wrap: nowrap; min-height: 2.5rem; }
+    .timer-rx-drug-lines { display: flex; flex-direction: column; gap: 0.35rem; }
+    .timer-rx-drug-lines .timer-rx-row + .timer-rx-row { padding-top: 0.35rem; border-top: 1px solid rgba(255,255,255,.2); }
+    .timer-rx.timer-rx-warning .timer-rx-drug-lines .timer-rx-row + .timer-rx-row,
+    .timer-rx.timer-rx-due .timer-rx-drug-lines .timer-rx-row + .timer-rx-row { border-top-color: rgba(0,0,0,.12); }
+    .timer-rx-prompt { font-size: 0.85rem; font-weight: 600; line-height: 1.3; flex: 1 1 auto; min-width: 0; }
+    .timer-rx-next-label { font-size: 0.85rem; font-weight: 600; line-height: 1.3; flex: 1 1 auto; min-width: 0; white-space: nowrap; }
+    .timer-rx.timer-rx-idle .timer-rx-prompt,
+    .timer-rx.timer-rx-idle .timer-rx-next-label,
+    .timer-rx.timer-rx-idle .timer-rx-countdown { color: white; }
+    .timer-rx.timer-rx-warning .timer-rx-prompt,
+    .timer-rx.timer-rx-warning .timer-rx-next-label,
+    .timer-rx.timer-rx-warning .timer-rx-countdown,
+    .timer-rx.timer-rx-due .timer-rx-prompt,
+    .timer-rx.timer-rx-due .timer-rx-next-label,
+    .timer-rx.timer-rx-due .timer-rx-countdown { color: inherit; }
+    .timer-rx .timer-rx-action-btn {
+      width: auto; min-height: 2.75rem; padding: 0.55rem 1rem; font-size: 0.9rem; font-weight: 700;
+      white-space: nowrap; flex-shrink: 0; border: 2px solid #163816; border-radius: 8px;
+      background: #1f4f1f; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,.28); cursor: pointer;
+      touch-action: manipulation;
+    }
+    .timer-rx .timer-rx-action-btn:hover { background: #163816; }
+    .timer-rx.timer-rx-idle .timer-rx-action-btn { background: #fff; color: #1f4f1f; border-color: #1f4f1f; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
+    .timer-rx.timer-rx-idle .timer-rx-action-btn:hover { background: #f0f7f0; }
+    .timer-rx.timer-rx-warning .timer-rx-action-btn { background: #c2410c; border-color: #9a3412; color: #fff; }
+    .timer-rx.timer-rx-warning .timer-rx-action-btn:hover { background: #9a3412; }
+    .timer-rx.timer-rx-due .timer-rx-action-btn { background: #b91c1c; border-color: #7f1d1d; color: #fff; box-shadow: 0 2px 8px rgba(127,29,29,.45); }
+    .timer-rx.timer-rx-due .timer-rx-action-btn:hover { background: #991b1b; }
+    .timer-rx-countdown {
+      font-size: 1.25rem;
+      font-family: ui-monospace, Consolas, monospace;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      min-height: 2.5rem;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 0.5rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .timer-controls { margin-left: auto; display: flex; gap: 0.5rem; align-items: center; }
+    .timer-interventions-btn {
+      width: auto; min-width: auto; padding: 0.75rem 1rem;
+      background: rgba(255, 255, 255, 0.95); color: var(--green-800);
+      border: 2px solid rgba(255, 255, 255, 0.45); font-weight: 600;
+    }
+    .timer-interventions-btn.active {
+      background: var(--green-100); border-color: #fff;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45);
+    }
+    .milestones { display: flex; gap: 0.5rem; }
+    .timer-action-box {
+      font-size: 0.75rem; padding: 0.35rem 0.65rem; min-height: var(--touch-min); border-radius: 6px;
+      background: rgba(255,255,255,.15); border: 2px solid rgba(255,255,255,.45); color: white;
+      font-weight: 700; cursor: pointer; line-height: 1.2;
+    }
+    .timer-action-box:hover { background: rgba(255,255,255,.22); }
+    .timer-action-box.on, .timer-action-box.active {
+      opacity: 1; background: rgba(255,255,255,.35); border-color: rgba(255,255,255,.85);
+      box-shadow: 0 0 0 2px rgba(255,255,255,.25);
+    }
+    .timer-rosc-phase { font-size: 0.85rem; font-weight: 700; opacity: 0.95; white-space: nowrap; }
+    .milestone { font-size: 0.75rem; padding: 0.2rem 0.5rem; border-radius: 4px; background: rgba(255,255,255,.15); opacity: 0.6; }
+    .milestone.on { opacity: 1; background: rgba(255,255,255,.3); font-weight: 600; }
+    .alert { display: none; padding: 1rem 1.25rem; border-radius: 10px; margin-bottom: 1rem; }
+    .alert.visible { display: block; }
+    .alert-warning { background: var(--amber-100); border: 2px solid var(--amber-600); }
+    .alert-critical { background: var(--red-100); border: 2px solid var(--red-600); }
+    .alert strong { display: block; margin-bottom: 0.35rem; }
+    .alert .rhythm-grid { margin: 0.75rem 0 0; }
+    .alert .rhythm-btn { min-height: var(--touch-min); padding: 1rem; font-size: 1.2rem; }
+    .early-transfer-panel,
+    .code-shock-panel {
+      padding: 1rem 1.25rem; margin-bottom: 1rem; border-radius: 10px;
+      background: var(--amber-100); border: 2px solid var(--amber-600);
+      scroll-margin-top: calc(var(--timer-bar-offset, 0px) + 1rem);
+    }
+    .early-transfer-panel p,
+    .code-shock-panel p {
+      margin: 0 0 1rem; font-size: 1.05rem; font-weight: 700; color: #92400e;
+    }
+    .early-transfer-panel .btn,
+    .code-shock-panel .btn { min-height: var(--touch-min); }
+    .alert .btn { min-height: var(--touch-min); }
+    .main { flex: 1; }
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(31,79,31,.1); }
+    .card.terminal { border-color: var(--red-600); background: var(--red-100); }
+    .card.complete { border-color: var(--green-600); background: var(--green-50); }
+    .badge { display: inline-block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 4px; background: var(--green-100); color: var(--green-700); margin-bottom: 0.75rem; }
+    .badge.warning { background: var(--amber-100); color: var(--amber-600); }
+    .badge.critical { background: var(--red-100); color: var(--red-700); }
+    .card h2 { margin: 0 0 0.75rem; font-size: 1.25rem; color: var(--green-800); }
+    .lead { color: var(--text-muted); margin: 0 0 1.25rem; }
+    .resuscitation-prompt {
+      padding: 1rem; margin: 0 0 1.25rem; border-radius: 8px;
+      background: var(--green-50); border-left: 4px solid var(--green-600);
+      font-size: 0.95rem; line-height: 1.5;
+    }
+    .resuscitation-prompt p { margin: 0 0 0.5rem; }
+    .resuscitation-prompt p:last-of-type { margin-bottom: 0.35rem; }
+    .resuscitation-prompt-list { margin: 0; padding-left: 1.25rem; }
+    .resuscitation-prompt-list li { margin-bottom: 0.35rem; }
+    .resuscitation-prompt-list li:last-child { margin-bottom: 0; }
+    .quality-prompt-checklist { list-style: none; margin: 0; padding: 0; }
+    .quality-prompt-checklist li { margin-bottom: 0.35rem; }
+    .quality-prompt-checklist li:last-child { margin-bottom: 0; }
+    .quality-prompt-item { display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; min-height: var(--touch-min); padding: 0.35rem 0; }
+    .quality-prompt-checkbox { width: 1.35rem; height: 1.35rem; margin: 0.1rem 0 0; flex-shrink: 0; accent-color: var(--green-700); cursor: pointer; }
+    .quality-prompt-checkbox:disabled { cursor: default; }
+    .quality-prompt-label { flex: 1; line-height: 1.4; }
+    .quality-prompt-done .quality-prompt-label { text-decoration: line-through; opacity: 0.65; }
+    .quality-prompt-done .quality-prompt-item { cursor: default; }
+    .checklist { list-style: none; padding: 0; margin: 0 0 1.5rem; }
+    .checklist li { padding: 0.6rem 0.75rem; margin-bottom: 0.35rem; background: var(--green-50); border-left: 3px solid var(--green-600); border-radius: 0 6px 6px 0; }
+    .assessment-tap-hint { margin: 0 0 1rem; font-size: 0.9rem; color: var(--text-muted); }
+    .assessment-tree { list-style: none; padding: 0; margin: 0 0 1rem; }
+    .assessment-tree-node { margin-bottom: 0.5rem; }
+    .assessment-tree-node.is-expanded .assessment-tree-row.is-branch { border-color: var(--green-600); background: var(--green-100); }
+    .assessment-tree-row { display: flex; align-items: center; gap: 0.65rem; width: 100%; text-align: left; padding: 0.9rem 1rem; background: var(--card-bg); border: 2px solid var(--border); border-radius: 10px; font-size: 1rem; font-family: inherit; font-weight: 600; color: inherit; cursor: pointer; min-height: var(--touch-min); touch-action: manipulation; box-shadow: 0 1px 3px rgb(0 0 0 / 8%); transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.1s; }
+    .assessment-tree-row:hover:not(:disabled) { border-color: var(--green-600); background: var(--green-50); box-shadow: 0 2px 8px rgb(0 0 0 / 10%); }
+    .assessment-tree-row:active:not(:disabled) { transform: scale(0.99); }
+    .assessment-tree-row.selected { background: var(--green-100); border-color: var(--green-600); box-shadow: 0 0 0 1px var(--green-600); }
+    .assessment-tree-row.disabled { opacity: 0.45; cursor: default; box-shadow: none; }
+    .assessment-tree-icon { flex: 0 0 1.1rem; font-size: 0.75rem; line-height: 1; color: var(--green-600); text-align: center; }
+    .assessment-tree-check { flex: 0 0 1.25rem; font-weight: 700; color: var(--green-600); text-align: center; }
+    .assessment-tree-label { flex: 1 1 auto; min-width: 0; }
+    .assessment-tree-hint { flex: 0 0 auto; font-size: 0.75rem; font-weight: 600; color: var(--green-600); background: var(--green-50); border: 1px solid var(--green-600); border-radius: 999px; padding: 0.2rem 0.55rem; white-space: nowrap; }
+    .assessment-tree-children { margin: 0.35rem 0 0.15rem 1.35rem; padding: 0.5rem 0 0.25rem 0.85rem; border-left: 3px solid var(--green-600); }
+    .assessment-tree-sublist { list-style: none; padding: 0; margin: 0; }
+    .assessment-tree-node-sub { margin-bottom: 0.4rem; }
+    .assessment-tree-row-sub { font-size: 0.95rem; font-weight: 500; padding: 0.75rem 0.9rem; border-color: var(--amber-600); background: var(--card-bg); }
+    .assessment-tree-row-sub:hover:not(:disabled) { border-color: var(--amber-600); background: var(--amber-100); }
+    .assessment-tree-row-sub.selected { background: var(--amber-100); border-color: var(--amber-600); box-shadow: 0 0 0 1px var(--amber-600); }
+    .assessment-tree-row-sub .assessment-tree-icon, .assessment-tree-row-sub .assessment-tree-check, .assessment-tree-row-sub .assessment-tree-hint { color: var(--amber-600); }
+    .assessment-tree-row-sub .assessment-tree-hint { background: var(--amber-100); border-color: var(--amber-600); }
+    .assessment-tree-panel { margin-top: 0.35rem; }
+    .assessment-combined-confirm { margin-top: 1rem; }
+    .assessment-confirm-list { margin: 0.75rem 0 1rem; padding-left: 1.25rem; }
+    .assessment-confirm-list li { margin-bottom: 0.35rem; }
+    .assessment-confirm-note { margin: 0 0 1rem; font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; }
+    .assessment-confirm-panel { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; }
+    .assessment-commence-panel { border-color: var(--green-600); background: var(--green-50); }
+    .assessment-observation-panel { padding: 1rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; }
+    .assessment-countdown { margin: 0 0 1rem; font-weight: 600; color: var(--amber-600); }
+    .assessment-observation-header { margin: 0 0 0.75rem; font-weight: 600; }
+    .assessment-checklist-locked .quality-prompt-checkbox { opacity: 0.45; cursor: not-allowed; }
+    .assessment-vod-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .vod-death-stamp { margin: 0; padding: 0.85rem 1rem; font-size: 1.05rem; font-weight: 700; background: var(--card-bg); border-left: 4px solid var(--red-600); border-radius: 0 6px 6px 0; }
+    .vod-timestamps-summary { margin: 1rem 0; }
+    .vod-summary-heading { margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.02em; }
+    .vod-criteria-stamps { list-style: none; padding: 0; margin: 0 0 0.75rem; }
+    .vod-criteria-stamp { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 0.6rem 0.85rem; margin-bottom: 0.35rem; background: var(--card-bg); border-left: 3px solid var(--amber-600); border-radius: 0 6px 6px 0; font-size: 0.95rem; }
+    .vod-criteria-time { flex: 0 0 auto; font-family: ui-monospace, monospace; font-size: 0.9rem; font-weight: 700; white-space: nowrap; }
+    .vod-timestamps-summary-compact { margin: 0; }
+    .vod-timestamps-summary-compact .vod-summary-heading { font-size: 0.7rem; margin-bottom: 0.35rem; }
+    .vod-timestamps-summary-compact .vod-criteria-stamp { padding: 0.4rem 0.6rem; margin-bottom: 0.25rem; font-size: 0.8rem; }
+    .vod-timestamps-summary-compact .vod-criteria-time { font-size: 0.75rem; }
+    .vod-timestamps-summary-compact .vod-death-stamp { margin-top: 0.5rem; padding: 0.5rem 0.65rem; font-size: 0.85rem; }
+    .timer-bar .vod-timestamps-summary .vod-summary-heading { color: rgba(255, 255, 255, 0.9); }
+    .timer-bar .vod-timestamps-summary .vod-criteria-stamp { background: rgba(0, 0, 0, 0.22); border: 1px solid rgba(255, 255, 255, 0.28); border-left: 3px solid #fbbf24; color: #fff; }
+    .timer-bar .vod-timestamps-summary .vod-criteria-time { color: #fff; }
+    .timer-bar .vod-timestamps-summary .vod-death-stamp { background: rgba(0, 0, 0, 0.22); border: 1px solid rgba(255, 255, 255, 0.28); border-left: 4px solid #f87171; color: #fff; }
+    .actions { display: flex; flex-direction: column; gap: var(--touch-gap); }
+    .btn {
+      border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 600; cursor: pointer;
+      padding: 1rem 1.25rem; width: 100%; min-height: var(--touch-min);
+      touch-action: manipulation; user-select: none;
+    }
+    .btn:active { transform: scale(0.98); filter: brightness(0.95); }
+    .btn-lg { padding: 1.1rem 1.5rem; font-size: 1.15rem; min-height: 3.5rem; }
+    .btn-sm { width: auto; min-width: var(--touch-min); padding: 0.75rem 1rem; font-size: 0.95rem; }
+    .btn-primary { background: var(--green-700); color: white; }
+    .btn-primary:hover { background: var(--green-800); }
+    .btn-secondary { background: var(--green-100); color: var(--green-800); }
+    .btn-danger { background: var(--red-600); color: white; }
+    .rhythm-grid { display: grid; grid-template-columns: 1fr; gap: var(--touch-gap); margin-bottom: 1.25rem; }
+    .rhythm-btn {
+      min-height: 3.75rem; padding: 1.1rem 1rem; border: 2px solid var(--border); border-radius: 12px;
+      background: var(--green-50); font-size: 1.25rem; font-weight: 700; cursor: pointer; color: var(--green-800);
+      touch-action: manipulation; user-select: none;
+    }
+    .rhythm-btn:active { transform: scale(0.98); }
+    .rhythm-btn.selected { border-color: var(--green-700); background: var(--green-200); }
+    .rhythm-vfvt { border-color: #7c3aed; background: #f5f3ff; color: #5b21b6; }
+    .rhythm-pea { border-color: var(--amber-600); background: var(--amber-100); color: #92400e; }
+    .rhythm-asystole { border-color: #64748b; background: #f1f5f9; color: #334155; }
+    .rhythm-rosc { border-color: #15803d; background: #dcfce7; color: #14532d; }
+    .pea-inputs { display: grid; grid-template-columns: 1fr; gap: var(--touch-gap); margin-bottom: 1.25rem; }
+    .pea-inputs label, .touch-field { display: flex; flex-direction: column; gap: 0.5rem; font-size: 1rem; font-weight: 600; }
+    .pea-inputs input, .touch-input {
+      min-height: var(--touch-min); padding: 0.85rem 1rem; border: 2px solid var(--border); border-radius: 12px;
+      font-size: 1.125rem;
+    }
+    .guidance { padding: 1rem; border-radius: 8px; margin-bottom: 1.25rem; background: var(--green-50); border-left: 4px solid var(--green-600); font-weight: 500; }
+    .guidance.cease { background: var(--red-100); border-left-color: var(--red-600); }
+    .guidance.advice { background: var(--amber-100); border-left-color: var(--amber-600); }
+    .guidance.unless { background: #fef9c3; border-left-color: #ca8a04; }
+    .tor-current-rhythm { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin: 0 0 1rem; }
+    .tor-change-rhythm-btn { min-height: 2rem; }
+    .tor-pea-criteria { margin: 1rem 0; }
+    .tor-pea-criteria-question { margin: 0 0 1rem; font-weight: 600; }
+    .tor-actions { display: flex; flex-direction: column; gap: var(--touch-gap); margin-top: 1rem; }
+    .timer-bar-post-tor { background: #374151; }
+    .timer-vod-section { display: flex; flex-direction: column; gap: 0.75rem; }
+    .timer-tor-stamp {
+      display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap;
+      padding: 0.5rem 0.75rem; border-radius: 8px;
+      background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.25);
+    }
+    .timer-tor-time { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; font-family: ui-monospace, Consolas, monospace; }
+    .timer-vod-countdown-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+    .timer-vod-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .timer-vod-ready-message { margin: 0.65rem 0 0; font-size: 0.9rem; font-weight: 600; line-height: 1.35; }
+    .tor-stamp-summary { margin: 0 0 1rem; font-weight: 600; }
+    .event-log-panel { margin-top: 1rem; }
+    .timer-clinical-discussion { display: flex; flex-direction: column; gap: 0.5rem; }
+    .timer-clinical-discussion-btn { width: 100%; min-height: 2.5rem; }
+    .timer-clinical-discussion-options { display: flex; flex-direction: column; gap: var(--touch-gap); }
+    .timer-clinical-discussion-option-btn {
+      width: 100%; min-height: 2.5rem; font-weight: 600;
+      background: rgba(255,255,255,.95); color: var(--green-800); border: 2px solid rgba(255,255,255,.45);
+    }
+    .timer-clinical-discussion-terminate-btn { background: #fecaca; color: #7f1d1d; border-color: #fca5a5; }
+    .rosc-btn {
+      display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+      min-height: 4.25rem; padding: 1.15rem 1.25rem; border: 2px solid var(--border); border-radius: 12px;
+      background: white; cursor: pointer; text-align: left; width: 100%; margin-bottom: var(--touch-gap);
+      touch-action: manipulation; user-select: none;
+    }
+    .rosc-btn.selected { border-color: var(--green-700); background: var(--green-50); }
+    .rosc-btn:active { transform: scale(0.99); }
+    .rosc-label { font-weight: 700; font-size: 1.1rem; color: var(--green-800); }
+    .rosc-desc { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.15rem; }
+    .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); text-align: center; font-size: 0.8rem; color: var(--text-muted); }
+    .hidden { display: none !important; }
+    .next-check {
+      display: flex; align-items: center; gap: 0.65rem;
+      min-height: 1.25rem; font-size: 0.85rem; opacity: 0.9;
+    }
+    .next-check-label { flex-shrink: 0; white-space: nowrap; }
+    .rhythm-check-progress-track {
+      flex: 1; min-width: 4rem; max-width: 9rem; height: 0.45rem; border-radius: 999px;
+      background: rgba(255, 255, 255, 0.28); overflow: hidden;
+    }
+    .rhythm-check-progress-fill {
+      height: 100%; border-radius: inherit; background: rgba(255, 255, 255, 0.95);
+      transition: width 1s linear;
+    }
+    .check-log { list-style: none; padding: 0; margin: 1rem 0 0; font-size: 0.9rem; }
+    .check-log li { display: flex; justify-content: space-between; padding: 0.45rem 0.6rem; margin-bottom: 0.25rem; background: var(--green-50); border-radius: 6px; }
+    .check-log .time { font-family: ui-monospace, Consolas, monospace; font-weight: 600; color: var(--green-700); }
+    .shock-box { margin-top: 0.75rem; padding: 1.15rem; background: #f5f3ff; border: 2px solid #7c3aed; border-radius: 12px; }
+    .shock-title { margin: 0 0 0.85rem; font-size: 1.05rem; font-weight: 700; color: #5b21b6; }
+    .energy-presets { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--touch-gap); margin-bottom: 1rem; }
+    .energy-preset {
+      min-height: var(--touch-min); border: 2px solid #c4b5fd; border-radius: 12px; background: white;
+      font-size: 1.2rem; font-weight: 700; color: #5b21b6; cursor: pointer; touch-action: manipulation;
+    }
+    .energy-preset.recommended:not(.selected) { border-color: #7c3aed; background: #ede9fe; }
+    .energy-preset.selected { border-color: #5b21b6; background: #ddd6fe; box-shadow: inset 0 0 0 2px #7c3aed; }
+    .energy-preset:active { transform: scale(0.98); }
+    .shock-hint { margin: 0 0 0.75rem; font-size: 0.9rem; color: var(--text-muted); }
+    .shock-actions { display: flex; gap: var(--touch-gap); flex-direction: row; }
+    .shock-actions .btn { flex: 1; min-height: var(--touch-min); }
+    .vector-change-panel {
+      padding: 1rem 1.25rem; margin-bottom: 1rem; border-radius: 10px;
+      background: #f5f3ff; border: 2px solid #7c3aed;
+      scroll-margin-top: calc(var(--timer-bar-offset, 0px) + 1rem);
+    }
+    .vector-change-panel p {
+      margin: 0 0 1rem; font-size: 1.05rem; font-weight: 700; color: #5b21b6;
+    }
+    .vector-change-actions { display: flex; gap: var(--touch-gap); flex-direction: row; }
+    .vector-change-actions .btn {
+      flex: 1; min-height: var(--touch-min); font-size: 0.95rem; line-height: 1.2; padding: 0.85rem 0.65rem;
+    }
+    .vascular-access-panel {
+      padding: 1rem 1.25rem; margin-bottom: 1rem; border-radius: 10px;
+      background: #e0f2fe; border: 2px solid #0284c7;
+      scroll-margin-top: calc(var(--timer-bar-offset, 0px) + 1rem);
+    }
+    .vascular-access-panel p { margin: 0 0 1rem; font-size: 1.05rem; font-weight: 700; color: #0c4a6e; }
+    .sbp-reminder-panel {
+      padding: 1rem 1.25rem; margin-bottom: 1rem; border-radius: 10px;
+      background: #ecfdf5; border: 2px solid #059669;
+      scroll-margin-top: calc(var(--timer-bar-offset, 0px) + 1rem);
+    }
+    .sbp-reminder-panel p { margin: 0 0 1rem; font-size: 1.05rem; font-weight: 700; color: #065f46; }
+    .sbp-reminder-actions { display: flex; flex-direction: column; gap: var(--touch-gap); }
+    .sbp-reminder-actions .btn { min-height: var(--touch-min); line-height: 1.2; padding: 0.85rem 0.65rem; }
+    .sbp-reminder-back-btn { width: 100%; min-height: var(--touch-min); margin-top: 0.25rem; }
+    .rosc-monitoring-reminders {
+      display: flex; flex-direction: column; gap: 0;
+      scroll-margin-top: calc(var(--timer-bar-offset, 0px) + 1rem);
+    }
+    .pulse-rate-reminder-panel {
+      padding: 1rem 1.25rem; margin-bottom: 1rem; border-radius: 10px;
+      background: #eff6ff; border: 2px solid #2563eb;
+      scroll-margin-top: calc(var(--timer-bar-offset, 0px) + 1rem);
+    }
+    .pulse-rate-reminder-panel > p { margin: 0 0 1rem; font-size: 1.05rem; font-weight: 700; color: #1e3a8a; }
+    .pulse-rate-atropine-prompt { font-size: 1rem !important; font-weight: 600 !important; color: #1d4ed8 !important; margin: 0 0 1rem !important; }
+    .pulse-rate-atropine-max {
+      font-size: 1rem !important; font-weight: 700 !important; color: #b45309 !important;
+      background: var(--amber-100); padding: 0.75rem; border-radius: 8px; border: 1px solid var(--amber-600);
+      margin: 0 0 1rem !important;
+    }
+    .pulse-rate-atropine-actions.hidden { display: none; }
+    .rosc-atropine-summary { margin: 0 0 1rem; font-size: 1rem; font-weight: 600; color: #1e3a8a; }
+    .rosc-atropine-max-badge { color: #b45309; font-weight: 700; }
+    .sbp-reminder-fluid-actions.hidden { display: none; }
+    .vascular-access-subtitle { font-size: 0.95rem !important; font-weight: 600 !important; color: #0369a1 !important; }
+    .vascular-route-actions { display: flex; gap: var(--touch-gap); flex-direction: row; margin-bottom: 0.75rem; }
+    .vascular-route-actions .btn { flex: 1; min-height: var(--touch-min); }
+    .vascular-back-btn { width: 100%; min-height: var(--touch-min); margin-top: 0.25rem; }
+    .intervention-back-btn {
+      width: 100%; min-height: var(--touch-min); margin-top: 0.75rem;
+      background: #fff; color: #334155; border: 2px solid #64748b; border-radius: 12px;
+      font-size: 1.05rem; font-weight: 600; cursor: pointer; touch-action: manipulation;
+    }
+    .intervention-back-btn:active { transform: scale(0.98); background: #f1f5f9; }
+    .cannula-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--touch-gap); margin-bottom: 0.75rem; }
+    .cannula-btn {
+      min-height: var(--touch-min); border: 2px solid rgba(0,0,0,.15); border-radius: 12px;
+      font-size: 1.2rem; font-weight: 700; cursor: pointer; touch-action: manipulation; color: #1a2e1a;
+    }
+    .cannula-blue { background: #93c5fd; }
+    .cannula-pink { background: #f9a8d4; }
+    .cannula-green { background: #86efac; }
+    .cannula-grey { background: #d1d5db; }
+    .cannula-orange { background: #fdba74; }
+    .interventions-panel {
+      margin: 0.75rem 0 1rem; padding: 1rem; border-radius: 10px;
+      background: var(--green-50); border: 2px solid var(--green-600);
+    }
+    .interventions-title { margin: 0 0 0.85rem; font-size: 1rem; font-weight: 700; color: var(--green-800); }
+    .interventions-list { display: flex; flex-direction: column; gap: var(--touch-gap); margin-bottom: 0.75rem; }
+    .intervention-options { display: flex; flex-direction: column; gap: var(--touch-gap); margin-bottom: 0.75rem; }
+    .intervention-option-saved { font-style: italic; }
+    .intervention-option-other { border-style: dashed; }
+    .intervention-other-form { display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 0.75rem; }
+    .intervention-other-label { font-size: 0.9rem; font-weight: 600; color: var(--green-800); }
+    .intervention-other-input {
+      width: 100%; min-height: var(--touch-min); padding: 0.75rem 1rem; font-size: 1rem;
+      border: 2px solid var(--border); border-radius: 10px; font-family: inherit;
+    }
+    .intervention-other-input:focus { outline: none; border-color: var(--green-600); }
+    .intervention-other-actions { display: flex; flex-direction: column; gap: var(--touch-gap); }
+    .rhythm-prompts { margin-bottom: 1rem; }
+    .rhythm-prompts:not(:has(.visible)) { display: none; }
+    .rhythm-prompts .alert { margin-bottom: 0; }
+    .rhythm-check-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1300;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(15, 23, 42, 0.72);
+    }
+    .rhythm-check-modal.visible { display: flex; }
+    .rhythm-check-modal-panel {
+      width: 100%;
+      max-width: 32rem;
+      max-height: min(90vh, 100%);
+      overflow-y: auto;
+      margin-bottom: 0;
+      display: block;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+    }
+    .interventions-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 900;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 1rem;
+      padding-top: calc(var(--timer-bar-offset, 0px) + 1rem);
+      overflow-y: auto;
+      background: rgba(15, 23, 42, 0.55);
+    }
+    .interventions-modal.visible { display: flex; }
+    .interventions-modal .interventions-panel {
+      width: 100%;
+      max-width: 32rem;
+      max-height: calc(100vh - var(--timer-bar-offset, 0px) - 2rem);
+      overflow-y: auto;
+      margin: 0;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+    }
+    .quality-prompt-item-with-pill { display: flex; align-items: flex-start; gap: 0.65rem; flex-wrap: wrap; min-height: var(--touch-min); padding: 0.35rem 0; }
+    .quality-prompt-item-main { display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; flex: 1 1 auto; min-width: 0; }
+    .reversible-causes-pill {
+      display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.2rem 0.55rem; border-radius: 999px;
+      border: 1px solid var(--gray-300); background: var(--gray-100); font-size: 0.72rem; font-weight: 800;
+      letter-spacing: 0.04em; line-height: 1; cursor: pointer; flex-shrink: 0;
+    }
+    .reversible-causes-pill-letter {
+      display: inline-flex; align-items: center; justify-content: center; width: 1.15rem; height: 1.15rem;
+      border-radius: 50%; color: var(--gray-600); background: #fff; border: 1px solid var(--gray-300);
+    }
+    .reversible-causes-pill-letter-done { background: var(--green-700); border-color: var(--green-700); color: #fff; }
+    .reversible-causes-modal {
+      display: none; position: fixed; inset: 0; z-index: 900; align-items: flex-start; justify-content: center;
+      padding: 1rem; padding-top: calc(var(--timer-bar-offset, 0px) + 1rem); overflow-y: auto;
+      background: rgba(15, 23, 42, 0.55);
+    }
+    .reversible-causes-modal.visible { display: flex; }
+    .reversible-causes-panel {
+      width: 100%; max-width: 36rem; max-height: calc(100vh - var(--timer-bar-offset, 0px) - 2rem); overflow-y: auto; margin: 0;
+      background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+    }
+    .reversible-causes-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1rem; }
+    .reversible-causes-header h2 { margin: 0; font-size: 1.15rem; }
+    .reversible-causes-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem 1.25rem; }
+    .reversible-causes-list { list-style: none; margin: 0; padding: 0; }
+    .reversible-causes-list li { margin-bottom: 0.35rem; }
+    .reversible-causes-list li:last-child { margin-bottom: 0; }
+    .reversible-causes-item { display: flex; align-items: flex-start; gap: 0.65rem; cursor: pointer; min-height: var(--touch-min); padding: 0.35rem 0; }
+    .reversible-causes-checkbox { width: 1.35rem; height: 1.35rem; margin: 0.1rem 0 0; flex-shrink: 0; accent-color: var(--green-700); cursor: pointer; }
+    .reversible-causes-checkbox:disabled { cursor: default; }
+    .reversible-causes-label { flex: 1; line-height: 1.4; }
+    .reversible-causes-item-done .reversible-causes-label { text-decoration: line-through; opacity: 0.65; }
+    .reversible-causes-item-done .reversible-causes-item { cursor: default; }
+  </style>
+  <script src="shock-config.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-toolbar">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false">Night mode</button>
+      </div>
+      <h1>Resusci-Time</h1>
+      <p class="subtitle">Adult Cardiac Arrest · Ambulance Resource Protocol</p>
+      <p class="als-guide-link-wrap">
+        <a class="als-guide-link" href="als-alogorhythm.png" target="_blank" rel="noopener noreferrer">Advanced Life Support (ALS) alogorhythm</a>
+      </p>
+      <p id="test-banner" class="test-banner hidden">Test mode — protocol times at 10% (elapsed shows real protocol time)</p>
+      <button type="button" id="test-jump-44-btn" class="btn btn-sm test-timer-jump-btn hidden">Jump to 44:00</button>
+    </header>
+
+    <div id="metronome-bar" class="metronome-bar hidden">
+      <button type="button" class="metronome-toggle" id="metronome-toggle" aria-pressed="false">
+        Metronome (100 bpm): Off
+      </button>
+    </div>
+
+    <div id="timer-bar" class="timer-bar">
+      <div class="timer-bar-top">
+        <div class="timer-elapsed">
+          <div id="timer-elapsed-label" style="font-size:.75rem;text-transform:uppercase;opacity:.85">Elapsed</div>
+          <span class="timer-value" id="timer-display">0:00</span>
+          <span class="timer-mins" id="timer-mins">0 min</span>
+        </div>
+        <div class="timer-shocks-stat">
+          <div class="timer-stat-label">Total shocks:</div>
+          <span class="timer-stat-value" id="timer-shocks">0</span>
+        </div>
+        <div class="timer-controls">
+          <button type="button" class="btn btn-sm timer-interventions-btn hidden" id="timer-interventions" aria-pressed="false">Interventions</button>
+          <button type="button" class="timer-action-box" id="timer-rosc" aria-pressed="false">ROSC</button>
+        </div>
+        <div class="milestones">
+          <button type="button" class="timer-action-box" id="timer-tor">TOR</button>
+        </div>
+      </div>
+      <div class="next-check" id="next-check">
+        <span class="next-check-label" id="next-check-label"></span>
+        <div
+          class="rhythm-check-progress-track hidden"
+          id="next-check-progress-track"
+          role="progressbar"
+          aria-label="Time until next rhythm check"
+          aria-valuemin="0"
+        >
+          <div class="rhythm-check-progress-fill" id="next-check-progress-fill"></div>
+        </div>
+      </div>
+      <div id="timer-clinical-discussion" class="timer-clinical-discussion hidden"></div>
+      <div id="timer-vod-section" class="timer-vod-section hidden"></div>
+      <div id="timer-rx" class="timer-rx hidden">
+        <div class="timer-rx-header">
+          <div class="timer-rx-title">Rx</div>
+          <div class="timer-rx-totals" id="timer-rx-totals"></div>
+        </div>
+        <div class="timer-rx-drug-lines" id="timer-rx-drug-lines"></div>
+      </div>
+      <div id="timer-rosc-rx" class="timer-rx timer-rx-idle hidden">
+        <div class="timer-rx-header">
+          <div class="timer-rx-title">Rx</div>
+          <div class="timer-rx-totals" id="timer-rosc-rx-totals"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rhythm-prompts">
+      <div id="rhythm-prompt-initial" class="alert alert-warning"></div>
+      <div id="rhythm-prompt-termination" class="alert alert-warning"></div>
+    </div>
+
+    <div id="vascular-access-panel" class="vascular-access-panel hidden" role="status"></div>
+
+    <div id="vector-change-panel" class="vector-change-panel hidden" role="status">
+      <p>Consider vector change.</p>
+      <div class="vector-change-actions">
+        <button type="button" class="btn btn-secondary btn-lg" id="vector-not-changed">Vector NOT changed</button>
+        <button type="button" class="btn btn-primary btn-lg" id="vector-changed">Vector changed</button>
+      </div>
+    </div>
+
+    <div id="early-transfer-panel" class="early-transfer-panel hidden" role="status">
+      <p>Consider early transfer to hospital if indicated.</p>
+      <button type="button" class="btn btn-primary btn-lg" id="ack-early-transfer">Acknowledge</button>
+    </div>
+
+    <div id="code-shock-panel" class="code-shock-panel hidden" role="status">
+      <p>CODE SHOCK notified to EOC</p>
+      <button type="button" class="btn btn-primary btn-lg" id="ack-code-shock">Acknowledge</button>
+    </div>
+
+    <div id="rosc-monitoring-reminders" class="rosc-monitoring-reminders hidden">
+      <div id="sbp-reminder-panel" class="sbp-reminder-panel" role="status">
+        <p>Maintain SBP &lt; 100 mmHg (&lt; 80 mmHg in trauma)</p>
+        <div id="sbp-reminder-primary-actions" class="sbp-reminder-actions">
+          <button type="button" class="btn btn-primary btn-lg" id="sbp-adequate-btn">SBP &lt; 100 mmHg (&lt; 80 mmHg in trauma)</button>
+          <button type="button" class="btn btn-secondary btn-lg" id="sbp-low-btn">SBP &gt; 100 mmHg (&gt; 80 mmHg in trauma)</button>
+        </div>
+        <div id="sbp-reminder-fluid-actions" class="sbp-reminder-actions sbp-reminder-fluid-actions hidden">
+          <button type="button" class="btn btn-primary btn-lg" data-sbp-fluid="250ml">250ml sodium chloride</button>
+          <button type="button" class="btn btn-primary btn-lg" data-sbp-fluid="500ml">500ml sodium chloride</button>
+          <button type="button" class="btn btn-primary btn-lg hidden" id="sbp-adrenaline-50-btn">50mcg Adrenaline (0.5ml 1:10,000)</button>
+          <button type="button" class="btn btn-primary btn-lg hidden" id="sbp-adrenaline-100-btn">100mcg Adrenaline (1.0ml 1:10,000)</button>
+          <button type="button" class="btn btn-secondary btn-lg" id="sbp-nothing-btn">Nothing administered at this time</button>
+          <button type="button" class="btn btn-secondary sbp-reminder-back-btn" id="sbp-back-btn">Back</button>
+        </div>
+      </div>
+      <div id="pulse-rate-reminder-panel" class="pulse-rate-reminder-panel" role="status">
+        <p>Pulse rate &gt;60 bpm?</p>
+        <div id="pulse-reminder-primary-actions" class="sbp-reminder-actions">
+          <button type="button" class="btn btn-primary btn-lg" id="pulse-yes-btn">Yes</button>
+          <button type="button" class="btn btn-secondary btn-lg" id="pulse-no-btn">No</button>
+        </div>
+        <div id="pulse-reminder-atropine-actions" class="sbp-reminder-actions pulse-rate-atropine-actions hidden">
+          <p id="pulse-atropine-prompt" class="pulse-rate-atropine-prompt">Consider atropine 600mcg</p>
+          <button type="button" class="btn btn-primary btn-lg" id="pulse-atropine-admin-btn">Administered</button>
+          <button type="button" class="btn btn-secondary btn-lg" id="pulse-atropine-not-admin-btn">Not administered</button>
+          <button type="button" class="btn btn-secondary sbp-reminder-back-btn" id="pulse-back-btn">Back</button>
+        </div>
+        <div id="pulse-reminder-max-actions" class="sbp-reminder-actions pulse-rate-atropine-actions hidden">
+          <p class="pulse-rate-atropine-max">Maximum atropine dose (3mg) given</p>
+          <button type="button" class="btn btn-primary btn-lg" id="pulse-max-ack-btn">Acknowledge</button>
+          <button type="button" class="btn btn-secondary sbp-reminder-back-btn" id="pulse-max-back-btn">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="alert-45" class="alert alert-critical">
+      <strong>45 minutes — Termination review</strong>
+      <p>Consider termination of resuscitation according to current rhythm.</p>
+      <button type="button" class="btn btn-primary" id="ack-45">Review termination guidance</button>
+    </div>
+
+    <main class="main" id="main"></main>
+
+    <footer class="footer">
+      <p>Refer to guideline for details. This tool supports clinical decision-making — it does not replace local protocols or senior clinical judgement.</p>
+    </footer>
+
+    <div id="interventions-modal" class="interventions-modal" role="dialog" aria-modal="true" aria-label="Interventions"></div>
+
+    <div id="reversible-causes-modal" class="reversible-causes-modal" role="dialog" aria-modal="true" aria-labelledby="reversible-causes-title"></div>
+
+    <div id="rhythm-check-modal" class="rhythm-check-modal" role="dialog" aria-modal="true" aria-labelledby="alert-rhythm-title">
+      <div id="alert-rhythm" class="alert alert-warning rhythm-check-modal-panel">
+        <strong id="alert-rhythm-title">Rhythm assessment due</strong>
+        <p id="alert-rhythm-msg">Select the current monitored rhythm.</p>
+        <div class="rhythm-grid" id="alert-rhythm-buttons"></div>
+        <div id="alert-rhythm-shock" class="shock-box hidden"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const THEME_STORAGE_KEY = 'resusci-time-theme';
+
+    function getStoredTheme() {
+      try {
+        const stored = localStorage.getItem(THEME_STORAGE_KEY);
+        if (stored === 'night' || stored === 'day') return stored;
+      } catch (e) {}
+      return 'day';
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.dataset.theme = theme === 'night' ? 'night' : 'day';
+      try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (e) {}
+      const btn = document.getElementById('theme-toggle');
+      if (btn) {
+        const night = theme === 'night';
+        btn.setAttribute('aria-pressed', night ? 'true' : 'false');
+        btn.textContent = night ? 'Day mode' : 'Night mode';
+      }
+    }
+
+    function toggleTheme() {
+      applyTheme(getStoredTheme() === 'night' ? 'day' : 'night');
+    }
+
+    applyTheme(getStoredTheme());
+
+    const INITIAL_ASSESSMENT_OPTIONS = [
+      { id: 'obviously-deceased', label: 'Obviously deceased' },
+      { id: 'adrt-dnacpr', label: 'ADRT / DNACPR / ReSPECT (Resuscitation Decision)' },
+      { id: 'lpa', label: 'Valid LPA (Lasting Power of Attorney) request' },
+      { id: 'futility', label: 'Futility' },
+      { id: 'end-of-life-care', label: 'End of Life Care' },
+    ];
+    const OBVIOUSLY_DECEASED_CRITERIA = [
+      { id: 'decapitation', label: 'Decapitation' },
+      { id: 'hemicorporectomy', label: 'Hemicorporectomy' },
+      { id: 'massive-cranial-destruction', label: 'Massive cranial or cerebral destruction' },
+      { id: 'decomposition-incineration', label: 'Decomposition or incineration' },
+      { id: 'hypostasis', label: 'Hypostasis' },
+      { id: 'rigor-mortis', label: 'Rigor mortis' },
+    ];
+    const VOD_OBSERVATION_CHECKLIST_HEADER =
+      'Confirm 5 minutes of the following (continuous):';
+    const VOD_OBSERVATION_CHECKLIST_ITEMS = [
+      { id: 'apnoea', label: 'Apnoea' },
+      { id: 'absent-central-pulse', label: 'Absent circulation at central pulse site' },
+      { id: 'unresponsive-gcs3', label: 'Unresponsive (GCS 3/15)' },
+      { id: 'asystole', label: 'Asystole' },
+    ];
+    function getVodCriteriaLogLabel(criteria) {
+      return 'VOD: ' + criteria;
+    }
+    function isVodCriteriaLogEntry(text) {
+      return text.indexOf('VOD: ') === 0;
+    }
+    function getVodCriteriaDisplayName(text) {
+      return isVodCriteriaLogEntry(text) ? text.slice(5) : text;
+    }
+    function filterVodCriteriaLogEntries(entries) {
+      return entries.filter(function (entry) { return isVodCriteriaLogEntry(entry.text); });
+    }
+    function renderVodTimestampsSummaryHtml(compact) {
+      if (!state.vodAtLabel) return '';
+      const criteria = filterVodCriteriaLogEntries(sortedLogEntries());
+      let html = '<div class="vod-timestamps-summary' + (compact ? ' vod-timestamps-summary-compact' : '') + '">';
+      if (criteria.length) {
+        html += '<p class="vod-summary-heading">Criteria for not commencing resuscitation</p><ul class="vod-criteria-stamps">';
+        criteria.forEach(function (entry) {
+          html += '<li class="vod-criteria-stamp"><span class="vod-criteria-name">' + getVodCriteriaDisplayName(entry.text) +
+            '</span><span class="vod-criteria-time">' + entry.label + '</span></li>';
+        });
+        html += '</ul>';
+      }
+      html += '<p class="vod-death-stamp">Verification of death recorded at ' + state.vodAtLabel + '</p></div>';
+      return html;
+    }
+    function isObviouslyDeceasedObservationCriterion(id) {
+      return id === 'hypostasis' || id === 'rigor-mortis';
+    }
+    const RHYTHM_VF_PVT = 'VF / pVT';
+    const RHYTHMS = [RHYTHM_VF_PVT, 'PEA', 'Asystole'];
+    const TIME_SCALE = 0.1; // 1 = production; 0.1 = 10% for testing
+    const METRONOME_BPM = 100;
+    const RHYTHM_CHECK_INTERVAL = Math.round(120 * TIME_SCALE);
+    const ADRENALINE_INTERVAL = Math.round(240 * TIME_SCALE);
+    const SBP_REMINDER_INTERVAL = Math.round(240 * TIME_SCALE);
+    const ROSC_MONITORING_REMINDER_INTERVAL = SBP_REMINDER_INTERVAL;
+    const ATROPINE_DOSE_MG = 0.6;
+    const ATROPINE_MAX_MG = 3;
+    const FORTY_FIVE_MINUTES = Math.round(2700 * TIME_SCALE);
+    const VOD_COUNTDOWN_ACTUAL_SECONDS = Math.round(300 * TIME_SCALE);
+    const TEST_JUMP_TO_DISPLAY_SECONDS = 44 * 60;
+    const TEST_JUMP_TO_ACTUAL_SECONDS = Math.round(TEST_JUMP_TO_DISPLAY_SECONDS * TIME_SCALE);
+    const VOD_READY_MESSAGE =
+      'Verification of death can now take place if the patient has been in continuous asystole for a period of at least 5 minutes';
+    const ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS = 600;
+    const ROSC_SUSTAINED_THRESHOLD_ACTUAL_SECONDS = Math.round(ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS * TIME_SCALE);
+
+    function shouldShowEarlyTransferReminder(initialRhythm, rhythmChecksLogged, acknowledged) {
+      if (acknowledged) return false;
+      if (rhythmChecksLogged < 3) return false;
+      return initialRhythm === RHYTHM_VF_PVT || initialRhythm === 'PEA';
+    }
+
+    const CODE_SHOCK_MIN_SHOCKS = 3;
+
+    function shouldShowCodeShockReminder(shockCount, acknowledged) {
+      if (acknowledged) return false;
+      return shockCount >= CODE_SHOCK_MIN_SHOCKS;
+    }
+
+    const EARLY_TRANSFER_LOG = 'Early transfer to hospital — considered';
+    const CODE_SHOCK_LOG = 'CODE SHOCK notified to EOC';
+    const VASCULAR_ACCESS_PROMPT = 'Establish vascular access.';
+    const IV_CANNULAS = [
+      ['22g', 'cannula-blue'],
+      ['20g', 'cannula-pink'],
+      ['18g', 'cannula-green'],
+      ['16g', 'cannula-grey'],
+      ['14g', 'cannula-orange'],
+    ];
+
+    const INTERVENTION_OPTIONS = [
+      { id: 'vascular-access', label: 'Vascular access' },
+      { id: 'airway', label: 'Airway' },
+      { id: 'breathing', label: 'Breathing' },
+      { id: 'medications', label: 'Medications' },
+    ];
+    const AIRWAY_OPTIONS = [
+      'Head tilt / jaw thrust',
+      'OPA',
+      'NPA',
+      'SGA (i-gel)',
+      'ET',
+      'Needle cric.',
+      'Tracheostomy',
+    ];
+    const BREATHING_OPTIONS = ['BVM', 'Mechanical vent.'];
+    const SODIUM_CHLORIDE_OPTIONS = ['flush', '250ml', '500ml'];
+    const MEDICATION_SIMPLE_OPTIONS = ['10% glucose', 'Naloxone'];
+
+    const ADRENALINE_STRENGTH = '1:10,000';
+    const ADRENALINE_DRUG_NAME = 'Adrenaline';
+    const AMIODARONE_DRUG_NAME = 'Amiodarone';
+    const AMIODARONE_MAX_DOSES = 2;
+    const AMIODARONE_DOSES = [
+      { mg: 300, minShocks: 3 },
+      { mg: 150, minShocks: 5 },
+    ];
+    const RX_WARNING_THRESHOLD_DISPLAY_SECONDS = 60;
+
+    function ordinalShock(n) {
+      const mod100 = n % 100;
+      const suffix = mod100 >= 11 && mod100 <= 13 ? 'th'
+        : n % 10 === 1 ? 'st'
+        : n % 10 === 2 ? 'nd'
+        : n % 10 === 3 ? 'rd' : 'th';
+      return n + suffix + ' shock';
+    }
+
+    function getAdrenalineNextDueLabel() {
+      return ADRENALINE_DRUG_NAME + ' next due in:';
+    }
+
+    function formatDrugAdministeredTotal(drugName, count) {
+      return drugName + ': ' + count + ' administered';
+    }
+
+    const VFVT_ADRENALINE_FIRST_DOSE_MIN_SHOCKS = 3;
+    const ADRENALINE_ASAP_PROMPT = 'Adrenaline ' + ADRENALINE_STRENGTH + ' — administer ASAP';
+    const ADRENALINE_REPEAT_PROMPT = 'Adrenaline ' + ADRENALINE_STRENGTH;
+
+    function hasNonShockableRhythmLogged(rhythmChecks) {
+      return rhythmChecks.some(function (c) { return c.rhythm === 'PEA' || c.rhythm === 'Asystole'; });
+    }
+
+    function requiresAdrenalineAsapForFirstDose(initialRhythm, hasNonShockableRhythm, adrenalineDoseCount) {
+      if (adrenalineDoseCount > 0) return false;
+      if (initialRhythm === 'PEA' || initialRhythm === 'Asystole') return true;
+      if (hasNonShockableRhythm) return true;
+      return false;
+    }
+
+    function requiresAdrenalineAfterThirdShock(initialRhythm, hasNonShockableRhythm, adrenalineDoseCount) {
+      if (adrenalineDoseCount > 0) return false;
+      if (requiresAdrenalineAsapForFirstDose(initialRhythm, hasNonShockableRhythm, adrenalineDoseCount)) return false;
+      return initialRhythm === RHYTHM_VF_PVT;
+    }
+
+    function shouldShowAmiodarone(initialRhythm, shockCount) {
+      return initialRhythm === RHYTHM_VF_PVT || shockCount > 0;
+    }
+
+    function getNextAmiodaroneDose(doseCount) {
+      if (doseCount >= AMIODARONE_MAX_DOSES) return null;
+      return AMIODARONE_DOSES[doseCount];
+    }
+
+    function isVfvtPreShockDrugWarning(shockCount, minShocks, pendingDose) {
+      return pendingDose && shockCount >= minShocks - 1 && shockCount < minShocks;
+    }
+
+    function getRxBoxVisualState(lines) {
+      if (lines.some(function (line) { return line.showButton; })) return 'due';
+      if (lines.some(function (line) { return line.isUpcomingWarning; })) return 'warning';
+      if (lines.some(function (line) {
+        return line.showCountdown && line.countdownRemaining > 0
+          && toDisplaySeconds(line.countdownRemaining) <= RX_WARNING_THRESHOLD_DISPLAY_SECONDS;
+      })) return 'warning';
+      return 'idle';
+    }
+
+    function getRxDrugTotals(initialRhythm, adrenalineDoseCount, amiodaroneDoseCount, shockCount) {
+      const totals = [{ drugName: ADRENALINE_DRUG_NAME, count: adrenalineDoseCount }];
+      if (shouldShowAmiodarone(initialRhythm, shockCount)) {
+        totals.push({ drugName: AMIODARONE_DRUG_NAME, count: amiodaroneDoseCount });
+      }
+      return totals;
+    }
+
+    function canLogAdrenaline(initialRhythm, doseCount, shockCount, hasNonShockableRhythm) {
+      if (doseCount > 0) return true;
+      if (requiresAdrenalineAsapForFirstDose(initialRhythm, hasNonShockableRhythm, doseCount)) return true;
+      if (requiresAdrenalineAfterThirdShock(initialRhythm, hasNonShockableRhythm, doseCount)) {
+        return shockCount >= VFVT_ADRENALINE_FIRST_DOSE_MIN_SHOCKS;
+      }
+      return true;
+    }
+
+    function buildAdrenalineLine(params) {
+      const hasDoses = params.adrenalineDoseCount > 0;
+      const asapFirst = requiresAdrenalineAsapForFirstDose(
+        params.initialRhythm, params.hasNonShockableRhythm, params.adrenalineDoseCount);
+      const shockGatedFirst = requiresAdrenalineAfterThirdShock(
+        params.initialRhythm, params.hasNonShockableRhythm, params.adrenalineDoseCount);
+      const logEnabled = canLogAdrenaline(
+        params.initialRhythm, params.adrenalineDoseCount, params.shockCount, params.hasNonShockableRhythm);
+      const showInterval = hasDoses && params.nextAdrenalineAt != null;
+      const remaining = showInterval ? Math.max(0, params.nextAdrenalineAt - params.elapsed) : 0;
+      const showCountdown = showInterval && remaining > 0;
+      const showButton = logEnabled && !showCountdown;
+      let prompt = ADRENALINE_REPEAT_PROMPT;
+      let isUpcomingWarning = false;
+
+      if (!hasDoses) {
+        if (asapFirst) {
+          prompt = ADRENALINE_ASAP_PROMPT;
+        } else if (shockGatedFirst) {
+          prompt = params.shockCount >= VFVT_ADRENALINE_FIRST_DOSE_MIN_SHOCKS
+            ? ADRENALINE_REPEAT_PROMPT
+            : ADRENALINE_DRUG_NAME + ' ' + ADRENALINE_STRENGTH + ' — after ' + ordinalShock(VFVT_ADRENALINE_FIRST_DOSE_MIN_SHOCKS);
+          isUpcomingWarning = isVfvtPreShockDrugWarning(
+            params.shockCount, VFVT_ADRENALINE_FIRST_DOSE_MIN_SHOCKS, true);
+        } else {
+          prompt = ADRENALINE_ASAP_PROMPT;
+        }
+      }
+
+      return {
+        id: 'adrenaline',
+        prompt: prompt,
+        showCountdown: showCountdown,
+        countdownRemaining: remaining,
+        showButton: showButton,
+        isUpcomingWarning: isUpcomingWarning,
+        actionLabel: 'ADX administered',
+      };
+    }
+
+    function buildAmiodaroneLine(params) {
+      const next = getNextAmiodaroneDose(params.amiodaroneDoseCount);
+      if (!next) {
+        return {
+          id: 'amiodarone',
+          prompt: AMIODARONE_DRUG_NAME + ' — all doses given',
+          showCountdown: false,
+          countdownRemaining: 0,
+          showButton: false,
+          isUpcomingWarning: false,
+          actionLabel: 'Amiodarone administered',
+        };
+      }
+      const logEnabled = canLogAmiodarone(params.amiodaroneDoseCount, params.shockCount);
+      const isUpcomingWarning = isVfvtPreShockDrugWarning(params.shockCount, next.minShocks, true);
+      const prompt = params.shockCount >= next.minShocks
+        ? AMIODARONE_DRUG_NAME + ' ' + next.mg + 'mg'
+        : AMIODARONE_DRUG_NAME + ' ' + next.mg + 'mg — after ' + ordinalShock(next.minShocks);
+
+      return {
+        id: 'amiodarone',
+        prompt: prompt,
+        showCountdown: false,
+        countdownRemaining: 0,
+        showButton: logEnabled,
+        isUpcomingWarning: isUpcomingWarning,
+        actionLabel: 'Amiodarone administered',
+      };
+    }
+
+    function buildRxDrugLines(params) {
+      const lines = [buildAdrenalineLine(params)];
+      if (shouldShowAmiodarone(params.initialRhythm, params.shockCount)) {
+        lines.push(buildAmiodaroneLine(params));
+      }
+      return lines;
+    }
+
+    function canLogAmiodarone(doseCount, shockCount) {
+      const next = getNextAmiodaroneDose(doseCount);
+      if (!next) return false;
+      return shockCount >= next.minShocks;
+    }
+
+    function getAmiodaroneLogLabel(doseNumber) {
+      const spec = AMIODARONE_DOSES[doseNumber - 1];
+      return 'Amiodarone ' + spec.mg + 'mg — dose ' + doseNumber;
+    }
+
+    function getAdrenalineLogLabel(doseNumber) {
+      return 'Adrenaline 1:10,000 — dose ' + doseNumber;
+    }
+
+    function shouldShowRxSection() {
+      return state.initialRhythm != null;
+    }
+
+    function showRxStep() {
+      return ['active-resuscitation', 'forty-five-minute-check', 'rosc-assessment'].includes(state.step);
+    }
+
+    function vascularAccessLogLabel(type, gauge) {
+      if (type === 'IO') return 'Vascular access — IO';
+      return 'Vascular access — IV ' + gauge;
+    }
+
+    function isVascularAccessLogEntry(text) {
+      return text.indexOf('Vascular access — ') === 0;
+    }
+
+    function hasVascularAccessLogged(entries) {
+      return entries.some(function (entry) { return isVascularAccessLogEntry(entry.text); });
+    }
+
+    function vectorChangeLogLabel(changed) {
+      return changed ? 'Vector change — changed' : 'Vector change — not changed';
+    }
+
+    function afterRhythmLogged(rhythm, shockJoules) {
+      if (rhythm === RHYTHM_VF_PVT && shockJoules != null) {
+        state.consecutiveShockCount++;
+        if (state.consecutiveShockCount % 3 === 0) {
+          state.showVectorChangeReminder = true;
+        }
+      } else {
+        state.consecutiveShockCount = 0;
+      }
+    }
+
+    const state = {
+      step: 'start',
+      initialRhythm: null,
+      currentRhythm: null,
+      heartRate: '',
+      qrsWidthMs: '',
+      roscStatus: null,
+      fortyFiveAck: false,
+      earlyTransferAck: false,
+      codeShockAck: false,
+      elapsed: 0,
+      running: false,
+      fortyFiveFired: false,
+      lastRhythmEntryAt: 0,
+      nextCheckAt: RHYTHM_CHECK_INTERVAL,
+      showRhythmCheckAlert: false,
+      rhythmChecks: [],
+      showShockForm: false,
+      shockFormContext: null,
+      terminationShockJoules: null,
+      rhythmAlertMounted: null,
+      consecutiveShockCount: 0,
+      showVectorChangeReminder: false,
+      logEntries: [],
+      showRhythmLog: false,
+      showVascularAccessReminder: false,
+      vascularAccessStep: 'prompt',
+      pendingVascularAccessAtEpochMs: null,
+      pendingContinuousCompressionsFromChecklist: false,
+      showInterventions: false,
+      interventionStep: 'list',
+      interventionSubStep: 'options',
+      interventionOtherDraft: '',
+      savedOtherInterventions: [],
+      interventionVascularStep: 'route',
+      adrenalineDoseCount: 0,
+      amiodaroneDoseCount: 0,
+      nextAdrenalineAt: null,
+      completedQualityPrompts: {},
+      completedReversibleCauses: {},
+      showReversibleCausesModal: false,
+      preRhythmModals: null,
+      lastRxUiStructureSig: null,
+      timerView: 'arrest',
+      roscElapsed: 0,
+      completedRoscTasks: {},
+      sbpReminderVisible: false,
+      pulseReminderVisible: false,
+      sbpReminderExpanded: false,
+      pulseReminderExpanded: false,
+      pulseShowAtropineMaxMessage: false,
+      roscNextReminderAt: ROSC_MONITORING_REMINDER_INTERVAL,
+      hasSbpFluidLogged: false,
+      showSbpAdrenaline100: false,
+      sbpAdrenaline50AwaitingNextReminder: false,
+      atropineTotalMg: 0,
+      sustainedRoscLogged: false,
+      sustainedRoscEverAchieved: false,
+      clinicalDiscussionPending: false,
+      clinicalDiscussionOpen: false,
+      metronomeEnabled: false,
+      peaTorCriteriaMet: null,
+      torEndedAtLabel: null,
+      vodCountdownRemaining: VOD_COUNTDOWN_ACTUAL_SECONDS,
+      vodAtLabel: null,
+      iaMainIds: {},
+      iaObviousIds: {},
+      iaPhase: 'list',
+      iaObservationActive: false,
+      iaObservationCountdown: VOD_COUNTDOWN_ACTUAL_SECONDS,
+      iaObservationChecklist: {},
+    };
+
+    let intervalId = null;
+    let vodIntervalId = null;
+    let observationIntervalId = null;
+    let metronomeController = null;
+
+    function createMetronome(bpm) {
+      let audioContext = null;
+      let schedulerId = null;
+      let nextBeatTime = 0;
+      let running = false;
+
+      function playTick(time) {
+        if (!audioContext) return;
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 880;
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.exponentialRampToValueAtTime(0.22, time + 0.001);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start(time);
+        oscillator.stop(time + 0.06);
+      }
+
+      async function ensureContext() {
+        if (!audioContext) audioContext = new AudioContext();
+        if (audioContext.state === 'suspended') await audioContext.resume();
+        return audioContext;
+      }
+
+      function schedule() {
+        if (!audioContext || !running) return;
+        const beatInterval = 60 / bpm;
+        while (nextBeatTime < audioContext.currentTime + 0.1) {
+          playTick(nextBeatTime);
+          nextBeatTime += beatInterval;
+        }
+        schedulerId = setTimeout(schedule, 25);
+      }
+
+      return {
+        start: async function () {
+          const context = await ensureContext();
+          if (running) return;
+          running = true;
+          nextBeatTime = context.currentTime + 0.05;
+          schedule();
+        },
+        stop: function () {
+          running = false;
+          if (schedulerId !== null) {
+            clearTimeout(schedulerId);
+            schedulerId = null;
+          }
+        },
+      };
+    }
+
+    function getMetronomeController() {
+      if (!metronomeController) metronomeController = createMetronome(METRONOME_BPM);
+      return metronomeController;
+    }
+
+    function isTimerActiveStep(step) {
+      if (['start', 'initial-assessment', 'do-not-resuscitate'].includes(step)) return false;
+      if (step === 'complete') return !!state.vodAtLabel;
+      return true;
+    }
+
+    function getVodCountdownRemainingFraction(secondsRemaining) {
+      if (VOD_COUNTDOWN_ACTUAL_SECONDS <= 0) return 0;
+      return Math.min(1, Math.max(0, secondsRemaining / VOD_COUNTDOWN_ACTUAL_SECONDS));
+    }
+
+    function renderLogHtml() {
+      if (!state.logEntries.length) return '';
+      return '<div class="event-log-panel"><p class="check-log-label">Log</p><ul class="check-log">' +
+        state.logEntries.map(function (entry) {
+          return '<li><span class="check-time">' + entry.label + '</span><span>' + entry.text + '</span></li>';
+        }).join('') +
+        '</ul></div>';
+    }
+
+    function stopVodCountdown() {
+      if (vodIntervalId) {
+        clearInterval(vodIntervalId);
+        vodIntervalId = null;
+      }
+    }
+
+    function startVodCountdown() {
+      stopVodCountdown();
+      vodIntervalId = setInterval(function () {
+        if (state.step !== 'post-tor') {
+          stopVodCountdown();
+          return;
+        }
+        if (state.vodCountdownRemaining > 0) {
+          state.vodCountdownRemaining--;
+        }
+        updateTimerUI();
+      }, 1000);
+    }
+
+    function updateMetronomeUI() {
+      const bar = document.getElementById('metronome-bar');
+      const btn = document.getElementById('metronome-toggle');
+      const show =
+        isTimerActiveStep(state.step) &&
+        state.step !== 'post-tor' &&
+        !(state.step === 'complete' && state.vodAtLabel);
+      bar.classList.toggle('hidden', !show);
+      btn.classList.toggle('active', state.metronomeEnabled);
+      btn.setAttribute('aria-pressed', String(state.metronomeEnabled));
+      btn.textContent = 'Metronome (' + METRONOME_BPM + ' bpm): ' + (state.metronomeEnabled ? 'On' : 'Off');
+      const metronome = getMetronomeController();
+      if (state.metronomeEnabled && show) {
+        void metronome.start();
+      } else {
+        metronome.stop();
+      }
+    }
+
+    function toggleMetronome() {
+      state.metronomeEnabled = !state.metronomeEnabled;
+      updateMetronomeUI();
+    }
+
+    function formatElapsed(s) {
+      const m = Math.floor(s / 60);
+      const sec = s % 60;
+      return m + ':' + String(sec).padStart(2, '0');
+    }
+
+    function toDisplaySeconds(actual) {
+      if (TIME_SCALE === 1) return actual;
+      return Math.floor(actual / TIME_SCALE);
+    }
+
+    function formatDisplayElapsed(actual) {
+      return formatElapsed(toDisplaySeconds(actual));
+    }
+
+    function formatActualTime(date) {
+      const d = date || new Date();
+      const h = d.getHours();
+      const m = d.getMinutes();
+      const s = d.getSeconds();
+      return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    }
+
+    function pushLogEntry(text, atEpochMs) {
+      const at = atEpochMs != null ? new Date(atEpochMs) : new Date();
+      const entry = {
+        atEpochMs: at.getTime(),
+        label: formatActualTime(at),
+        text,
+      };
+      state.logEntries.push(entry);
+      return entry;
+    }
+
+    function promptVascularAccessAfterFirstMedication(atEpochMs) {
+      if (hasVascularAccessLogged(state.logEntries)) return;
+      state.pendingVascularAccessAtEpochMs = atEpochMs;
+      state.showVascularAccessReminder = true;
+      state.vascularAccessStep = 'prompt';
+      updateVascularAccessPanel();
+    }
+
+    function sortedLogEntries() {
+      return [...state.logEntries].sort((a, b) => a.atEpochMs - b.atEpochMs);
+    }
+
+    const RESUSCITATION_QUALITY_HEADER = 'High-quality chest compressions and ventilations, and:';
+    const RESUSCITATION_QUALITY_ITEMS = [
+      { id: 'minimise-interruptions', label: 'Minimise interruptions to chest compressions', action: 'log' },
+      { id: 'pad-placement', label: 'Ensure optimal defibrillator pad placement', action: 'log' },
+      { id: 'oxygen', label: 'Give oxygen', action: 'log' },
+      { id: 'continuous-compressions', label: 'Continuous compressions if tracheal tube or SGA', action: 'airway-interventions' },
+      { id: 'capnography', label: 'Use waveform capnography', action: 'log' },
+      { id: 'vascular-access', label: 'Early IV access (IO if IV not possible)', action: 'vascular-access' },
+      { id: 'reversible-causes', label: 'Address reversible causes', action: 'reversible-causes' },
+    ];
+
+    const REVERSIBLE_CAUSES = [
+      { id: 'hypoxia', label: 'Hypoxia', letter: 'H' },
+      { id: 'hypovolaemia', label: 'Hypovolaemia', letter: 'H' },
+      { id: 'hypo-hyper-metabolic', label: 'Hypo / hyper metabolic', letter: 'H' },
+      { id: 'hypo-hyper-thermia', label: 'Hypo hyper thermia', letter: 'H' },
+      { id: 'thrombosis', label: 'Thrombosis', letter: 'T' },
+      { id: 'tension-pneumothorax', label: 'Tension pneumothorax', letter: 'T' },
+      { id: 'toxins', label: 'Toxins', letter: 'T' },
+      { id: 'tamponade', label: 'Tamponade', letter: 'T' },
+    ];
+    const REVERSIBLE_CAUSE_H_ITEMS = REVERSIBLE_CAUSES.filter(function (item) { return item.letter === 'H'; });
+    const REVERSIBLE_CAUSE_T_ITEMS = REVERSIBLE_CAUSES.filter(function (item) { return item.letter === 'T'; });
+
+    const ROSC_TASK_ITEMS = [
+      { id: 'abcde', label: 'ABCDE assessment', action: 'log' },
+      { id: 'spo2-paco2', label: 'Aim for SpO2 94-98% and normal PaCO2', action: 'log' },
+      { id: '12-lead-ecg', label: '12 lead ECG', action: 'log' },
+      { id: 'reversible-causes', label: 'Identify and treat reversible causes', action: 'reversible-causes' },
+      { id: 'temperature-control', label: 'Temperature control', action: 'log' },
+    ];
+
+    function getRoscSbpFluidLogLabel(ml) {
+      return 'Post ROSC care: ' + ml + ' sodium chloride';
+    }
+
+    function getRoscSbpAdrenaline50LogLabel() {
+      return 'Post ROSC care: 50mcg Adrenaline (0.5ml 1:10,000)';
+    }
+
+    function getRoscSbpAdrenaline100LogLabel() {
+      return 'Post ROSC care: 100mcg Adrenaline (1.0ml 1:10,000)';
+    }
+
+    function formatAtropineMg(totalMg) {
+      return totalMg.toFixed(1);
+    }
+
+    function getAtropineAdministeredTotal(totalMg) {
+      return 'Atropine: ' + formatAtropineMg(totalMg) + ' mg administered';
+    }
+
+    function isAtropineMaxReached(totalMg) {
+      return totalMg >= ATROPINE_MAX_MG;
+    }
+
+    function getPulseRateAbove60LogLabel() {
+      return 'Post ROSC care: Pulse rate >60 bpm';
+    }
+
+    function getAtropineAdministeredLogLabel() {
+      return 'Post ROSC care: Atropine 600mcg administered';
+    }
+
+    function getAtropineNotAdministeredLogLabel() {
+      return 'Post ROSC care: Atropine 600mcg not administered';
+    }
+
+    function resetRoscMonitoringProgress() {
+      state.hasSbpFluidLogged = false;
+      state.showSbpAdrenaline100 = false;
+      state.sbpAdrenaline50AwaitingNextReminder = false;
+      state.atropineTotalMg = 0;
+    }
+
+    function resetRoscMonitoringOnArrest() {
+      resetRoscMonitoringReminder();
+      state.atropineTotalMg = 0;
+    }
+
+    function resetRoscMonitoringReminder() {
+      state.sbpReminderVisible = false;
+      state.pulseReminderVisible = false;
+      state.sbpReminderExpanded = false;
+      state.pulseReminderExpanded = false;
+      state.pulseShowAtropineMaxMessage = false;
+      state.roscNextReminderAt = ROSC_MONITORING_REMINDER_INTERVAL;
+    }
+
+    function applyRoscMonitoringShownSideEffects() {
+      if (state.sbpAdrenaline50AwaitingNextReminder) {
+        state.showSbpAdrenaline100 = true;
+        state.sbpAdrenaline50AwaitingNextReminder = false;
+      }
+    }
+
+    function showRoscMonitoringReminders() {
+      applyRoscMonitoringShownSideEffects();
+      state.sbpReminderVisible = true;
+      state.pulseReminderVisible = true;
+      state.sbpReminderExpanded = false;
+      state.pulseReminderExpanded = false;
+      state.pulseShowAtropineMaxMessage = false;
+    }
+
+    function startRoscMonitoringOnRoscEntry() {
+      showRoscMonitoringReminders();
+      state.roscNextReminderAt = ROSC_MONITORING_REMINDER_INTERVAL;
+    }
+
+    function dismissSbpReminder() {
+      state.sbpReminderVisible = false;
+      state.sbpReminderExpanded = false;
+    }
+
+    function dismissPulseReminder() {
+      state.pulseReminderVisible = false;
+      state.pulseReminderExpanded = false;
+      state.pulseShowAtropineMaxMessage = false;
+    }
+
+    function logSbpFluid(ml) {
+      pushLogEntry(getRoscSbpFluidLogLabel(ml));
+      state.hasSbpFluidLogged = true;
+      dismissSbpReminder();
+    }
+
+    function logSbpAdrenaline50() {
+      pushLogEntry(getRoscSbpAdrenaline50LogLabel());
+      state.sbpAdrenaline50AwaitingNextReminder = true;
+      dismissSbpReminder();
+    }
+
+    function logSbpAdrenaline100() {
+      pushLogEntry(getRoscSbpAdrenaline100LogLabel());
+      dismissSbpReminder();
+    }
+
+    function handlePulseYes() {
+      pushLogEntry(getPulseRateAbove60LogLabel());
+      dismissPulseReminder();
+    }
+
+    function handlePulseNo() {
+      state.pulseReminderExpanded = true;
+      state.pulseShowAtropineMaxMessage = isAtropineMaxReached(state.atropineTotalMg);
+    }
+
+    function handleAtropineAdministered() {
+      pushLogEntry(getAtropineAdministeredLogLabel());
+      state.atropineTotalMg = Math.min(ATROPINE_MAX_MG, state.atropineTotalMg + ATROPINE_DOSE_MG);
+      dismissPulseReminder();
+    }
+
+    function handleAtropineNotAdministered() {
+      pushLogEntry(getAtropineNotAdministeredLogLabel());
+      dismissPulseReminder();
+    }
+
+    function updateRoscMonitoringPanels() {
+      const wrapper = document.getElementById('rosc-monitoring-reminders');
+      const show = state.timerView === 'rosc' &&
+        state.step === 'active-resuscitation' &&
+        (state.sbpReminderVisible || state.pulseReminderVisible);
+      const wasHidden = wrapper.classList.contains('hidden');
+      wrapper.classList.toggle('hidden', !show);
+      if (!show) return;
+      document.getElementById('sbp-reminder-panel').classList.toggle('hidden', !state.sbpReminderVisible);
+      document.getElementById('pulse-rate-reminder-panel').classList.toggle('hidden', !state.pulseReminderVisible);
+      document.getElementById('sbp-reminder-primary-actions').classList.toggle('hidden', state.sbpReminderExpanded);
+      document.getElementById('sbp-reminder-fluid-actions').classList.toggle('hidden', !state.sbpReminderExpanded);
+      document.getElementById('sbp-adrenaline-50-btn').classList.toggle('hidden', !state.hasSbpFluidLogged);
+      document.getElementById('sbp-adrenaline-100-btn').classList.toggle('hidden', !state.showSbpAdrenaline100);
+      document.getElementById('pulse-reminder-primary-actions').classList.toggle('hidden', state.pulseReminderExpanded);
+      document.getElementById('pulse-reminder-atropine-actions').classList.toggle('hidden', !state.pulseReminderExpanded || state.pulseShowAtropineMaxMessage);
+      document.getElementById('pulse-reminder-max-actions').classList.toggle('hidden', !state.pulseReminderExpanded || !state.pulseShowAtropineMaxMessage);
+      if (wasHidden) scrollReminderIntoView(wrapper);
+    }
+
+    function getRoscPhaseLabel(actualSeconds) {
+      return toDisplaySeconds(actualSeconds) < ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS
+        ? 'Transient ROSC'
+        : 'Sustained ROSC';
+    }
+
+    function getSustainedRoscAchievedLogLabel() {
+      return 'Sustained ROSC achieved (>10 minutes with output)';
+    }
+
+    function maybeLogSustainedRoscAchieved() {
+      if (state.sustainedRoscLogged) return;
+      if (state.roscElapsed < ROSC_SUSTAINED_THRESHOLD_ACTUAL_SECONDS) return;
+      state.sustainedRoscLogged = true;
+      state.sustainedRoscEverAchieved = true;
+      pushLogEntry(getSustainedRoscAchievedLogLabel());
+    }
+
+    function isRoscTaskComplete(id) {
+      if (id === 'reversible-causes') return allReversibleCausesComplete();
+      return !!state.completedRoscTasks[id];
+    }
+
+    function exitRoscMode() {
+      state.timerView = 'arrest';
+      resetRoscMonitoringOnArrest();
+      state.sustainedRoscLogged = false;
+      if (state.elapsed >= FORTY_FIVE_MINUTES && !state.fortyFiveAck) {
+        document.getElementById('alert-45').classList.add('visible');
+      }
+    }
+
+    function enterRoscMode(fromRhythmCheck) {
+      state.timerView = 'rosc';
+      state.roscElapsed = 0;
+      state.sustainedRoscLogged = false;
+      document.getElementById('alert-45').classList.remove('visible');
+      startRoscMonitoringOnRoscEntry();
+      pushLogEntry(fromRhythmCheck ? 'ROSC' : 'ROSC — post-arrest care commenced');
+    }
+
+    function handleRhythmCheckRosc() {
+      const wasArrest = state.timerView === 'arrest';
+      if (wasArrest) clearPreRhythmModals();
+      state.lastRhythmEntryAt = state.elapsed;
+      state.nextCheckAt = state.elapsed + RHYTHM_CHECK_INTERVAL;
+      state.showRhythmCheckAlert = false;
+      state.rhythmAlertMounted = null;
+      clearShockForm();
+      updateRhythmCheckAlert();
+      if (wasArrest) {
+        enterRoscMode(true);
+      } else {
+        pushLogEntry('ROSC');
+        restorePreRhythmModals();
+      }
+      updateReversibleCausesModal();
+      render();
+    }
+
+    function getRoscTaskLogLabel(label) {
+      return 'Post ROSC care: ' + label;
+    }
+
+    function completeRoscTask(id, label) {
+      if (isRoscTaskComplete(id)) return;
+      state.completedRoscTasks[id] = true;
+      pushLogEntry(getRoscTaskLogLabel(label));
+      render();
+    }
+
+    function handleRoscTask(id) {
+      const item = ROSC_TASK_ITEMS.find(function (i) { return i.id === id; });
+      if (!item || isRoscTaskComplete(id)) return;
+      if (item.action === 'reversible-causes') {
+        openReversibleCausesModal();
+        return;
+      }
+      completeRoscTask(id, item.label);
+    }
+
+    function renderRoscChecklistHtml() {
+      return '<div class="resuscitation-prompt rosc-checklist">' +
+        '<p><strong>Post-ROSC care</strong></p>' +
+        '<ul class="quality-prompt-checklist">' +
+        ROSC_TASK_ITEMS.map(function (item) {
+          const done = isRoscTaskComplete(item.id);
+          if (item.id === 'reversible-causes') {
+            return '<li class="' + (done ? 'quality-prompt-done' : '') + '">' +
+              '<div class="quality-prompt-item quality-prompt-item-with-pill">' +
+              '<label class="quality-prompt-item-main">' +
+              '<input type="checkbox" class="quality-prompt-checkbox" data-rosc-task="' + item.id + '"' +
+              (done ? ' checked disabled' : '') + ' />' +
+              '<span class="quality-prompt-label">' + item.label + '</span>' +
+              '</label>' +
+              renderReversibleCausesPillHtml() +
+              '</div></li>';
+          }
+          return '<li class="' + (done ? 'quality-prompt-done' : '') + '">' +
+            '<label class="quality-prompt-item">' +
+            '<input type="checkbox" class="quality-prompt-checkbox" data-rosc-task="' + item.id + '"' +
+            (done ? ' checked disabled' : '') + ' />' +
+            '<span class="quality-prompt-label">' + item.label + '</span>' +
+            '</label></li>';
+        }).join('') +
+        '</ul></div>';
+    }
+
+    function getReversibleCauseLogLabel(label) {
+      return 'Reversible cause considered: ' + label;
+    }
+
+    function allReversibleCausesComplete() {
+      return REVERSIBLE_CAUSES.every(function (item) { return !!state.completedReversibleCauses[item.id]; });
+    }
+
+    function getRxDrugLineParams() {
+      return {
+        initialRhythm: state.initialRhythm,
+        hasNonShockableRhythm: hasNonShockableRhythmLogged(state.rhythmChecks),
+        adrenalineDoseCount: state.adrenalineDoseCount,
+        amiodaroneDoseCount: state.amiodaroneDoseCount,
+        shockCount: countShocksDelivered(),
+        elapsed: state.elapsed,
+        nextAdrenalineAt: state.nextAdrenalineAt,
+      };
+    }
+
+    function getRhythmCheckRemainingFraction(secondsRemaining) {
+      if (RHYTHM_CHECK_INTERVAL <= 0) return 0;
+      return Math.min(1, Math.max(0, secondsRemaining / RHYTHM_CHECK_INTERVAL));
+    }
+
+    function updateNextRhythmCheckUI() {
+      const labelEl = document.getElementById('next-check-label');
+      const trackEl = document.getElementById('next-check-progress-track');
+      const fillEl = document.getElementById('next-check-progress-fill');
+      const show = !['start', 'initial-assessment', 'do-not-resuscitate', 'complete'].includes(state.step) &&
+        state.step === 'active-resuscitation' &&
+        state.elapsed < FORTY_FIVE_MINUTES;
+      if (!show || !labelEl || !trackEl || !fillEl) {
+        if (labelEl) labelEl.textContent = '';
+        if (trackEl) trackEl.classList.add('hidden');
+        return;
+      }
+      if (state.showRhythmCheckAlert) {
+        labelEl.textContent = '\u00a0';
+        trackEl.classList.add('hidden');
+        return;
+      }
+      const remaining = Math.max(0, state.nextCheckAt - state.elapsed);
+      labelEl.textContent = 'Next rhythm check: ' + formatDisplayElapsed(remaining);
+      trackEl.classList.remove('hidden');
+      trackEl.setAttribute('aria-valuemax', String(RHYTHM_CHECK_INTERVAL));
+      trackEl.setAttribute('aria-valuenow', String(remaining));
+      fillEl.style.width = (getRhythmCheckRemainingFraction(remaining) * 100) + '%';
+    }
+
+    function renderReversibleCausesPillHtml() {
+      return '<button type="button" class="reversible-causes-pill" data-open-reversible-causes aria-label="Open reversible causes checklist">' +
+        REVERSIBLE_CAUSES.map(function (cause) {
+          const done = !!state.completedReversibleCauses[cause.id];
+          return '<span class="reversible-causes-pill-letter' + (done ? ' reversible-causes-pill-letter-done' : '') + '">' + cause.letter + '</span>';
+        }).join('') +
+        '</button>';
+    }
+
+    function renderReversibleCauseColumnHtml(items) {
+      return '<ul class="reversible-causes-list">' +
+        items.map(function (item) {
+          const done = !!state.completedReversibleCauses[item.id];
+          return '<li class="' + (done ? 'reversible-causes-item-done' : '') + '">' +
+            '<label class="reversible-causes-item">' +
+            '<input type="checkbox" class="reversible-causes-checkbox" data-reversible-cause="' + item.id + '"' +
+            (done ? ' checked disabled' : '') + ' />' +
+            '<span class="reversible-causes-label">' + item.label + '</span>' +
+            '</label></li>';
+        }).join('') +
+        '</ul>';
+    }
+
+    function renderReversibleCausesModalHtml() {
+      return '<div class="reversible-causes-panel">' +
+        '<div class="reversible-causes-header">' +
+        '<h2 id="reversible-causes-title">Address reversible causes</h2>' +
+        '<button type="button" class="btn btn-secondary btn-sm" data-close-reversible-causes>Close</button>' +
+        '</div>' +
+        '<div class="reversible-causes-columns">' +
+        renderReversibleCauseColumnHtml(REVERSIBLE_CAUSE_H_ITEMS) +
+        renderReversibleCauseColumnHtml(REVERSIBLE_CAUSE_T_ITEMS) +
+        '</div></div>';
+    }
+
+    function openReversibleCausesModal() {
+      state.showReversibleCausesModal = true;
+      updateReversibleCausesModal();
+    }
+
+    function closeReversibleCausesModal() {
+      state.showReversibleCausesModal = false;
+      updateReversibleCausesModal();
+    }
+
+    function updateReversibleCausesModal() {
+      const modal = document.getElementById('reversible-causes-modal');
+      if (!modal) return;
+      modal.classList.toggle('visible', state.showReversibleCausesModal);
+      if (!state.showReversibleCausesModal) {
+        modal.innerHTML = '';
+        return;
+      }
+      modal.innerHTML = renderReversibleCausesModalHtml();
+    }
+
+    function toggleReversibleCause(id) {
+      if (state.completedReversibleCauses[id]) return;
+      const item = REVERSIBLE_CAUSES.find(function (i) { return i.id === id; });
+      if (!item) return;
+      state.completedReversibleCauses[id] = true;
+      pushLogEntry(getReversibleCauseLogLabel(item.label));
+      if (allReversibleCausesComplete()) {
+        state.completedQualityPrompts['reversible-causes'] = true;
+      }
+      render();
+    }
+
+    const CONTINUOUS_COMPRESSIONS_AIRWAY_OPTIONS = ['SGA (i-gel)', 'ET', 'Tracheostomy'];
+
+    function isContinuousCompressionsAirwayOption(option) {
+      return CONTINUOUS_COMPRESSIONS_AIRWAY_OPTIONS.indexOf(option) !== -1;
+    }
+
+    function completeContinuousCompressionsPrompt() {
+      if (state.completedQualityPrompts['continuous-compressions']) return;
+      const item = RESUSCITATION_QUALITY_ITEMS.find(function (i) { return i.id === 'continuous-compressions'; });
+      if (!item) return;
+      state.completedQualityPrompts['continuous-compressions'] = true;
+      pushLogEntry(item.label);
+    }
+
+    function shouldCompleteContinuousCompressionsPrompt(airwayOption) {
+      return state.pendingContinuousCompressionsFromChecklist ||
+        isContinuousCompressionsAirwayOption(airwayOption);
+    }
+
+    function finishAirwayIntervention(airwayOption) {
+      if (shouldCompleteContinuousCompressionsPrompt(airwayOption)) {
+        completeContinuousCompressionsPrompt();
+      }
+      state.pendingContinuousCompressionsFromChecklist = false;
+    }
+
+    function toggleInterventions() {
+      if (state.showInterventions) {
+        closeInterventions();
+      } else {
+        state.showInterventions = true;
+        state.interventionStep = 'list';
+        state.interventionSubStep = 'options';
+        state.interventionOtherDraft = '';
+        state.interventionVascularStep = 'route';
+      }
+      render();
+    }
+
+    function openQualityAirwayInterventions() {
+      state.pendingContinuousCompressionsFromChecklist = true;
+      state.showInterventions = true;
+      state.interventionStep = 'airway';
+      state.interventionSubStep = 'options';
+      state.interventionOtherDraft = '';
+      render();
+    }
+
+    function openQualityVascularInterventions() {
+      state.showInterventions = true;
+      state.interventionStep = 'vascular-access';
+      state.interventionSubStep = 'options';
+      state.interventionVascularStep = 'route';
+      render();
+    }
+
+    function renderQualityChecklistHtml(showCommenceLine) {
+      const commence = showCommenceLine
+        ? '<p><strong>Commence high quality resuscitation.</strong></p>'
+        : '';
+      return '<div class="resuscitation-prompt">' + commence +
+        '<p>' + RESUSCITATION_QUALITY_HEADER + '</p>' +
+        '<ul class="quality-prompt-checklist">' +
+        RESUSCITATION_QUALITY_ITEMS.map(function (item) {
+          const done = !!state.completedQualityPrompts[item.id];
+          if (item.id === 'reversible-causes') {
+            return '<li class="' + (done ? 'quality-prompt-done' : '') + '">' +
+              '<div class="quality-prompt-item quality-prompt-item-with-pill">' +
+              '<label class="quality-prompt-item-main">' +
+              '<input type="checkbox" class="quality-prompt-checkbox" data-quality-prompt="' + item.id + '"' +
+              (done ? ' checked disabled' : '') + ' />' +
+              '<span class="quality-prompt-label">' + item.label + '</span>' +
+              '</label>' +
+              renderReversibleCausesPillHtml() +
+              '</div></li>';
+          }
+          return '<li class="' + (done ? 'quality-prompt-done' : '') + '">' +
+            '<label class="quality-prompt-item">' +
+            '<input type="checkbox" class="quality-prompt-checkbox" data-quality-prompt="' + item.id + '"' +
+            (done ? ' checked disabled' : '') + ' />' +
+            '<span class="quality-prompt-label">' + item.label + '</span>' +
+            '</label></li>';
+        }).join('') +
+        '</ul></div>';
+    }
+
+    function handleQualityPrompt(id) {
+      if (state.completedQualityPrompts[id]) return;
+      const item = RESUSCITATION_QUALITY_ITEMS.find(function (i) { return i.id === id; });
+      if (!item) return;
+      if (item.action === 'vascular-access') {
+        openQualityVascularInterventions();
+        return;
+      }
+      if (item.action === 'airway-interventions') {
+        openQualityAirwayInterventions();
+        return;
+      }
+      if (item.action === 'reversible-causes') {
+        openReversibleCausesModal();
+        return;
+      }
+      state.completedQualityPrompts[id] = true;
+      pushLogEntry(item.label);
+      render();
+    }
+
+    function getPathSpecificActions(r) {
+      if (r === RHYTHM_VF_PVT) return ['Follow any local pathway for refractory cardiac arrest.'];
+      if (r === 'PEA') return ['Treat any reversible cause identified or strongly suspected.'];
+      return [
+        "Gather information to decide if continuing treatment is in the patient's best interest.",
+        'Discontinue at any point if continuing resuscitation is felt to be inappropriate.',
+      ];
+    }
+
+    function getPathActions(r) {
+      return RESUSCITATION_QUALITY_ITEMS.map(function (i) { return i.label; }).concat(getPathSpecificActions(r));
+    }
+
+    function getTermination(initial, current, peaMeetsCriteria, sustainedRoscEverAchieved) {
+      if (sustainedRoscEverAchieved) {
+        return {
+          kind: 'seek-advice',
+          message: 'Prior sustained ROSC was achieved but the patient is now back in cardiac arrest — seek senior clinical advice.',
+        };
+      }
+      if (initial === 'Asystole') {
+        return {
+          kind: 'asystole-initial',
+          message: 'Termination of resuscitation should now be considered regardless of current rhythm unless there are compelling reasons to continue.',
+        };
+      }
+      if (current === 'Asystole') {
+        return { kind: 'end-or-continue', message: 'Termination of resuscitation is appropriate.' };
+      }
+      if (current === 'PEA') {
+        if (peaMeetsCriteria === null) return null;
+        if (peaMeetsCriteria) {
+          return {
+            kind: 'end-or-continue',
+            message: 'PEA with rate below 40 bpm and QRS width greater than 120 ms — termination of resuscitation is appropriate.',
+          };
+        }
+        return { kind: 'seek-advice', message: 'Seek senior advice.' };
+      }
+      if (current === RHYTHM_VF_PVT) {
+        if (initial === RHYTHM_VF_PVT) return { kind: 'seek-advice', message: 'Seek senior advice.' };
+        return { kind: 'end-or-continue', message: 'Termination of resuscitation is appropriate.' };
+      }
+      return null;
+    }
+
+    function needsPeaTorCriteriaQuestion(initial, current) {
+      return initial !== 'Asystole' && current === 'PEA';
+    }
+
+    function terminationGuidanceClass(kind) {
+      if (kind === 'end-or-continue') return 'cease';
+      if (kind === 'seek-advice') return 'advice';
+      return 'unless';
+    }
+
+    function beginTorReview() {
+      if (state.timerView === 'rosc') return;
+      state.fortyFiveAck = true;
+      document.getElementById('alert-45').classList.remove('visible');
+      state.currentRhythm = null;
+      state.peaTorCriteriaMet = null;
+      state.step = 'forty-five-minute-check';
+      render();
+    }
+
+    function handleTorEndResuscitation() {
+      const now = new Date();
+      state.running = false;
+      state.metronomeEnabled = false;
+      state.clinicalDiscussionPending = false;
+      state.clinicalDiscussionOpen = false;
+      pushLogEntry('Termination of resuscitation — resuscitation ended', now.getTime());
+      state.torEndedAtLabel = formatActualTime(now);
+      state.vodCountdownRemaining = VOD_COUNTDOWN_ACTUAL_SECONDS;
+      state.vodAtLabel = null;
+      state.step = 'post-tor';
+      getMetronomeController().stop();
+      updateMetronomeUI();
+      startVodCountdown();
+      render();
+    }
+
+    function handleVod() {
+      if (state.vodCountdownRemaining > 0) return;
+      const now = new Date();
+      stopVodCountdown();
+      pushLogEntry('Verification of death', now.getTime());
+      state.vodAtLabel = formatActualTime(now);
+      state.step = 'complete';
+      render();
+    }
+
+    function handleTorContinueResuscitation() {
+      pushLogEntry('Termination of resuscitation — resuscitation continued');
+      state.step = 'active-resuscitation';
+      render();
+    }
+
+    function handleTorSeekSeniorAdvice() {
+      pushLogEntry('Termination of resuscitation — senior clinical advice sought');
+      state.clinicalDiscussionPending = true;
+      state.clinicalDiscussionOpen = false;
+      state.step = 'active-resuscitation';
+      render();
+    }
+
+    function handleClinicalDiscussionContinue() {
+      pushLogEntry('Clinical discussion — continue resuscitation');
+      state.clinicalDiscussionPending = false;
+      state.clinicalDiscussionOpen = false;
+      if (!state.running && state.step !== 'post-tor') {
+        state.running = true;
+        if (!intervalId) intervalId = setInterval(tick, 1000);
+      }
+      render();
+    }
+
+    function handleClinicalDiscussionTerminate() {
+      state.clinicalDiscussionPending = false;
+      state.clinicalDiscussionOpen = false;
+      handleTorEndResuscitation();
+    }
+
+    function openClinicalDiscussionMenu() {
+      state.clinicalDiscussionOpen = true;
+      updateTimerUI();
+    }
+
+    function renderTerminationReviewHtml() {
+      const initial = state.initialRhythm;
+      const current = state.currentRhythm;
+      let html = '<p>Initial rhythm: <strong>' + initial + '</strong>. Select the <em>current</em> monitored rhythm.</p>';
+      if (!current) {
+        html += '<div class="rhythm-grid">' +
+          RHYTHMS.map(function (r) {
+            return '<button type="button" class="rhythm-btn ' + rhythmClass(r) + '" data-tor-rhythm="' + r + '">' + r + '</button>';
+          }).join('') +
+          '</div>';
+        return html;
+      }
+      html += '<p class="tor-current-rhythm">Current rhythm: <strong>' + current + '</strong> ' +
+        '<button type="button" class="btn btn-sm btn-secondary tor-change-rhythm-btn" data-tor-reset-rhythm>Change</button></p>';
+      if (needsPeaTorCriteriaQuestion(initial, current) && !state.sustainedRoscEverAchieved && state.peaTorCriteriaMet === null) {
+        html += '<div class="tor-pea-criteria">' +
+          '<p class="tor-pea-criteria-question">Is rate below 40 bpm and width of QRS complexes greater than 120 ms?</p>' +
+          '<div class="tor-actions">' +
+          '<button type="button" class="btn btn-primary btn-lg" data-tor-pea-criteria="yes">Yes</button>' +
+          '<button type="button" class="btn btn-secondary btn-lg" data-tor-pea-criteria="no">No</button>' +
+          '</div></div>';
+        return html;
+      }
+      const guidance = getTermination(initial, current, state.peaTorCriteriaMet, state.sustainedRoscEverAchieved);
+      if (!guidance) return html;
+      html += '<div class="guidance ' + terminationGuidanceClass(guidance.kind) + '"><p>' + guidance.message + '</p></div>';
+      html += '<div class="tor-actions">';
+      if (guidance.kind === 'end-or-continue') {
+        html += '<button type="button" class="btn btn-danger btn-lg" data-tor-end>End resuscitation efforts</button>' +
+          '<button type="button" class="btn btn-secondary btn-lg" data-tor-continue>Continue resuscitation</button>';
+      } else if (guidance.kind === 'asystole-initial') {
+        html += '<button type="button" class="btn btn-danger btn-lg" data-tor-end>End resuscitation efforts</button>' +
+          '<button type="button" class="btn btn-secondary btn-lg" data-tor-continue>Continue resuscitation</button>' +
+          '<button type="button" class="btn btn-secondary btn-lg" data-tor-senior-advice>Seek senior clinical advice (not required unless concerned)</button>';
+      } else if (guidance.kind === 'seek-advice') {
+        html += '<button type="button" class="btn btn-secondary btn-lg" data-tor-senior-advice>Seek senior clinical advice</button>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function getRoscGuidance(s) {
+      if (s === 'sustained') return 'Following ROSC the focus should be on stabilisation and transfer. Patients achieving sustained ROSC (>10 mins) who re-arrest should be discussed with a senior clinician if they remain in cardiac arrest following 45 mins of resuscitation.';
+      if (s === 'transient') return 'Transient ROSC is defined as a rhythm with output that lasted less than 10 minutes. Any transient ROSC occurring during a resuscitation attempt can be disregarded and termination of resuscitation considered based on the guidance above.';
+      return 'Resuscitation beyond 45 minutes is unlikely to be successful. Seek senior support if required or if there are compelling reasons to continue.';
+    }
+
+    function rhythmClass(r) {
+      if (r === RHYTHM_VF_PVT) return 'rhythm-vfvt';
+      if (r === 'PEA') return 'rhythm-pea';
+      return 'rhythm-asystole';
+    }
+
+    function startTimer() {
+      state.elapsed = 0;
+      state.running = true;
+      state.fortyFiveFired = false;
+      state.fortyFiveAck = false;
+      state.lastRhythmEntryAt = 0;
+      state.nextCheckAt = RHYTHM_CHECK_INTERVAL;
+      state.rhythmChecks = [];
+      state.showRhythmCheckAlert = false;
+      state.showShockForm = false;
+      state.shockFormContext = null;
+      state.terminationShockJoules = null;
+      state.earlyTransferAck = false;
+      state.codeShockAck = false;
+      state.rhythmAlertMounted = null;
+      state.consecutiveShockCount = 0;
+      state.showVectorChangeReminder = false;
+      state.logEntries = [];
+      state.showRhythmLog = false;
+      state.showVascularAccessReminder = false;
+      state.vascularAccessStep = 'prompt';
+      state.pendingVascularAccessAtEpochMs = null;
+      state.pendingContinuousCompressionsFromChecklist = false;
+      state.showInterventions = false;
+      state.interventionStep = 'list';
+      state.interventionSubStep = 'options';
+      state.interventionOtherDraft = '';
+      state.savedOtherInterventions = [];
+      state.interventionVascularStep = 'route';
+      state.adrenalineDoseCount = 0;
+      state.amiodaroneDoseCount = 0;
+      state.nextAdrenalineAt = null;
+      clearInterval(intervalId);
+      intervalId = setInterval(tick, 1000);
+      updateRhythmCheckAlert();
+      updateEarlyTransferPanel();
+      updateCodeShockPanel();
+      updateTimerUI();
+    }
+
+    function getShockDefaults() {
+      return (window.SHOCK_CONFIG && window.SHOCK_CONFIG.defaultEnergiesJoules) || [120, 150, 200];
+    }
+
+    function countShocksDelivered() {
+      return state.rhythmChecks.filter(c => c.shockJoules != null).length;
+    }
+
+    function countVfvtShocks() {
+      return countShocksDelivered();
+    }
+
+    function getDefaultShockJoules() {
+      const defaults = getShockDefaults();
+      const idx = Math.min(countVfvtShocks(), defaults.length - 1);
+      return defaults[idx];
+    }
+
+    function formatLogRhythm(c) {
+      if (c.rhythm === RHYTHM_VF_PVT && c.shockJoules != null) return c.rhythm + ' — ' + c.shockJoules + 'J';
+      return c.rhythm;
+    }
+
+    function clearShockForm() {
+      state.showShockForm = false;
+      state.shockFormContext = null;
+    }
+
+    function openShockForm(context) {
+      state.showShockForm = true;
+      state.shockFormContext = context;
+    }
+
+    function bindShockForm(containerId, onConfirm, onCancel) {
+      const box = document.getElementById(containerId);
+      if (!box) return;
+      const shockNum = countVfvtShocks() + 1;
+      const presets = [...new Set(getShockDefaults())];
+      const defaultJoules = getDefaultShockJoules();
+      let selectedJoules = defaultJoules;
+
+      function renderSelection() {
+        box.querySelectorAll('.energy-preset').forEach(btn => {
+          const energy = Number(btn.dataset.energy);
+          btn.classList.toggle('selected', energy === selectedJoules);
+          btn.classList.toggle('recommended', energy === defaultJoules);
+          btn.setAttribute('aria-pressed', String(energy === selectedJoules));
+        });
+      }
+
+      const backBtn = onCancel
+        ? '<button type="button" class="btn btn-secondary btn-lg" id="cancel-shock-btn">Back</button>'
+        : '';
+
+      box.innerHTML = `
+        <p class="shock-title">Shock #${shockNum} — select energy</p>
+        <div class="energy-presets" role="group" aria-label="Shock energy">
+          ${presets.map(e => `<button type="button" class="energy-preset ${e === defaultJoules ? 'recommended' : ''} ${e === selectedJoules ? 'selected' : ''}" data-energy="${e}" aria-pressed="${e === selectedJoules}">${e}J</button>`).join('')}
+        </div>
+        <div class="shock-actions">
+          <button type="button" class="btn btn-primary btn-lg" id="confirm-shock-btn">Shock delivered</button>
+          ${backBtn}
+        </div>`;
+      box.classList.remove('hidden');
+      box.querySelectorAll('.energy-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+          selectedJoules = Number(btn.dataset.energy);
+          renderSelection();
+        });
+      });
+      document.getElementById('confirm-shock-btn').addEventListener('click', () => onConfirm(selectedJoules));
+      if (onCancel) {
+        document.getElementById('cancel-shock-btn').addEventListener('click', onCancel);
+      }
+    }
+
+    function hideInlineShockForm() {
+      const box = document.getElementById('select-rhythm-shock');
+      if (box) {
+        box.classList.add('hidden');
+        box.innerHTML = '';
+      }
+    }
+
+    function recordRhythmCheck(rhythm, shockJoules) {
+      const label = formatDisplayElapsed(state.elapsed);
+      const entry = { minute: Math.floor(toDisplaySeconds(state.elapsed) / 60), label, rhythm };
+      if (rhythm === RHYTHM_VF_PVT && shockJoules != null) entry.shockJoules = shockJoules;
+      state.rhythmChecks.push(entry);
+      pushLogEntry(formatLogRhythm(entry));
+      afterRhythmLogged(rhythm, shockJoules);
+      state.lastRhythmEntryAt = state.elapsed;
+      state.nextCheckAt = state.elapsed + RHYTHM_CHECK_INTERVAL;
+      state.showRhythmCheckAlert = false;
+      state.rhythmAlertMounted = null;
+      clearShockForm();
+      updateRhythmCheckAlert();
+      exitRoscMode();
+      updateEarlyTransferPanel();
+      updateCodeShockPanel();
+      restorePreRhythmModals();
+      updateReversibleCausesModal();
+      render();
+    }
+
+    function updateVectorChangePanel() {
+      setReminderPanelVisible(
+        document.getElementById('vector-change-panel'),
+        state.showVectorChangeReminder
+      );
+    }
+
+    function dismissVectorChangeReminder(changed) {
+      pushLogEntry(vectorChangeLogLabel(changed));
+      state.showVectorChangeReminder = false;
+      updateVectorChangePanel();
+      render();
+    }
+
+    function closeInterventions() {
+      state.pendingContinuousCompressionsFromChecklist = false;
+      state.showInterventions = false;
+      state.interventionStep = 'list';
+      state.interventionSubStep = 'options';
+      state.interventionOtherDraft = '';
+      state.interventionVascularStep = 'route';
+    }
+
+    function getSavedOthersForCategory(category) {
+      return state.savedOtherInterventions
+        .filter(function (e) { return e.category === category; })
+        .map(function (e) { return e.label; });
+    }
+
+    function rememberOtherIntervention(category, label) {
+      if (state.savedOtherInterventions.some(function (e) {
+        return e.category === category && e.label === label;
+      })) return;
+      state.savedOtherInterventions.push({ category: category, label: label });
+    }
+
+    function interventionBack() {
+      if (state.interventionSubStep !== 'options') {
+        state.interventionSubStep = 'options';
+        state.interventionOtherDraft = '';
+        render();
+        return;
+      }
+      state.interventionStep = 'list';
+      state.interventionSubStep = 'options';
+      state.interventionOtherDraft = '';
+      state.interventionVascularStep = 'route';
+      render();
+    }
+
+    function logAirway(option) {
+      pushLogEntry('Airway — ' + option);
+      finishAirwayIntervention(option);
+      closeInterventions();
+      render();
+    }
+
+    function logBreathing(option) {
+      pushLogEntry('Breathing — ' + option);
+      pushLogEntry('Oxygen');
+      closeInterventions();
+      render();
+    }
+
+    function logSodiumChloride(variant) {
+      pushLogEntry('Medication — Sodium chloride (' + variant + ')');
+      closeInterventions();
+      render();
+    }
+
+    function logMedication(label) {
+      pushLogEntry('Medication — ' + label);
+      closeInterventions();
+      render();
+    }
+
+    function logOtherIntervention(category, label) {
+      rememberOtherIntervention(category, label);
+      const prefix = category === 'airway' ? 'Airway' : category === 'breathing' ? 'Breathing' : 'Medication';
+      pushLogEntry(prefix + ' — ' + label);
+      if (category === 'airway') finishAirwayIntervention(label);
+      else state.pendingContinuousCompressionsFromChecklist = false;
+      state.interventionOtherDraft = '';
+      state.interventionSubStep = 'options';
+      closeInterventions();
+      render();
+    }
+
+    function logVascularAccess(text) {
+      pushLogEntry(text, state.pendingVascularAccessAtEpochMs);
+      state.pendingVascularAccessAtEpochMs = null;
+      state.showVascularAccessReminder = false;
+      state.vascularAccessStep = 'prompt';
+      state.completedQualityPrompts['vascular-access'] = true;
+      closeInterventions();
+      updateVascularAccessPanel();
+      render();
+    }
+
+    function bindVascularAccessRoute(containerId, context) {
+      const box = document.getElementById(containerId);
+      if (!box) return;
+      box.innerHTML = `
+        <p class="vascular-access-subtitle">Select access route</p>
+        <div class="vascular-route-actions">
+          <button type="button" class="btn btn-primary btn-lg" data-va-route="iv" data-va-context="${context}">IV</button>
+          <button type="button" class="btn btn-secondary btn-lg" data-va-route="io" data-va-context="${context}">IO</button>
+        </div>`;
+      box.querySelectorAll('[data-va-route]').forEach(btn => {
+        btn.onclick = () => {
+          const route = btn.dataset.vaRoute;
+          const ctx = btn.dataset.vaContext;
+          if (route === 'io') {
+            logVascularAccess(vascularAccessLogLabel('IO'));
+            return;
+          }
+          if (ctx === 'reminder') {
+            state.vascularAccessStep = 'iv-gauge';
+            updateVascularAccessPanel();
+          } else {
+            state.interventionVascularStep = 'iv-gauge';
+            render();
+          }
+        };
+      });
+    }
+
+    function bindVascularAccessGauge(containerId, context) {
+      const box = document.getElementById(containerId);
+      if (!box) return;
+      box.innerHTML = `
+        <p class="vascular-access-subtitle">Select cannula size</p>
+        <div class="cannula-grid">
+          ${IV_CANNULAS.map(([g, c]) => `<button type="button" class="cannula-btn ${c}" data-va-gauge="${g}">${g}</button>`).join('')}
+        </div>
+        <button type="button" class="btn btn-secondary vascular-back-btn" data-va-back="${context}">Back</button>`;
+      box.querySelectorAll('[data-va-gauge]').forEach(btn => {
+        btn.onclick = () => logVascularAccess(vascularAccessLogLabel('IV', btn.dataset.vaGauge));
+      });
+      box.querySelector('[data-va-back]').onclick = () => {
+        if (context === 'reminder') {
+          state.vascularAccessStep = 'route';
+          updateVascularAccessPanel();
+        } else {
+          state.interventionVascularStep = 'route';
+          render();
+        }
+      };
+    }
+
+    function updateVascularAccessPanel() {
+      const panel = document.getElementById('vascular-access-panel');
+      const show = state.showVascularAccessReminder &&
+        (state.step === 'select-rhythm' || state.step === 'active-resuscitation');
+      const wasHidden = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !show);
+      if (!show) {
+        panel.innerHTML = '';
+        return;
+      }
+      if (state.vascularAccessStep === 'prompt') {
+        panel.innerHTML = `
+          <p>${VASCULAR_ACCESS_PROMPT}</p>
+          <button type="button" class="btn btn-primary btn-lg" id="va-established-btn">Established</button>`;
+        document.getElementById('va-established-btn').onclick = () => {
+          state.vascularAccessStep = 'route';
+          updateVascularAccessPanel();
+        };
+      } else if (state.vascularAccessStep === 'route') {
+        panel.innerHTML = '<div id="va-reminder-route"></div>';
+        bindVascularAccessRoute('va-reminder-route', 'reminder');
+      } else {
+        panel.innerHTML = '<div id="va-reminder-gauge"></div>';
+        bindVascularAccessGauge('va-reminder-gauge', 'reminder');
+      }
+      if (wasHidden) {
+        scrollReminderIntoView(panel);
+      }
+    }
+
+    function renderInterventionOptionButtons(options, savedLabels, selectAttr, otherAction) {
+      const preset = options.map(function (option) {
+        return '<button type="button" class="btn btn-secondary btn-lg" ' + selectAttr + '="' +
+          option.replace(/"/g, '&quot;') + '">' + option + '</button>';
+      }).join('');
+      const saved = savedLabels.map(function (label) {
+        return '<button type="button" class="btn btn-secondary btn-lg intervention-option-saved" ' +
+          selectAttr + '="' + label.replace(/"/g, '&quot;') + '">' + label + '</button>';
+      }).join('');
+      return '<div class="intervention-options">' + preset + saved +
+        '<button type="button" class="btn btn-secondary btn-lg intervention-option-other" data-action="' +
+        otherAction + '">Other</button></div>';
+    }
+
+    function renderInterventionsPanel() {
+      if (!state.showInterventions) return '';
+      if (state.interventionStep === 'list') {
+        return (
+          '<div class="interventions-panel" id="interventions-panel">' +
+          '<p class="interventions-title">Interventions</p>' +
+          '<div class="interventions-list">' +
+          INTERVENTION_OPTIONS.map(function (o) {
+            return '<button type="button" class="btn btn-secondary btn-lg" data-intervention="' + o.id + '">' + o.label + '</button>';
+          }).join('') +
+          '</div>' +
+          '<button type="button" class="btn btn-secondary" data-action="close-interventions">Close</button>' +
+          '</div>'
+        );
+      }
+      if (state.interventionStep === 'vascular-access') {
+        return (
+          '<div class="interventions-panel" id="interventions-panel">' +
+          '<p class="interventions-title">Vascular access</p>' +
+          '<div id="interventions-va-flow"></div>' +
+          '<button type="button" class="intervention-back-btn" data-action="interventions-back">Back</button>' +
+          '</div>'
+        );
+      }
+      if (state.interventionSubStep === 'other') {
+        const title = INTERVENTION_OPTIONS.find(function (o) { return o.id === state.interventionStep; });
+        return (
+          '<div class="interventions-panel" id="interventions-panel">' +
+          '<p class="interventions-title">' + (title ? title.label : '') + ' — Other</p>' +
+          '<div class="intervention-other-form">' +
+          '<label class="intervention-other-label" for="intervention-other-input">Describe intervention</label>' +
+          '<input id="intervention-other-input" type="text" class="intervention-other-input" placeholder="Enter details" value="' +
+          (state.interventionOtherDraft || '').replace(/"/g, '&quot;') + '" />' +
+          '<div class="intervention-other-actions">' +
+          '<button type="button" class="btn btn-primary" data-action="log-intervention-other">Log</button>' +
+          '<button type="button" class="btn btn-secondary" data-action="cancel-intervention-other">Cancel</button>' +
+          '</div></div>' +
+          '<button type="button" class="intervention-back-btn" data-action="interventions-back">Back</button>' +
+          '</div>'
+        );
+      }
+      if (state.interventionStep === 'medications' && state.interventionSubStep === 'sodium-chloride') {
+        return (
+          '<div class="interventions-panel" id="interventions-panel">' +
+          '<p class="interventions-title">Sodium chloride</p>' +
+          '<div class="intervention-options">' +
+          SODIUM_CHLORIDE_OPTIONS.map(function (variant) {
+            return '<button type="button" class="btn btn-secondary btn-lg" data-sodium-chloride="' + variant + '">' + variant + '</button>';
+          }).join('') +
+          '</div>' +
+          '<button type="button" class="intervention-back-btn" data-action="interventions-back">Back</button>' +
+          '</div>'
+        );
+      }
+      if (state.interventionStep === 'airway') {
+        return (
+          '<div class="interventions-panel" id="interventions-panel">' +
+          '<p class="interventions-title">Airway</p>' +
+          renderInterventionOptionButtons(AIRWAY_OPTIONS, getSavedOthersForCategory('airway'), 'data-airway', 'airway-other') +
+          '<button type="button" class="intervention-back-btn" data-action="interventions-back">Back</button>' +
+          '</div>'
+        );
+      }
+      if (state.interventionStep === 'breathing') {
+        return (
+          '<div class="interventions-panel" id="interventions-panel">' +
+          '<p class="interventions-title">Breathing</p>' +
+          renderInterventionOptionButtons(BREATHING_OPTIONS, getSavedOthersForCategory('breathing'), 'data-breathing', 'breathing-other') +
+          '<button type="button" class="intervention-back-btn" data-action="interventions-back">Back</button>' +
+          '</div>'
+        );
+      }
+      return (
+        '<div class="interventions-panel" id="interventions-panel">' +
+        '<p class="interventions-title">Medications</p>' +
+        '<div class="intervention-options">' +
+        '<button type="button" class="btn btn-secondary btn-lg" data-action="sodium-chloride">Sodium chloride</button>' +
+        MEDICATION_SIMPLE_OPTIONS.map(function (label) {
+          return '<button type="button" class="btn btn-secondary btn-lg" data-medication="' + label + '">' + label + '</button>';
+        }).join('') +
+        getSavedOthersForCategory('medications').map(function (label) {
+          return '<button type="button" class="btn btn-secondary btn-lg intervention-option-saved" data-medication="' +
+            label.replace(/"/g, '&quot;') + '">' + label + '</button>';
+        }).join('') +
+        '<button type="button" class="btn btn-secondary btn-lg intervention-option-other" data-action="medications-other">Other</button>' +
+        '</div>' +
+        '<button type="button" class="intervention-back-btn" data-action="interventions-back">Back</button>' +
+        '</div>'
+      );
+    }
+
+    function updateInterventionsModal() {
+      const modal = document.getElementById('interventions-modal');
+      if (!modal) return;
+      modal.classList.toggle('visible', state.showInterventions);
+      if (!state.showInterventions) {
+        modal.innerHTML = '';
+        return;
+      }
+      modal.innerHTML = renderInterventionsPanel();
+      bindInterventionsPanel();
+    }
+
+    function bindInterventionsPanel() {
+      const panel = document.getElementById('interventions-panel');
+      if (!panel) return;
+
+      const flow = document.getElementById('interventions-va-flow');
+      if (flow) {
+        if (state.interventionVascularStep === 'route') {
+          flow.innerHTML = '<div id="interventions-va-route"></div>';
+          bindVascularAccessRoute('interventions-va-route', 'interventions');
+        } else {
+          flow.innerHTML = '<div id="interventions-va-gauge"></div>';
+          bindVascularAccessGauge('interventions-va-gauge', 'interventions');
+        }
+      }
+
+      const otherInput = document.getElementById('intervention-other-input');
+      if (otherInput) {
+        otherInput.oninput = function () { state.interventionOtherDraft = otherInput.value; };
+        otherInput.onkeydown = function (e) {
+          if (e.key === 'Enter' && otherInput.value.trim()) {
+            logOtherIntervention(state.interventionStep, otherInput.value.trim());
+          }
+        };
+      }
+
+      panel.onclick = function (e) {
+        const el = e.target.closest(
+          '[data-action], [data-intervention], [data-airway], [data-breathing], [data-sodium-chloride], [data-medication]',
+        );
+        if (!el || !panel.contains(el)) return;
+
+        if (el.dataset.intervention) {
+          state.interventionStep = el.dataset.intervention;
+          state.interventionSubStep = 'options';
+          state.interventionOtherDraft = '';
+          if (state.interventionStep === 'vascular-access') state.interventionVascularStep = 'route';
+          render();
+          return;
+        }
+
+        const action = el.dataset.action;
+        if (action === 'close-interventions') {
+          closeInterventions();
+          render();
+          return;
+        }
+        if (action === 'interventions-back') {
+          interventionBack();
+          return;
+        }
+        if (action === 'sodium-chloride') {
+          state.interventionSubStep = 'sodium-chloride';
+          render();
+          return;
+        }
+        if (action === 'airway-other' || action === 'breathing-other' || action === 'medications-other') {
+          state.interventionSubStep = 'other';
+          render();
+          return;
+        }
+        if (action === 'log-intervention-other') {
+          const label = (state.interventionOtherDraft || '').trim();
+          if (label) logOtherIntervention(state.interventionStep, label);
+          return;
+        }
+        if (action === 'cancel-intervention-other') {
+          state.interventionSubStep = 'options';
+          state.interventionOtherDraft = '';
+          render();
+          return;
+        }
+
+        if (el.dataset.airway) {
+          logAirway(el.dataset.airway);
+          return;
+        }
+        if (el.dataset.breathing) {
+          logBreathing(el.dataset.breathing);
+          return;
+        }
+        if (el.dataset.sodiumChloride) {
+          logSodiumChloride(el.dataset.sodiumChloride);
+          return;
+        }
+        if (el.dataset.medication) {
+          logMedication(el.dataset.medication);
+          return;
+        }
+      };
+    }
+
+    function updateEarlyTransferPanel() {
+      const panel = document.getElementById('early-transfer-panel');
+      const show = state.step === 'active-resuscitation' &&
+        state.timerView === 'arrest' &&
+        shouldShowEarlyTransferReminder(state.initialRhythm, state.rhythmChecks.length, state.earlyTransferAck);
+      setReminderPanelVisible(panel, show);
+    }
+
+    function updateCodeShockPanel() {
+      const panel = document.getElementById('code-shock-panel');
+      const show = state.step === 'active-resuscitation' &&
+        state.timerView === 'arrest' &&
+        shouldShowCodeShockReminder(countShocksDelivered(), state.codeShockAck);
+      setReminderPanelVisible(panel, show);
+    }
+
+    function acknowledgeEarlyTransfer() {
+      state.earlyTransferAck = true;
+      pushLogEntry(EARLY_TRANSFER_LOG);
+      updateEarlyTransferPanel();
+      updateCodeShockPanel();
+      render();
+    }
+
+    function acknowledgeCodeShock() {
+      state.codeShockAck = true;
+      pushLogEntry(CODE_SHOCK_LOG);
+      updateCodeShockPanel();
+      render();
+    }
+
+    function scheduleRhythmChecksFromNow() {
+      state.lastRhythmEntryAt = state.elapsed;
+      state.nextCheckAt = state.elapsed + RHYTHM_CHECK_INTERVAL;
+    }
+
+    function createInitialRhythmEntry(rhythm, shockJoules) {
+      const label = formatDisplayElapsed(state.elapsed);
+      const entry = {
+        minute: Math.floor(toDisplaySeconds(state.elapsed) / 60),
+        label,
+        rhythm,
+      };
+      if (rhythm === RHYTHM_VF_PVT && shockJoules != null) entry.shockJoules = shockJoules;
+      return entry;
+    }
+
+    function confirmInitialVfvt(shockJoules) {
+      state.initialRhythm = RHYTHM_VF_PVT;
+      state.step = 'active-resuscitation';
+      const entry = createInitialRhythmEntry(RHYTHM_VF_PVT, shockJoules);
+      state.rhythmChecks.push(entry);
+      pushLogEntry(formatLogRhythm(entry));
+      afterRhythmLogged(RHYTHM_VF_PVT, shockJoules);
+      scheduleRhythmChecksFromNow();
+      clearShockForm();
+      hideInlineShockForm();
+      render();
+    }
+
+    function handleRhythmSelection(rhythm, context) {
+      if (rhythm === RHYTHM_VF_PVT && context !== 'termination') {
+        openShockForm(context);
+        if (context === 'check') updateRhythmCheckAlert(true);
+        else render();
+        return;
+      }
+      if (context === 'initial') {
+        state.initialRhythm = rhythm;
+        state.step = 'active-resuscitation';
+        const entry = createInitialRhythmEntry(rhythm);
+        state.rhythmChecks.push(entry);
+        pushLogEntry(rhythm);
+        scheduleRhythmChecksFromNow();
+        render();
+      } else if (context === 'check') {
+        recordRhythmCheck(rhythm);
+      } else if (context === 'termination') {
+        state.currentRhythm = rhythm;
+        state.peaTorCriteriaMet = null;
+        render();
+      }
+    }
+
+    function updateRhythmPromptInitial() {
+      const panel = document.getElementById('rhythm-prompt-initial');
+      if (!panel) return;
+      const show = state.step === 'select-rhythm';
+      panel.classList.toggle('visible', show);
+      if (!show) {
+        panel.innerHTML = '';
+        return;
+      }
+      const showShock = state.showShockForm && state.shockFormContext === 'initial';
+      if (showShock) {
+        panel.innerHTML =
+          '<strong>Analyse first monitored rhythm</strong>' +
+          '<p>Select the initial rhythm to follow the correct pathway.</p>' +
+          '<div id="select-rhythm-shock" class="shock-box"></div>';
+        bindShockForm('select-rhythm-shock', confirmInitialVfvt, function () {
+          clearShockForm();
+          hideInlineShockForm();
+          render();
+        });
+        return;
+      }
+      panel.innerHTML =
+        '<strong>Analyse first monitored rhythm</strong>' +
+        '<p>Select the initial rhythm to follow the correct pathway.</p>' +
+        '<div class="rhythm-grid" id="select-rhythm-buttons">' +
+        RHYTHMS.map(function (r) {
+          return '<button type="button" class="rhythm-btn ' + rhythmClass(r) + '" data-rhythm="' + r + '">' + r + '</button>';
+        }).join('') +
+        '</div>';
+    }
+
+    function updateRhythmPromptTermination() {
+      const panel = document.getElementById('rhythm-prompt-termination');
+      if (!panel) return;
+      panel.classList.remove('visible');
+      panel.innerHTML = '';
+    }
+
+    function savePreRhythmModals() {
+      state.preRhythmModals = {
+        showInterventions: state.showInterventions,
+        interventionStep: state.interventionStep,
+        interventionSubStep: state.interventionSubStep,
+        interventionOtherDraft: state.interventionOtherDraft,
+        interventionVascularStep: state.interventionVascularStep,
+        showReversibleCausesModal: state.showReversibleCausesModal,
+      };
+    }
+
+    function restorePreRhythmModals() {
+      const saved = state.preRhythmModals;
+      if (!saved) return;
+      state.preRhythmModals = null;
+      if (saved.showInterventions) {
+        state.showInterventions = true;
+        state.interventionStep = saved.interventionStep;
+        state.interventionSubStep = saved.interventionSubStep;
+        state.interventionOtherDraft = saved.interventionOtherDraft;
+        state.interventionVascularStep = saved.interventionVascularStep;
+      }
+      if (saved.showReversibleCausesModal) {
+        state.showReversibleCausesModal = true;
+      }
+    }
+
+    function clearPreRhythmModals() {
+      state.preRhythmModals = null;
+    }
+
+    function openRhythmCheckAlert() {
+      savePreRhythmModals();
+      state.pendingContinuousCompressionsFromChecklist = false;
+      closeInterventions();
+      state.showReversibleCausesModal = false;
+      state.showRhythmCheckAlert = true;
+      updateRhythmCheckAlert(true);
+    }
+
+    function updateRhythmAlertTitle() {
+      if (!state.showRhythmCheckAlert) return;
+      const title = document.getElementById('alert-rhythm-title');
+      if (title) {
+        title.textContent = 'Rhythm assessment due — ' + formatDisplayElapsed(state.elapsed);
+      }
+    }
+
+    function updateRhythmCheckAlert(forceRemount) {
+      const modal = document.getElementById('rhythm-check-modal');
+      modal.classList.toggle('visible', state.showRhythmCheckAlert);
+      updateRhythmAlertTitle();
+
+      if (!state.showRhythmCheckAlert) {
+        state.rhythmAlertMounted = null;
+        return;
+      }
+
+      const mode = state.showShockForm && state.shockFormContext === 'check' ? 'shock' : 'rhythm';
+      if (!forceRemount && state.rhythmAlertMounted === mode) return;
+
+      state.rhythmAlertMounted = mode;
+      const buttons = document.getElementById('alert-rhythm-buttons');
+      const shockBox = document.getElementById('alert-rhythm-shock');
+      if (mode === 'shock') {
+        buttons.classList.add('hidden');
+        bindShockForm('alert-rhythm-shock', (joules) => recordRhythmCheck(RHYTHM_VF_PVT, joules), () => {
+          clearShockForm();
+          updateRhythmCheckAlert(true);
+        });
+      } else {
+        buttons.classList.remove('hidden');
+        shockBox.classList.add('hidden');
+        shockBox.innerHTML = '';
+        buttons.innerHTML = RHYTHMS.map(r =>
+          `<button type="button" class="rhythm-btn ${rhythmClass(r)}" data-record-rhythm="${r}">${r}</button>`
+        ).join('') +
+          '<button type="button" class="rhythm-btn rhythm-rosc" data-record-rhythm="ROSC">ROSC</button>';
+        buttons.querySelectorAll('[data-record-rhythm]').forEach(el => {
+          el.addEventListener('click', () => {
+            if (el.dataset.recordRhythm === 'ROSC') handleRhythmCheckRosc();
+            else handleRhythmSelection(el.dataset.recordRhythm, 'check');
+          });
+        });
+      }
+    }
+
+    function tick() {
+      if (!state.running) return;
+      state.elapsed++;
+      if (state.timerView === 'rosc') {
+        state.roscElapsed++;
+        maybeLogSustainedRoscAchieved();
+        if (state.roscElapsed >= state.roscNextReminderAt) {
+          showRoscMonitoringReminders();
+          state.roscNextReminderAt = state.roscElapsed + ROSC_MONITORING_REMINDER_INTERVAL;
+          updateRoscMonitoringPanels();
+        }
+      }
+      if (state.step === 'active-resuscitation' && state.elapsed >= state.nextCheckAt && !state.showRhythmCheckAlert) {
+        openRhythmCheckAlert();
+      }
+      if (state.elapsed >= FORTY_FIVE_MINUTES && !state.fortyFiveFired) {
+        state.fortyFiveFired = true;
+        if (state.timerView !== 'rosc') {
+          document.getElementById('alert-45').classList.add('visible');
+        }
+      }
+      updateTimerUI();
+    }
+
+    function jumpToTestFortyFour() {
+      state.elapsed = TEST_JUMP_TO_ACTUAL_SECONDS;
+      if (state.elapsed >= FORTY_FIVE_MINUTES && !state.fortyFiveFired) {
+        state.fortyFiveFired = true;
+        if (state.timerView !== 'rosc') {
+          document.getElementById('alert-45').classList.add('visible');
+        }
+      } else if (state.elapsed < FORTY_FIVE_MINUTES) {
+        state.fortyFiveFired = false;
+      }
+      updateTimerUI();
+    }
+
+    function logAdrenaline() {
+      if (state.timerView !== 'arrest') return;
+      if (!state.initialRhythm) return;
+      if (!canLogAdrenaline(state.initialRhythm, state.adrenalineDoseCount, countShocksDelivered(), hasNonShockableRhythmLogged(state.rhythmChecks))) return;
+      const isFirstMedication = state.adrenalineDoseCount + state.amiodaroneDoseCount === 0;
+      const needsVascularPrompt = isFirstMedication && !hasVascularAccessLogged(state.logEntries);
+      state.adrenalineDoseCount++;
+      const entry = pushLogEntry(getAdrenalineLogLabel(state.adrenalineDoseCount));
+      state.nextAdrenalineAt = state.elapsed + ADRENALINE_INTERVAL;
+      updateTimerUI();
+      if (needsVascularPrompt) promptVascularAccessAfterFirstMedication(entry.atEpochMs);
+    }
+
+    function logAmiodarone() {
+      if (state.timerView !== 'arrest') return;
+      if (!state.initialRhythm) return;
+      const shockCount = countShocksDelivered();
+      if (!shouldShowAmiodarone(state.initialRhythm, shockCount)) return;
+      if (!canLogAmiodarone(state.amiodaroneDoseCount, shockCount)) return;
+      const isFirstMedication = state.adrenalineDoseCount + state.amiodaroneDoseCount === 0;
+      const needsVascularPrompt = isFirstMedication && !hasVascularAccessLogged(state.logEntries);
+      state.amiodaroneDoseCount++;
+      const entry = pushLogEntry(getAmiodaroneLogLabel(state.amiodaroneDoseCount));
+      updateTimerUI();
+      if (needsVascularPrompt) promptVascularAccessAfterFirstMedication(entry.atEpochMs);
+      render();
+    }
+
+    function buildRxUiStructureSignature(lines, totals) {
+      return JSON.stringify({
+        totals: totals.map(function (t) { return t.drugName + ':' + t.count; }),
+        lines: lines.map(function (l) {
+          return l.id + '|' + l.showCountdown + '|' + l.showButton + '|' + l.prompt + '|' + l.actionLabel;
+        }),
+      });
+    }
+
+    function renderTimerRxDrugLine(line) {
+      if (line.showCountdown) {
+        return '<div class="timer-rx-row">' +
+          '<span class="timer-rx-next-label">' + getAdrenalineNextDueLabel() + '</span>' +
+          '<span class="timer-rx-countdown" id="timer-rx-adrenaline-countdown">' + formatDisplayElapsed(line.countdownRemaining) + '</span>' +
+          '</div>';
+      }
+      const btn = line.showButton
+        ? '<button type="button" class="btn btn-sm timer-rx-action-btn" data-log-drug="' + line.id + '">' + line.actionLabel + '</button>'
+        : '';
+      return '<div class="timer-rx-row">' +
+        '<span class="timer-rx-prompt">' + line.prompt + '</span>' +
+        btn +
+        '</div>';
+    }
+
+    function updateTimerRxUI() {
+      const rx = document.getElementById('timer-rx');
+      const show = shouldShowRxSection() && showRxStep() && state.timerView === 'arrest';
+      rx.classList.toggle('hidden', !show);
+      if (!show) {
+        state.lastRxUiStructureSig = null;
+        return;
+      }
+
+      const shockCount = countShocksDelivered();
+      const params = {
+        initialRhythm: state.initialRhythm,
+        hasNonShockableRhythm: hasNonShockableRhythmLogged(state.rhythmChecks),
+        adrenalineDoseCount: state.adrenalineDoseCount,
+        amiodaroneDoseCount: state.amiodaroneDoseCount,
+        shockCount: shockCount,
+        elapsed: state.elapsed,
+        nextAdrenalineAt: state.nextAdrenalineAt,
+      };
+      const lines = buildRxDrugLines(params);
+      const visualState = getRxBoxVisualState(lines);
+      const totals = getRxDrugTotals(state.initialRhythm, state.adrenalineDoseCount, state.amiodaroneDoseCount, shockCount);
+      const structureSig = buildRxUiStructureSignature(lines, totals);
+
+      rx.classList.remove('timer-rx-idle', 'timer-rx-warning', 'timer-rx-due');
+      rx.classList.add('timer-rx-' + visualState);
+
+      if (structureSig !== state.lastRxUiStructureSig) {
+        state.lastRxUiStructureSig = structureSig;
+        document.getElementById('timer-rx-totals').innerHTML = totals.map(function (total) {
+          return '<span class="timer-rx-drug-total">' + formatDrugAdministeredTotal(total.drugName, total.count) + '</span>';
+        }).join('');
+        document.getElementById('timer-rx-drug-lines').innerHTML = lines.map(renderTimerRxDrugLine).join('');
+      } else {
+        const adrenalineLine = lines.find(function (l) { return l.id === 'adrenaline' && l.showCountdown; });
+        if (adrenalineLine) {
+          const countdownEl = document.getElementById('timer-rx-adrenaline-countdown');
+          if (countdownEl) countdownEl.textContent = formatDisplayElapsed(adrenalineLine.countdownRemaining);
+        }
+      }
+    }
+
+    function updateModalTopOffset() {
+      const bar = document.getElementById('timer-bar');
+      const offset = bar && bar.classList.contains('visible')
+        ? Math.ceil(bar.getBoundingClientRect().bottom)
+        : 0;
+      document.documentElement.style.setProperty('--timer-bar-offset', offset + 'px');
+    }
+
+    function getStickyHeaderClearance() {
+      var bar = document.getElementById('timer-bar');
+      if (bar && bar.offsetParent !== null) {
+        return Math.ceil(bar.getBoundingClientRect().bottom);
+      }
+      var cssOffset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--timer-bar-offset'), 10);
+      return isNaN(cssOffset) ? 0 : cssOffset;
+    }
+
+    function scrollReminderIntoView(element) {
+      if (!element) return;
+      var scrollGapPx = 16;
+      function scroll() {
+        var clearance = getStickyHeaderClearance();
+        var top = element.getBoundingClientRect().top + window.scrollY - clearance - scrollGapPx;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      }
+      requestAnimationFrame(function () {
+        requestAnimationFrame(scroll);
+      });
+    }
+
+    function setReminderPanelVisible(panel, visible) {
+      const wasHidden = panel.classList.contains('hidden');
+      panel.classList.toggle('hidden', !visible);
+      if (visible && wasHidden) {
+        scrollReminderIntoView(panel);
+      }
+    }
+
+    function updateTimerRoscRxUI() {
+      const roscRx = document.getElementById('timer-rosc-rx');
+      const show = state.timerView === 'rosc' && state.step === 'active-resuscitation';
+      roscRx.classList.toggle('hidden', !show);
+      if (!show) return;
+      document.getElementById('timer-rosc-rx-totals').innerHTML =
+        '<span class="timer-rx-drug-total">' + getAtropineAdministeredTotal(state.atropineTotalMg) + '</span>';
+    }
+
+    function updateTimerClinicalDiscussionUI() {
+      const section = document.getElementById('timer-clinical-discussion');
+      const show =
+        state.clinicalDiscussionPending &&
+        state.step === 'active-resuscitation' &&
+        state.timerView === 'arrest' &&
+        state.step !== 'post-tor' &&
+        !(state.step === 'complete' && state.vodAtLabel);
+      section.classList.toggle('hidden', !show);
+      if (!show) {
+        section.innerHTML = '';
+        return;
+      }
+      if (!state.clinicalDiscussionOpen) {
+        section.innerHTML =
+          '<button type="button" class="timer-action-box timer-clinical-discussion-btn on" id="timer-clinical-discussion-open">' +
+          'Clinical discussion decision</button>';
+        document.getElementById('timer-clinical-discussion-open').onclick = openClinicalDiscussionMenu;
+        return;
+      }
+      section.innerHTML =
+        '<div class="timer-clinical-discussion-options" role="group" aria-label="Clinical discussion decision">' +
+        '<button type="button" class="btn btn-sm timer-clinical-discussion-option-btn" id="timer-clinical-discussion-continue">Continue resuscitation</button>' +
+        '<button type="button" class="btn btn-sm timer-clinical-discussion-option-btn timer-clinical-discussion-terminate-btn" id="timer-clinical-discussion-terminate">Terminate resuscitation</button>' +
+        '</div>';
+      document.getElementById('timer-clinical-discussion-continue').onclick = handleClinicalDiscussionContinue;
+      document.getElementById('timer-clinical-discussion-terminate').onclick = handleClinicalDiscussionTerminate;
+    }
+
+    function updateTimerVodUI() {
+      const section = document.getElementById('timer-vod-section');
+      const postTor = state.step === 'post-tor';
+      const vodComplete = state.step === 'complete' && state.vodAtLabel;
+      const showResusControls = !postTor && !vodComplete;
+      section.classList.toggle('hidden', !postTor && !vodComplete);
+      barPostTorClass(postTor || vodComplete);
+      if (postTor && state.torEndedAtLabel) {
+        const vodReady = state.vodCountdownRemaining <= 0;
+        section.innerHTML =
+          '<div class="timer-tor-stamp" role="status">' +
+          '<span class="timer-label">TOR occurred</span>' +
+          '<span class="timer-tor-time">' + state.torEndedAtLabel + '</span></div>' +
+          '<div class="timer-vod-countdown">' +
+          '<div class="timer-vod-countdown-header">' +
+          '<span class="timer-next-check-label">' +
+          (vodReady
+            ? 'Verification of death wait complete'
+            : 'Verification of death in: ' + formatDisplayElapsed(state.vodCountdownRemaining)) +
+          '</span>' +
+          '<button type="button" class="timer-action-box timer-vod-btn' + (vodReady ? ' on' : '') + '" id="timer-vod-btn"' +
+          (vodReady ? '' : ' disabled') + '>VOD</button></div>' +
+          '<div class="rhythm-check-progress-track" role="progressbar" aria-label="Time until verification of death">' +
+          '<div class="rhythm-check-progress-fill" style="width:' + (getVodCountdownRemainingFraction(state.vodCountdownRemaining) * 100) + '%"></div></div>' +
+          (vodReady ? '<p class="timer-vod-ready-message">' + VOD_READY_MESSAGE + '</p>' : '') +
+          '</div>';
+        const vodBtn = document.getElementById('timer-vod-btn');
+        if (vodBtn) vodBtn.onclick = handleVod;
+        return;
+      }
+      if (vodComplete && state.vodAtLabel) {
+        section.innerHTML = '<div class="timer-vod-section">' + renderVodTimestampsSummaryHtml(true) + '</div>';
+        return;
+      }
+      section.innerHTML = '';
+    }
+
+    function barPostTorClass(active) {
+      document.getElementById('timer-bar').classList.toggle('timer-bar-post-tor', active);
+    }
+
+    function updateTimerUI() {
+      const bar = document.getElementById('timer-bar');
+      const show = isTimerActiveStep(state.step);
+      bar.classList.toggle('visible', show);
+      const postTor = state.step === 'post-tor';
+      const vodComplete = state.step === 'complete' && state.vodAtLabel;
+      const showResusControls = !postTor && !vodComplete;
+      bar.classList.toggle('critical', showResusControls && state.elapsed >= FORTY_FIVE_MINUTES && state.timerView !== 'rosc');
+      const displaySeconds = state.timerView === 'rosc' ? state.roscElapsed : state.elapsed;
+      document.getElementById('timer-display').textContent = formatDisplayElapsed(displaySeconds);
+      document.getElementById('timer-elapsed-label').textContent =
+        postTor || vodComplete ? 'Resuscitation ended' : (state.timerView === 'rosc' ? 'ROSC' : 'Elapsed');
+      const minsEl = document.getElementById('timer-mins');
+      if (showResusControls) {
+        if (state.timerView === 'rosc') {
+          minsEl.innerHTML = '<span class="timer-rosc-phase">' + getRoscPhaseLabel(state.roscElapsed) + '</span>';
+        } else {
+          minsEl.textContent = Math.floor(toDisplaySeconds(state.elapsed) / 60) + ' min';
+        }
+        minsEl.classList.remove('hidden');
+      } else {
+        minsEl.classList.add('hidden');
+      }
+      document.querySelector('.timer-shocks-stat').classList.toggle('hidden', !showResusControls);
+      document.querySelector('.timer-controls').classList.toggle('hidden', !showResusControls);
+      document.querySelector('.milestones').classList.toggle('hidden', !showResusControls);
+      document.getElementById('next-check').classList.toggle('hidden', !showResusControls || state.step !== 'active-resuscitation');
+      document.getElementById('timer-shocks').textContent = countShocksDelivered();
+      const torBtn = document.getElementById('timer-tor');
+      if (torBtn) {
+        torBtn.classList.toggle('hidden', state.timerView === 'rosc');
+        torBtn.classList.toggle('on', state.elapsed >= FORTY_FIVE_MINUTES && state.timerView !== 'rosc');
+      }
+      document.getElementById('test-banner').classList.toggle('hidden', TIME_SCALE === 1);
+      const showTestJump =
+        TIME_SCALE !== 1 &&
+        show &&
+        showResusControls &&
+        state.timerView === 'arrest';
+      document.getElementById('test-jump-44-btn').classList.toggle('hidden', !showTestJump);
+      const roscBtn = document.getElementById('timer-rosc');
+      if (roscBtn) {
+        roscBtn.classList.toggle('hidden', state.timerView === 'rosc');
+        roscBtn.classList.toggle('active', state.timerView === 'rosc');
+        roscBtn.setAttribute('aria-pressed', String(state.timerView === 'rosc'));
+      }
+      const intBtn = document.getElementById('timer-interventions');
+      const showIntBtn = state.step === 'select-rhythm' || state.step === 'active-resuscitation';
+      intBtn.classList.toggle('hidden', !showIntBtn);
+      intBtn.classList.toggle('active', state.showInterventions);
+      intBtn.setAttribute('aria-pressed', String(state.showInterventions));
+      updateNextRhythmCheckUI();
+      updateRhythmAlertTitle();
+      updateTimerRxUI();
+      updateTimerRoscRxUI();
+      updateTimerClinicalDiscussionUI();
+      updateTimerVodUI();
+      updateMetronomeUI();
+      updateModalTopOffset();
+    }
+
+    function resetAll() {
+      clearInterval(intervalId);
+      stopVodCountdown();
+      state.step = 'start';
+      state.initialRhythm = null;
+      state.currentRhythm = null;
+      state.heartRate = '';
+      state.qrsWidthMs = '';
+      state.roscStatus = null;
+      state.elapsed = 0;
+      state.running = false;
+      state.fortyFiveFired = false;
+      state.fortyFiveAck = false;
+      state.nextCheckAt = RHYTHM_CHECK_INTERVAL;
+      state.lastRhythmEntryAt = 0;
+      state.rhythmChecks = [];
+      state.showRhythmCheckAlert = false;
+      state.showShockForm = false;
+      state.shockFormContext = null;
+      state.terminationShockJoules = null;
+      state.earlyTransferAck = false;
+      state.codeShockAck = false;
+      state.rhythmAlertMounted = null;
+      state.consecutiveShockCount = 0;
+      state.showVectorChangeReminder = false;
+      state.logEntries = [];
+      state.showRhythmLog = false;
+      state.showVascularAccessReminder = false;
+      state.vascularAccessStep = 'prompt';
+      state.pendingVascularAccessAtEpochMs = null;
+      state.pendingContinuousCompressionsFromChecklist = false;
+      state.showInterventions = false;
+      state.interventionStep = 'list';
+      state.interventionSubStep = 'options';
+      state.interventionOtherDraft = '';
+      state.savedOtherInterventions = [];
+      state.interventionVascularStep = 'route';
+      state.adrenalineDoseCount = 0;
+      state.amiodaroneDoseCount = 0;
+      state.nextAdrenalineAt = null;
+      state.completedQualityPrompts = {};
+      state.completedReversibleCauses = {};
+      state.showReversibleCausesModal = false;
+      state.preRhythmModals = null;
+      state.lastRxUiStructureSig = null;
+      state.timerView = 'arrest';
+      state.roscElapsed = 0;
+      state.completedRoscTasks = {};
+      state.sustainedRoscLogged = false;
+      state.sustainedRoscEverAchieved = false;
+      state.clinicalDiscussionPending = false;
+      state.clinicalDiscussionOpen = false;
+      resetRoscMonitoringReminder();
+      resetRoscMonitoringProgress();
+      state.metronomeEnabled = false;
+      state.peaTorCriteriaMet = null;
+      state.torEndedAtLabel = null;
+      state.vodCountdownRemaining = VOD_COUNTDOWN_ACTUAL_SECONDS;
+      state.vodAtLabel = null;
+      resetInitialAssessment();
+      getMetronomeController().stop();
+      document.getElementById('alert-45').classList.remove('visible');
+      updateRhythmCheckAlert(true);
+      updateVectorChangePanel();
+      updateEarlyTransferPanel();
+      updateCodeShockPanel();
+      updateRoscMonitoringPanels();
+      render();
+    }
+
+    function stopObservationCountdown() {
+      if (observationIntervalId) {
+        clearInterval(observationIntervalId);
+        observationIntervalId = null;
+      }
+    }
+
+    function iaIsMainSelected(id) {
+      return !!state.iaMainIds[id];
+    }
+
+    function iaIsObviousSelected(id) {
+      return !!state.iaObviousIds[id];
+    }
+
+    function getDirectVodLabels() {
+      const labels = [];
+      Object.keys(state.iaMainIds).forEach(function (id) {
+        if (id === 'obviously-deceased') return;
+        const option = INITIAL_ASSESSMENT_OPTIONS.find(function (o) { return o.id === id; });
+        if (option) labels.push(option.label);
+      });
+      Object.keys(state.iaObviousIds).forEach(function (id) {
+        if (isObviouslyDeceasedObservationCriterion(id)) return;
+        const criterion = OBVIOUSLY_DECEASED_CRITERIA.find(function (c) { return c.id === id; });
+        if (criterion) labels.push(criterion.label);
+      });
+      return labels;
+    }
+
+    function getObservationLabels() {
+      return OBVIOUSLY_DECEASED_CRITERIA.filter(function (criterion) {
+        return state.iaObviousIds[criterion.id] && isObviouslyDeceasedObservationCriterion(criterion.id);
+      }).map(function (criterion) { return criterion.label; });
+    }
+
+    function iaResetObservation() {
+      state.iaObservationActive = false;
+      state.iaObservationCountdown = VOD_COUNTDOWN_ACTUAL_SECONDS;
+      state.iaObservationChecklist = {};
+      stopObservationCountdown();
+    }
+
+    function iaClearAllVodSelections() {
+      Object.keys(state.iaMainIds).forEach(function (id) {
+        if (id !== 'obviously-deceased') delete state.iaMainIds[id];
+      });
+      state.iaObviousIds = {};
+      iaResetObservation();
+    }
+
+    function iaToggleMain(id) {
+      if (state.iaMainIds[id]) delete state.iaMainIds[id];
+      else state.iaMainIds[id] = true;
+      if (!state.iaMainIds['obviously-deceased']) {
+        state.iaObviousIds = {};
+        iaResetObservation();
+      } else if (id !== 'obviously-deceased' && state.iaMainIds[id]) {
+        iaResetObservation();
+      }
+    }
+
+    function iaToggleObvious(id) {
+      if (state.iaObservationActive) return;
+      const wasSelected = !!state.iaObviousIds[id];
+      if (wasSelected) {
+        delete state.iaObviousIds[id];
+        if (isObviouslyDeceasedObservationCriterion(id)) iaResetObservation();
+      } else {
+        state.iaObviousIds[id] = true;
+        if (!isObviouslyDeceasedObservationCriterion(id)) iaResetObservation();
+      }
+    }
+
+    function resetInitialAssessment() {
+      iaResetObservation();
+      state.iaMainIds = {};
+      state.iaObviousIds = {};
+      state.iaPhase = 'list';
+    }
+
+    function finishInitialAssessmentVod(criteriaLabels) {
+      const now = new Date();
+      (criteriaLabels || []).forEach(function (label) {
+        pushLogEntry(getVodCriteriaLogLabel(label), now);
+      });
+      pushLogEntry('Verification of death', now);
+      state.vodAtLabel = formatActualTime(now);
+      resetInitialAssessment();
+      state.step = 'complete';
+      render();
+    }
+
+    function startObservationCountdown() {
+      stopObservationCountdown();
+      state.iaObservationActive = true;
+      state.iaObservationCountdown = VOD_COUNTDOWN_ACTUAL_SECONDS;
+      state.iaObservationChecklist = {};
+      observationIntervalId = setInterval(function () {
+        if (!state.iaObservationActive) return;
+        if (state.iaObservationCountdown <= 0) {
+          stopObservationCountdown();
+          updateObservationDom();
+          return;
+        }
+        state.iaObservationCountdown--;
+        updateObservationDom();
+      }, 1000);
+    }
+
+    function updateObservationDom() {
+      const expired = state.iaObservationCountdown <= 0;
+      const el = document.getElementById('ia-countdown');
+      if (el) {
+        el.textContent = expired
+          ? '5-minute observation period complete'
+          : 'Observation period: ' + formatDisplayElapsed(state.iaObservationCountdown) + ' remaining';
+      }
+      const allChecked = VOD_OBSERVATION_CHECKLIST_ITEMS.every(function (item) {
+        return state.iaObservationChecklist[item.id];
+      });
+      const btn = document.getElementById('ia-vod-btn');
+      if (btn) btn.disabled = !expired || !allChecked;
+      document.querySelectorAll('[data-ia-observation-item]').forEach(function (cb) {
+        cb.disabled = !expired;
+        if (cb.closest('li')) cb.closest('li').classList.toggle('assessment-checklist-locked', !expired);
+      });
+    }
+
+    function getAllSelectedVodLabels() {
+      return getDirectVodLabels().concat(getObservationLabels());
+    }
+
+    function requiresAsystoleObservationFlow() {
+      return getObservationLabels().length > 0 && getDirectVodLabels().length === 0;
+    }
+
+    function renderUnifiedConfirmPanelHtml() {
+      const direct = getDirectVodLabels();
+      const observation = getObservationLabels();
+      const all = getAllSelectedVodLabels();
+      if (!all.length || state.iaPhase !== 'list' || state.iaObservationActive) return '';
+
+      if (requiresAsystoleObservationFlow()) {
+        return (
+          '<div class="assessment-combined-confirm assessment-confirm-panel" role="status">' +
+          '<p>Confirm the patient is in <strong>asystole</strong> for:</p>' +
+          '<ul class="assessment-confirm-list">' +
+          observation.map(function (label) { return '<li>' + label + '</li>'; }).join('') +
+          '</ul><div class="actions">' +
+          '<button type="button" class="btn btn-danger btn-lg" data-ia-action="asystole-yes">Yes — in asystole</button>' +
+          '<button type="button" class="btn btn-primary btn-lg" data-ia-action="asystole-no">No — not in asystole</button></div></div>'
+        );
+      }
+
+      return (
+        '<div class="assessment-combined-confirm assessment-confirm-panel" role="status">' +
+        '<p>Confirm the following</p>' +
+        '<ul class="assessment-confirm-list">' +
+        all.map(function (label) { return '<li>' + label + '</li>'; }).join('') +
+        '</ul><div class="actions">' +
+        '<button type="button" class="btn btn-danger btn-lg" data-ia-action="confirm-direct-vod">Yes — confirm</button>' +
+        '<button type="button" class="btn btn-secondary btn-lg" data-ia-action="cancel-all-vod">No — go back</button></div></div>'
+      );
+    }
+
+    function renderObservationPanelHtml() {
+      if (!state.iaObservationActive || !requiresAsystoleObservationFlow()) return '';
+      const observation = getObservationLabels();
+      const expired = state.iaObservationCountdown <= 0;
+      const allChecked = VOD_OBSERVATION_CHECKLIST_ITEMS.every(function (item) {
+        return state.iaObservationChecklist[item.id];
+      });
+      const checklist = VOD_OBSERVATION_CHECKLIST_ITEMS.map(function (item) {
+        const done = !!state.iaObservationChecklist[item.id];
+        return (
+          '<li class="' + (done ? 'quality-prompt-done' : '') + (!expired ? ' assessment-checklist-locked' : '') + '">' +
+          '<label class="quality-prompt-item"><input type="checkbox" class="quality-prompt-checkbox" data-ia-observation-item="' +
+          item.id + '" ' + (done ? 'checked' : '') + ' ' + (!expired ? 'disabled' : '') +
+          '><span class="quality-prompt-label">' + item.label + '</span></label></li>'
+        );
+      }).join('');
+      return (
+        '<div class="assessment-combined-confirm assessment-observation-panel"><p class="assessment-observation-criterion">Selected criteria:</p>' +
+        '<ul class="assessment-confirm-list">' +
+        observation.map(function (label) { return '<li>' + label + '</li>'; }).join('') +
+        '</ul>' +
+        '<div class="assessment-countdown" id="ia-countdown" role="status">' +
+        (expired ? '5-minute observation period complete' : 'Observation period: ' + formatDisplayElapsed(state.iaObservationCountdown) + ' remaining') +
+        '</div><p class="assessment-observation-header">' + VOD_OBSERVATION_CHECKLIST_HEADER + '</p>' +
+        '<ul class="quality-prompt-checklist">' + checklist + '</ul>' +
+        '<button type="button" class="btn btn-danger btn-lg assessment-vod-btn" id="ia-vod-btn" data-ia-action="observation-vod"' +
+        (!expired || !allChecked ? ' disabled' : '') + '>VOD</button></div>'
+      );
+    }
+
+    function renderInitialAssessmentTreeRow(option, selected) {
+      const isObviously = option.id === 'obviously-deceased';
+      const expanded = isObviously && iaIsMainSelected('obviously-deceased');
+      const icon = isObviously ? (expanded ? '▼' : '▶') : '○';
+      return (
+        '<button type="button" class="assessment-tree-row' +
+        (selected ? ' selected' : '') +
+        (isObviously ? ' is-branch' : '') +
+        '" data-ia-main="' + option.id +
+        '"><span class="assessment-tree-icon" aria-hidden="true">' + icon +
+        '</span><span class="assessment-tree-check" aria-hidden="true">' + (selected ? '✓' : '') +
+        '</span><span class="assessment-tree-label">' + option.label + '</span>' +
+        '<span class="assessment-tree-hint">Tap to select</span></button>'
+      );
+    }
+
+    function renderObviouslySubListHtml() {
+      return (
+        '<ul class="assessment-tree-sublist" role="group" aria-label="Obviously deceased criteria">' +
+        OBVIOUSLY_DECEASED_CRITERIA.map(function (criterion) {
+          const selected = iaIsObviousSelected(criterion.id);
+          return (
+            '<li class="assessment-tree-node assessment-tree-node-sub"><button type="button" class="assessment-tree-row assessment-tree-row-sub' +
+            (selected ? ' selected' : '') +
+            '" data-ia-obvious="' + criterion.id + '" data-ia-obvious-label="' + criterion.label +
+            '"><span class="assessment-tree-icon" aria-hidden="true">○</span><span class="assessment-tree-check" aria-hidden="true">' +
+            (selected ? '✓' : '') + '</span><span class="assessment-tree-label">' + criterion.label +
+            '</span><span class="assessment-tree-hint">Tap to select</span></button></li>'
+          );
+        }).join('') +
+        '</ul>'
+      );
+    }
+
+    function renderInitialAssessmentHtml() {
+      const phase = state.iaPhase;
+      const obviouslyExpanded = iaIsMainSelected('obviously-deceased');
+      const mainList = INITIAL_ASSESSMENT_OPTIONS.map(function (option) {
+        const selected = iaIsMainSelected(option.id);
+        const isObviously = option.id === 'obviously-deceased';
+        const expanded = isObviously && obviouslyExpanded;
+        let children = '';
+        if (isObviously && obviouslyExpanded) {
+          children = '<div class="assessment-tree-children">' + renderObviouslySubListHtml() + '</div>';
+        }
+        return (
+          '<li class="assessment-tree-node' + (selected ? ' is-selected' : '') + (expanded ? ' is-expanded' : '') + '" role="treeitem">' +
+          renderInitialAssessmentTreeRow(option, selected) +
+          children +
+          '</li>'
+        );
+      }).join('');
+
+      const commencePanel = phase === 'commence-command'
+        ? '<div class="assessment-confirm-panel assessment-commence-panel"><p><strong>Commence resuscitation immediately.</strong> Patient is not in asystole.</p>' +
+          '<button type="button" class="btn btn-primary btn-lg" data-action="commence-resuscitation">Commence resuscitation</button>' +
+          '<button type="button" class="btn btn-secondary btn-lg" data-ia-action="back-to-list">Back to assessment</button></div>'
+        : '';
+
+      const commenceBtn = phase === 'list' && !state.iaObservationActive
+        ? '<div class="actions"><button type="button" class="btn btn-primary btn-lg" data-action="commence-resuscitation">No — commence resuscitation</button></div>'
+        : '';
+
+      return (
+        '<section class="card"><div class="badge">Initial assessment</div>' +
+        '<h2>Any of the following identified?</h2>' +
+        '<p class="assessment-tap-hint">Tap options to select one or more. Expandable items show sub-criteria below.</p>' +
+        '<ul class="assessment-tree" role="tree">' + mainList + '</ul>' +
+        renderUnifiedConfirmPanelHtml() +
+        renderObservationPanelHtml() +
+        commencePanel + commenceBtn + '</section>'
+      );
+    }
+
+    function bindInitialAssessmentEvents() {
+      document.querySelectorAll('[data-ia-main]').forEach(function (btn) {
+        btn.onclick = function () {
+          if (state.iaPhase !== 'list' && state.iaPhase !== 'commence-command') return;
+          if (state.iaPhase === 'commence-command') state.iaPhase = 'list';
+          if (state.iaObservationActive && btn.dataset.iaMain !== 'obviously-deceased') return;
+          iaToggleMain(btn.dataset.iaMain);
+          render();
+        };
+      });
+      document.querySelectorAll('[data-ia-obvious]').forEach(function (btn) {
+        btn.onclick = function () {
+          if (state.iaPhase !== 'list' || !iaIsMainSelected('obviously-deceased') || state.iaObservationActive) return;
+          iaToggleObvious(btn.dataset.iaObvious);
+          render();
+        };
+      });
+      document.querySelectorAll('[data-ia-action]').forEach(function (btn) {
+        btn.onclick = function () {
+          const action = btn.dataset.iaAction;
+          if (action === 'back-to-list') {
+            state.iaPhase = 'list';
+            render();
+            return;
+          }
+          if (action === 'cancel-all-vod') {
+            iaClearAllVodSelections();
+            render();
+            return;
+          }
+          if (action === 'confirm-direct-vod') {
+            finishInitialAssessmentVod(getAllSelectedVodLabels());
+            return;
+          }
+          if (action === 'asystole-yes') {
+            startObservationCountdown();
+            render();
+            return;
+          }
+          if (action === 'asystole-no') {
+            state.iaObviousIds = {};
+            iaResetObservation();
+            state.iaPhase = 'commence-command';
+            render();
+            return;
+          }
+          if (action === 'observation-vod') {
+            finishInitialAssessmentVod(getObservationLabels());
+          }
+        };
+      });
+      document.querySelectorAll('[data-ia-observation-item]').forEach(function (cb) {
+        cb.onchange = function () {
+          if (state.iaObservationCountdown > 0) return;
+          state.iaObservationChecklist[cb.dataset.iaObservationItem] = cb.checked;
+          updateObservationDom();
+        };
+      });
+    }
+
+    function render() {
+      const main = document.getElementById('main');
+      updateTimerUI();
+      updateEarlyTransferPanel();
+      updateCodeShockPanel();
+      updateVectorChangePanel();
+      updateVascularAccessPanel();
+      updateRoscMonitoringPanels();
+      updateRhythmPromptInitial();
+      updateRhythmPromptTermination();
+      if (state.step === 'active-resuscitation') {
+        updateRhythmCheckAlert();
+      } else {
+        document.getElementById('rhythm-check-modal').classList.remove('visible');
+        state.rhythmAlertMounted = null;
+      }
+
+      if (state.step === 'start') {
+        main.innerHTML = `
+          <section class="card">
+            <div class="badge">0 min</div>
+            <h2>Adult cardiac arrest confirmed by ambulance resource</h2>
+            <p class="lead">Begin protocol assessment.</p>
+            <button type="button" class="btn btn-primary btn-lg" data-action="initial-assessment">Start protocol</button>
+          </section>`;
+      } else if (state.step === 'initial-assessment') {
+        main.innerHTML = renderInitialAssessmentHtml();
+      } else if (state.step === 'select-rhythm') {
+        main.innerHTML =
+          '<section class="card">' +
+          renderQualityChecklistHtml(true) +
+          '</section>';
+      } else if (state.step === 'active-resuscitation') {
+        const pathActions = getPathSpecificActions(state.initialRhythm).map(a => `<li>${a}</li>`).join('');
+        const hasLog = state.logEntries.length;
+        const log = hasLog
+          ? `<ul class="check-log">${sortedLogEntries().map(e =>
+              `<li><span class="time">${e.label}</span><span>${e.text}</span></li>`
+            ).join('')}</ul>`
+          : '';
+        const logSection = hasLog
+          ? `<button type="button" class="btn btn-secondary" data-action="toggle-rhythm-log" style="margin-top:1rem">${state.showRhythmLog ? 'Hide log' : 'View log'}</button>${state.showRhythmLog ? '<p style="font-size:.85rem;font-weight:600;margin:1rem 0 0.35rem">Log</p>' + log : ''}`
+          : '';
+        const careContent = state.timerView === 'rosc'
+          ? renderRoscChecklistHtml()
+          : renderQualityChecklistHtml(false) + '<ul class="action-list">' + pathActions + '</ul>';
+        main.innerHTML = `
+          <section class="card">
+            <div class="badge">Path: ${state.initialRhythm}</div>
+            <h2>${state.timerView === 'rosc' ? 'Post-ROSC care' : 'Continue resuscitation'}</h2>
+            ${careContent}
+            ${logSection ? '<div style="margin-top:1rem">' + logSection + '</div>' : ''}
+            ${state.elapsed >= FORTY_FIVE_MINUTES && state.fortyFiveAck && state.timerView !== 'rosc' ? '<button type="button" class="btn btn-primary" data-action="tor-review">View 45-minute termination guidance</button>' : ''}
+            <p style="font-size:.85rem;color:var(--text-muted);margin-top:1rem">Rhythm assessment every 2 minutes from last entry.${(state.initialRhythm === RHYTHM_VF_PVT || state.initialRhythm === 'PEA') ? ' Early transfer reminder after third rhythm check.' : ''}${state.timerView !== 'rosc' ? ' Special review at 45 minutes.' : ''}</p>
+          </section>`;
+      } else if (state.step === 'forty-five-minute-check') {
+        main.innerHTML =
+          '<section class="card">' +
+          '<div class="badge critical">TOR</div>' +
+          '<h2>Termination of resuscitation</h2>' +
+          renderTerminationReviewHtml() +
+          '</section>';
+      } else if (state.step === 'post-tor') {
+        main.innerHTML =
+          '<section class="card">' +
+          '<div class="badge critical">TOR</div>' +
+          '<h2>Resuscitation ended</h2>' +
+          '<p class="lead">Resuscitation has been terminated. Complete the verification-of-death wait shown in the timer bar, then record VOD when appropriate.</p>' +
+          (state.torEndedAtLabel ? '<p class="tor-stamp-summary">TOR occurred at ' + state.torEndedAtLabel + '</p>' : '') +
+          renderLogHtml() +
+          '</section>';
+      } else if (state.step === 'rosc-assessment') {
+        const opts = [
+          ['sustained', 'Sustained ROSC', '>10 minutes with output'],
+          ['transient', 'Transient ROSC', 'Output lasting <10 minutes'],
+          ['none', 'No ROSC', 'No return of circulation'],
+        ];
+        main.innerHTML = `
+          <section class="card">
+            <div class="badge critical">45 min — ROSC?</div>
+            <h2>Return of spontaneous circulation</h2>
+            ${opts.map(([v,l,d]) => `
+              <button type="button" class="rosc-btn ${state.roscStatus === v ? 'selected' : ''}" data-rosc="${v}">
+                <span class="rosc-label">${l}</span>
+                <span class="rosc-desc">${d}</span>
+              </button>`).join('')}
+            ${state.roscStatus ? `
+              <div class="guidance"><p>${getRoscGuidance(state.roscStatus)}</p></div>
+              <button type="button" class="btn btn-primary btn-lg" data-action="complete">Complete protocol</button>` : ''}
+          </section>`;
+      } else if (state.step === 'complete') {
+        main.innerHTML = `
+          <section class="card complete">
+            <h2>Protocol complete</h2>
+            ${state.initialRhythm ? `<p>Initial rhythm: ${state.initialRhythm}</p>` : ''}
+            ${state.currentRhythm ? `<p>Final rhythm: ${state.currentRhythm}</p>` : ''}
+            ${state.roscStatus ? `<p>ROSC status: ${state.roscStatus}</p>` : ''}
+            ${state.torEndedAtLabel ? `<p>TOR occurred at ${state.torEndedAtLabel}</p>` : ''}
+            ${state.vodAtLabel ? renderVodTimestampsSummaryHtml(false) : ''}
+            <p style="font-family:monospace">Total elapsed: ${formatDisplayElapsed(state.elapsed)}</p>
+            ${state.vodAtLabel ? renderLogHtml() : ''}
+            <button type="button" class="btn btn-primary btn-lg" data-action="reset">New case</button>
+          </section>`;
+      }
+
+      bindMainEvents();
+      if (state.step === 'initial-assessment') bindInitialAssessmentEvents();
+      updateInterventionsModal();
+      updateReversibleCausesModal();
+    }
+
+    function bindPeaInputs() {
+      const hr = document.getElementById('hr-input');
+      const qrs = document.getElementById('qrs-input');
+      if (hr) hr.oninput = () => { state.heartRate = hr.value; render(); };
+      if (qrs) qrs.oninput = () => { state.qrsWidthMs = qrs.value; render(); };
+    }
+
+    function bindMainEvents() {
+      document.querySelectorAll('[data-action]').forEach(function (el) {
+        if (el.closest('#interventions-panel')) return;
+        el.onclick = function () {
+          const a = el.dataset.action;
+          if (a === 'reset') return resetAll();
+          if (a === 'toggle-rhythm-log') {
+            state.showRhythmLog = !state.showRhythmLog;
+            render();
+            return;
+          }
+          if (a === 'initial-assessment') state.step = 'initial-assessment';
+          else if (a === 'commence-resuscitation') {
+            resetInitialAssessment();
+            state.step = 'select-rhythm';
+            startTimer();
+          }
+          else if (a === 'select-rhythm') state.step = 'select-rhythm';
+          else if (a === 'active-resuscitation') state.step = 'active-resuscitation';
+          else if (a === 'tor-review') beginTorReview();
+          else if (a === 'forty-five-minute-check') beginTorReview();
+          else if (a === 'rosc-assessment') state.step = 'rosc-assessment';
+          else if (a === 'complete') state.step = 'complete';
+          render();
+        };
+      });
+      document.querySelectorAll('[data-rhythm]').forEach(el => {
+        el.onclick = () => handleRhythmSelection(el.dataset.rhythm, 'initial');
+      });
+      document.querySelectorAll('[data-tor-rhythm]').forEach(function (el) {
+        el.onclick = function () {
+          state.currentRhythm = el.dataset.torRhythm;
+          state.peaTorCriteriaMet = null;
+          render();
+        };
+      });
+      const torReset = document.querySelector('[data-tor-reset-rhythm]');
+      if (torReset) torReset.onclick = function () {
+        state.currentRhythm = null;
+        state.peaTorCriteriaMet = null;
+        render();
+      };
+      document.querySelectorAll('[data-tor-pea-criteria]').forEach(function (el) {
+        el.onclick = function () {
+          state.peaTorCriteriaMet = el.dataset.torPeaCriteria === 'yes';
+          render();
+        };
+      });
+      const torEnd = document.querySelector('[data-tor-end]');
+      if (torEnd) torEnd.onclick = handleTorEndResuscitation;
+      const torContinue = document.querySelector('[data-tor-continue]');
+      if (torContinue) torContinue.onclick = handleTorContinueResuscitation;
+      const torSenior = document.querySelector('[data-tor-senior-advice]');
+      if (torSenior) torSenior.onclick = handleTorSeekSeniorAdvice;
+      document.querySelectorAll('[data-current-rhythm]').forEach(el => {
+        el.onclick = () => handleRhythmSelection(el.dataset.currentRhythm, 'termination');
+      });
+      document.querySelectorAll('[data-rosc]').forEach(el => {
+        el.onclick = () => {
+          state.roscStatus = el.dataset.rosc;
+          render();
+        };
+      });
+      document.querySelectorAll('[data-quality-prompt]').forEach(function (cb) {
+        cb.onchange = function () {
+          handleQualityPrompt(cb.dataset.qualityPrompt);
+        };
+      });
+      document.querySelectorAll('[data-open-reversible-causes]').forEach(function (btn) {
+        btn.onclick = function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          openReversibleCausesModal();
+        };
+      });
+      document.querySelectorAll('[data-rosc-task]').forEach(function (cb) {
+        cb.onchange = function () {
+          handleRoscTask(cb.dataset.roscTask);
+        };
+      });
+    }
+
+    document.getElementById('metronome-toggle').onclick = toggleMetronome;
+
+    document.getElementById('timer-rosc').onclick = function () {
+      if (state.timerView === 'rosc') return;
+      enterRoscMode(false);
+      render();
+    };
+
+    document.getElementById('timer-interventions').onclick = toggleInterventions;
+
+    document.getElementById('timer-tor').onclick = beginTorReview;
+
+    document.getElementById('ack-45').onclick = beginTorReview;
+
+    document.getElementById('ack-early-transfer').onclick = acknowledgeEarlyTransfer;
+    document.getElementById('ack-code-shock').onclick = acknowledgeCodeShock;
+
+    document.getElementById('sbp-adequate-btn').onclick = function () {
+      dismissSbpReminder();
+      updateRoscMonitoringPanels();
+    };
+    document.getElementById('sbp-low-btn').onclick = function () {
+      state.sbpReminderExpanded = true;
+      updateRoscMonitoringPanels();
+    };
+    document.getElementById('sbp-back-btn').onclick = function () {
+      state.sbpReminderExpanded = false;
+      updateRoscMonitoringPanels();
+    };
+    document.getElementById('sbp-nothing-btn').onclick = function () {
+      dismissSbpReminder();
+      updateRoscMonitoringPanels();
+    };
+    document.querySelectorAll('[data-sbp-fluid]').forEach(function (btn) {
+      btn.onclick = function () {
+        logSbpFluid(btn.dataset.sbpFluid);
+        updateRoscMonitoringPanels();
+        render();
+      };
+    });
+    document.getElementById('sbp-adrenaline-50-btn').onclick = function () {
+      logSbpAdrenaline50();
+      updateRoscMonitoringPanels();
+      render();
+    };
+    document.getElementById('sbp-adrenaline-100-btn').onclick = function () {
+      logSbpAdrenaline100();
+      updateRoscMonitoringPanels();
+      render();
+    };
+
+    document.getElementById('pulse-yes-btn').onclick = function () {
+      handlePulseYes();
+      updateRoscMonitoringPanels();
+      render();
+    };
+    document.getElementById('pulse-no-btn').onclick = function () {
+      handlePulseNo();
+      updateRoscMonitoringPanels();
+    };
+    document.getElementById('pulse-back-btn').onclick = function () {
+      state.pulseReminderExpanded = false;
+      state.pulseShowAtropineMaxMessage = false;
+      updateRoscMonitoringPanels();
+    };
+    document.getElementById('pulse-max-back-btn').onclick = function () {
+      state.pulseReminderExpanded = false;
+      state.pulseShowAtropineMaxMessage = false;
+      updateRoscMonitoringPanels();
+    };
+    document.getElementById('pulse-atropine-admin-btn').onclick = function () {
+      handleAtropineAdministered();
+      updateRoscMonitoringPanels();
+      render();
+    };
+    document.getElementById('pulse-atropine-not-admin-btn').onclick = function () {
+      handleAtropineNotAdministered();
+      updateRoscMonitoringPanels();
+      render();
+    };
+    document.getElementById('pulse-max-ack-btn').onclick = function () {
+      dismissPulseReminder();
+      updateRoscMonitoringPanels();
+    };
+
+    document.getElementById('vector-not-changed').onclick = () => dismissVectorChangeReminder(false);
+    document.getElementById('vector-changed').onclick = () => dismissVectorChangeReminder(true);
+
+    document.getElementById('test-jump-44-btn').onclick = jumpToTestFortyFour;
+
+    document.getElementById('theme-toggle').onclick = toggleTheme;
+
+    document.getElementById('timer-rx').addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-log-drug]');
+      if (!btn) return;
+      if (btn.dataset.logDrug === 'adrenaline') logAdrenaline();
+      else if (btn.dataset.logDrug === 'amiodarone') logAmiodarone();
+    });
+
+    document.getElementById('reversible-causes-modal').addEventListener('click', function (e) {
+      if (e.target.closest('[data-close-reversible-causes]')) {
+        closeReversibleCausesModal();
+      }
+    });
+
+    document.getElementById('reversible-causes-modal').addEventListener('change', function (e) {
+      const cb = e.target.closest('[data-reversible-cause]');
+      if (cb && !cb.disabled) toggleReversibleCause(cb.dataset.reversibleCause);
+    });
+
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+:root,
+html[data-theme='day'] {
+  --green-50: #e8f0e8;
+  --green-100: #d0e0d0;
+  --green-600: #2d6a2d;
+  --green-800: #163816;
+  --text: #1a2e1a;
+  --bg: #dfe8df;
+  --brand-bg-image: url('/ambulance-service-logo.png');
+  --brand-bg-opacity: 0.24;
+  --brand-bg-filter: none;
+}
+
+html[data-theme='night'] {
+  --green-50: #1a241a;
+  --green-100: #243024;
+  --green-600: #5a9a5a;
+  --green-800: #c8dcc8;
+  --text: #e2eae2;
+  --bg: #111612;
+  --brand-bg-opacity: 0.18;
+  --brand-bg-filter: brightness(1.35);
+}
+
+:root {
+  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  position: relative;
+  background-color: var(--bg);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--brand-bg-image) center / min(85vw, 540px) no-repeat;
+  opacity: var(--brand-bg-opacity);
+  filter: var(--brand-bg-filter);
+}
+
+#root {
+  min-height: 100svh;
+  position: relative;
+  z-index: 1;
+}
