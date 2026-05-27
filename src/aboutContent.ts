@@ -17,6 +17,11 @@ export const ABOUT_SECTIONS = [
       'Resusci-Time runs entirely in your browser. It does not send patient data to a server. Event log entries and theme preference are kept locally on the device for the duration of the session (and theme choice may persist in browser storage).',
   },
   {
+    heading: 'Install on your device',
+    body:
+      'Add Resusci-Time to your home screen for quick access and offline use. On iPhone or iPad (Safari): tap Share, then Add to Home Screen — your Resusci-Time icon will appear on the home screen. On Android (Chrome): open the menu and choose Install app or Add to Home screen.',
+  },
+  {
     heading: 'Contact & custom versions',
     body:
       'For support, to report errors, suggest improvements, or discuss custom versions tailored to an individual ambulance or NHS service, please get in touch.',
