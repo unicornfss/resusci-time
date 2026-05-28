@@ -5,6 +5,9 @@ export const emasTrust: TrustOverrides = {
   trustLabel: 'EMAS',
   brandBackgroundAsset: 'backgrounds/emas-crest.png',
   features: {
-    extraMedications: [{ id: 'sodium-bicarbonate', label: 'Sodium bicarbonate' }],
+    extraMedications: [
+      // { id: 'sodium-bicarbonate', label: 'Sodium bicarbonate' },
+      // { id: 'lignocaine', label: 'Lignocaine' },
+    ],
   },
 }
