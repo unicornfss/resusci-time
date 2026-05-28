@@ -26,7 +26,7 @@ export const AIRWAY_OPTIONS = [
   'Tracheostomy',
 ] as const
 
-export const BREATHING_OPTIONS = ['BVM', 'Mechanical vent.', 'Thoracotomy'] as const
+export const BREATHING_OPTIONS = ['BVM', 'Mechanical vent.'] as const
 
 export const SODIUM_CHLORIDE_OPTIONS = ['flush', '250ml', '500ml'] as const
 
