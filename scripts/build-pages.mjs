@@ -10,7 +10,8 @@ import { renderSitePage } from './site-shell.mjs'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const buildLiveOnly = process.env.BUILD_LIVE_ONLY === '1'
 const buildPreviewOnly = process.env.BUILD_PREVIEW_ONLY === '1'
-const buildAll = !buildLiveOnly && !buildPreviewOnly
+const buildLandingOnly = process.env.BUILD_LANDING_ONLY === '1'
+const buildAll = !buildLiveOnly && !buildPreviewOnly && !buildLandingOnly
 
 const outputRoot = process.env.OUTPUT_DIR
   ? resolve(process.env.OUTPUT_DIR)
@@ -22,26 +23,17 @@ const buildLabel = `Version ${packageJson.version} - Last updated ${new Date().t
   timeStyle: 'short',
 })}`
 
-const liveLinks = trustManifest
-  .map(
-    ({ id, label }) =>
-      `<li><a href="./${id}/">Resusci-Time - ${label} version</a></li>`,
-  )
-  .join('\n        ')
-
 const landingHtml = renderSitePage({
   title: 'Resusci-Time',
   assetPrefix: './',
   body: `
       <h1>Resusci-Time</h1>
-      <p>Choose your build:</p>
+      <p>Adult cardiac arrest protocol timer and checklist.</p>
       <ul class="link-list">
-        ${liveLinks}
-      </ul>
-      <p class="hint">Standard has no trust-specific options. Bookmark the link for your service.</p>
-      <ul class="link-list">
+        <li><a href="./standard/">Open Resusci-Time</a></li>
         <li><a href="./blog/">Blog - updates &amp; guides</a></li>
       </ul>
+      <p class="hint">Custom versions for individual ambulance services and NHS trusts are provided by separate arrangement.</p>
       <p class="version">${buildLabel}</p>
     `,
 })
@@ -98,10 +90,17 @@ if (buildAll) {
   mkdirSync(outputRoot, { recursive: true })
   buildPreviewTrusts()
   console.log('Built preview dist-pages into existing output (from current checkout)')
+} else if (buildLandingOnly) {
+  mkdirSync(outputRoot, { recursive: true })
+  copyStaticSiteAssets()
+  console.log('Built landing page and blog into existing dist-pages (from current checkout)')
 } else {
   throw new Error('Invalid build flags')
 }
 
+if (buildAll || buildLiveOnly || buildLandingOnly) {
+  console.log('Landing page and blog updated')
+}
 if (buildAll || buildLiveOnly) {
   const liveIds = trustManifest.map(({ id }) => id).join(', ')
   console.log(`Live folders: ${liveIds}`)

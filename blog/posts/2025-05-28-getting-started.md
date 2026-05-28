@@ -2,49 +2,24 @@
 title: Getting started with Resusci-Time
 date: 2025-05-28
 category: guide
-summary: Standard build capabilities, choosing your version, and day-to-day use on shift.
+summary: Standard build capabilities and day-to-day use on shift.
 ---
 
 This guide covers the basics for crews using Resusci-Time on a phone or tablet.
 
 ![Resusci-Time logo](../images/resusci-time-logo.png)
 
-## 1. Choose your build
+Resusci-Time is based on the **Spring 2026 JRCALC / AACE adult resuscitation and verification of death guidelines**. It is **not intended to replace clinical knowledge and skill** — it is a support tool only. Mistakes may be present; any identified errors will be corrected as soon as possible.
 
-From the [home page](../../), open the version for your service:
+## 1. Open the Standard build
 
-| Build | When to use |
-| --- | --- |
-| **Standard** | Generic adult cardiac arrest protocol — shared options only, no trust-specific extras |
-| **WMAS** | West Midlands — includes Code Shock reminder and WMAS branding |
-| **EMAS** | East Midlands — EMAS branding; trust-specific medication options can be enabled |
+The **Standard** version is what we are publishing for general use. Open [Resusci-Time](../../standard/) from the [home page](../../) and bookmark the URL so you can open it quickly from the home screen.
 
-Bookmark that URL so you can open it quickly from the home screen.
-
-### Custom versions on request
-
-The **Standard** build is the baseline for any ambulance service. **Custom versions** are available on request — for example:
-
-- Service crest or logo as the app background
-- Trust-specific reminders (such as Code Shock)
-- Additional medication buttons
-- Other protocol-aligned options agreed with your clinical team
-
-Contact the project maintainer to discuss a build for your trust.
-
-<figure>
-  <img src="../images/wmas-crest.png" alt="Example WMAS custom branding" width="280" />
-  <figcaption>Example: WMAS build with trust crest branding</figcaption>
-</figure>
-
-<figure>
-  <img src="../images/emas-crest.png" alt="Example EMAS custom branding" width="280" />
-  <figcaption>Example: EMAS build with trust crest branding</figcaption>
-</figure>
+**Custom versions** catering for individual ambulance services or NHS trusts can be provided on request — for example service crest or logo, trust-specific reminders, additional medication buttons, or other protocol-aligned options agreed with your clinical team. Contact the project maintainer if you would like to discuss a tailored build.
 
 ## 2. What the Standard build includes
 
-The Standard version provides the full core arrest workflow without trust-only extras:
+The Standard version provides the full core arrest workflow:
 
 **Timer and protocol**
 
@@ -86,8 +61,6 @@ Saved “Other” entries reappear for quick re-use during the same case.
 - Day / night theme
 - Works offline after first load
 
-Trust builds add features on top of this list — for example, WMAS includes a **Code Shock** reminder after three shocks.
-
 ## 3. Install on your device (optional)
 
 On **Chrome** or **Edge**, use **Install app** (or **Add to Home screen** on mobile). The timer then opens full-screen like a native app. You need **HTTPS** — the live site or a local preview build, not plain HTTP on a LAN address for some features.
@@ -117,8 +90,8 @@ Use the **event log** panel to export, share, or save the record. Autosave keeps
 
 ## Tips
 
-- Run through a **training case** before first live use if your build shows a preview or test banner.
+- Run through a **training case** before first live use.
 - Keep screen brightness up and **Do Not Disturb** on if possible.
 - The app supports **day/night** theme from the header toggle.
 
-More guides will be added here as features grow. If you spot a bug, need a custom trust build, or have a feature idea, contact your local clinical lead or the project maintainer.
+More guides will be added here as features grow. If you spot a bug, need a custom service build, or have a feature idea, contact your local clinical lead or the project maintainer.
