@@ -1,4 +1,4 @@
-const CACHE_NAME = 'resusci-time-v1'
+const CACHE_NAME = 'resusci-time-v3'
 
 const PRECACHE_URLS = [
   './',

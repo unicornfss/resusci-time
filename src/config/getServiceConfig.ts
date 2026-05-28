@@ -27,10 +27,8 @@ export function getServiceConfig(trustId: TrustId, channel: BuildChannel = 'live
     headerTitle: `Resusci-Time - ${trust.trustLabel}${versionSuffix}`,
     brandBackgroundAsset: trust.brandBackgroundAsset ?? defaultBrandBackgroundAsset,
     features: {
-      codeShock: {
-        ...defaultFeatures.codeShock,
-        ...trust.features.codeShock,
-      },
+      ...(trust.features?.codeShock ? { codeShock: trust.features.codeShock } : {}),
+      extraMedications: trust.features?.extraMedications ?? defaultFeatures.extraMedications,
     },
   }
 }

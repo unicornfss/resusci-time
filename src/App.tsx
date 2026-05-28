@@ -101,8 +101,10 @@ import type {
 } from './interventions'
 import {
   BREATHING_OPTIONS,
+  CIRCULATION_OPTIONS,
   getAirwayLogLabel,
   getBreathingLogEntries,
+  getCirculationLogLabel,
   getMedicationLogLabel,
   getOtherInterventionLogLabel,
   getSodiumChlorideLogLabel,
@@ -714,6 +716,11 @@ function App() {
     closeInterventions()
   }
 
+  function logCirculation(option: (typeof CIRCULATION_OPTIONS)[number]) {
+    pushLogEntry(getCirculationLogLabel(option))
+    closeInterventions()
+  }
+
   function logSodiumChloride(variant: (typeof SODIUM_CHLORIDE_OPTIONS)[number]) {
     pushLogEntry(getSodiumChlorideLogLabel(variant))
     closeInterventions()
@@ -1073,6 +1080,7 @@ function App() {
       onVascularAccessStepChange={setInterventionVascularStep}
       onLogAirway={logAirway}
       onLogBreathing={logBreathing}
+      onLogCirculation={logCirculation}
       onLogSodiumChloride={logSodiumChloride}
       onLogMedication={logMedication}
       onLogOther={logOtherIntervention}

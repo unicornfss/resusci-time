@@ -133,17 +133,17 @@ import { serviceConfig } from './config'
 
 export function shouldShowCodeShockReminder(shockCount: number, acknowledged: boolean): boolean {
   const { codeShock } = serviceConfig.features
-  if (!codeShock.enabled) return false
+  if (!codeShock) return false
   if (acknowledged) return false
   return shockCount >= codeShock.minShocks
 }
 
 export function getCodeShockPrompt(): string {
-  return serviceConfig.features.codeShock.prompt
+  return serviceConfig.features.codeShock?.prompt ?? ''
 }
 
 export function getCodeShockLogLabel(): string {
-  return serviceConfig.features.codeShock.logLabel
+  return serviceConfig.features.codeShock?.logLabel ?? ''
 }
 
 export const CONSECUTIVE_SHOCKS_FOR_VECTOR_REMINDER = 3

@@ -1,6 +1,7 @@
 import {
   AIRWAY_OPTIONS,
   BREATHING_OPTIONS,
+  CIRCULATION_OPTIONS,
   getInterventionCategoryLabel,
   getSavedOthersForCategory,
   INTERVENTION_OPTIONS,
@@ -12,6 +13,7 @@ import {
   type SavedOtherIntervention,
   type VascularAccessStep,
 } from '../interventions'
+import { serviceConfig } from '../config'
 import { InterventionOtherForm } from './InterventionOtherForm'
 import { VascularAccessFlow } from './VascularAccessFlow'
 
@@ -27,6 +29,7 @@ interface InterventionsPanelProps {
   onVascularAccessStepChange: (step: VascularAccessStep) => void
   onLogAirway: (option: string) => void
   onLogBreathing: (option: (typeof BREATHING_OPTIONS)[number]) => void
+  onLogCirculation: (option: (typeof CIRCULATION_OPTIONS)[number]) => void
   onLogSodiumChloride: (variant: (typeof SODIUM_CHLORIDE_OPTIONS)[number]) => void
   onLogMedication: (label: string) => void
   onLogOther: (category: OtherInterventionCategory, label: string) => void
@@ -90,6 +93,7 @@ export function InterventionsPanel({
   onVascularAccessStepChange,
   onLogAirway,
   onLogBreathing,
+  onLogCirculation,
   onLogSodiumChloride,
   onLogMedication,
   onLogOther,
@@ -214,6 +218,23 @@ export function InterventionsPanel({
     )
   }
 
+  if (step === 'circulation') {
+    return (
+      <div className="interventions-panel">
+        <p className="interventions-title">Circulation</p>
+        <OptionButtons
+          options={CIRCULATION_OPTIONS}
+          savedLabels={getSavedOthersForCategory(savedOthers, 'circulation')}
+          onSelect={(option) => onLogCirculation(option as (typeof CIRCULATION_OPTIONS)[number])}
+          onOther={() => onSubStepChange('other')}
+        />
+        <button type="button" className="btn btn-touch intervention-back-btn" onClick={onBack}>
+          Back
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="interventions-panel">
       <p className="interventions-title">Medications</p>
@@ -228,6 +249,16 @@ export function InterventionsPanel({
         {MEDICATION_SIMPLE_OPTIONS.map(({ label }) => (
           <button
             key={label}
+            type="button"
+            className="btn btn-secondary btn-lg btn-touch intervention-option"
+            onClick={() => onLogMedication(label)}
+          >
+            {label}
+          </button>
+        ))}
+        {serviceConfig.features.extraMedications.map(({ id, label }) => (
+          <button
+            key={id}
             type="button"
             className="btn btn-secondary btn-lg btn-touch intervention-option"
             onClick={() => onLogMedication(label)}

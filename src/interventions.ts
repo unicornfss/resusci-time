@@ -2,12 +2,13 @@ export const INTERVENTION_OPTIONS = [
   { id: 'vascular-access', label: 'Vascular access' },
   { id: 'airway', label: 'Airway' },
   { id: 'breathing', label: 'Breathing' },
+  { id: 'circulation', label: 'Circulation' },
   { id: 'medications', label: 'Medications' },
 ] as const
 
 export type InterventionId = (typeof INTERVENTION_OPTIONS)[number]['id']
 
-export type OtherInterventionCategory = 'airway' | 'breathing' | 'medications'
+export type OtherInterventionCategory = 'airway' | 'breathing' | 'circulation' | 'medications'
 
 export interface SavedOtherIntervention {
   category: OtherInterventionCategory
@@ -23,10 +24,13 @@ export const AIRWAY_OPTIONS = [
   'SGA (i-gel)',
   'ET',
   'Needle cric.',
+  'Suction',
   'Tracheostomy',
 ] as const
 
 export const BREATHING_OPTIONS = ['BVM', 'Mechanical vent.'] as const
+
+export const CIRCULATION_OPTIONS = ['Thoracotomy', 'Mechanical compressions'] as const
 
 export const SODIUM_CHLORIDE_OPTIONS = ['flush', '250ml', '500ml'] as const
 
@@ -80,6 +84,10 @@ export function getBreathingLogEntries(option: (typeof BREATHING_OPTIONS)[number
   return [`Breathing — ${option}`, 'Oxygen']
 }
 
+export function getCirculationLogLabel(option: (typeof CIRCULATION_OPTIONS)[number]): string {
+  return `Circulation — ${option}`
+}
+
 export function getSodiumChlorideLogLabel(variant: (typeof SODIUM_CHLORIDE_OPTIONS)[number]): string {
   return `Medication — Sodium chloride (${variant})`
 }
@@ -90,7 +98,13 @@ export function getMedicationLogLabel(label: string): string {
 
 export function getOtherInterventionLogLabel(category: OtherInterventionCategory, label: string): string {
   const prefix =
-    category === 'airway' ? 'Airway' : category === 'breathing' ? 'Breathing' : 'Medication'
+    category === 'airway'
+      ? 'Airway'
+      : category === 'breathing'
+        ? 'Breathing'
+        : category === 'circulation'
+          ? 'Circulation'
+          : 'Medication'
   return `${prefix} — ${label}`
 }
 

@@ -126,6 +126,22 @@ export function siteStyles(assetPrefix = './') {
       }
       .prose pre code { background: none; padding: 0; color: inherit; }
       .prose a { color: var(--accent); }
+      .prose img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 1rem auto;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 16px rgba(26, 46, 26, 0.1);
+      }
+      .prose figure { margin: 1.25rem 0; }
+      .prose figcaption {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-align: center;
+      }
       .back-link { display: inline-block; margin-top: 1.5rem; font-weight: 600; color: var(--accent); }
 `
 }

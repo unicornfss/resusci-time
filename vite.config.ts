@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { buildWebManifest, getServiceConfig } from './src/config/getServiceConfig'
-import { isTrustId, parseViteMode } from './src/config/trustIds'
+import { isTrustId, parseViteMode, TRUST_IDS } from './src/config/trustIds'
 import type { TrustId } from './src/config/types'
 
 const packageJson = JSON.parse(
@@ -65,15 +65,46 @@ function trustBuildPlugin(trustId: TrustId, channel: 'live' | 'preview'): Plugin
   }
 }
 
+function multiPagePreviewPlugin(): Plugin {
+  const folders = [
+    ...TRUST_IDS,
+    ...TRUST_IDS.map((id) => `${id}-preview`),
+    'blog',
+  ]
+
+  return {
+    name: 'multi-page-preview',
+    configurePreviewServer(server) {
+      server.middlewares.use((req, res, next) => {
+        const pathname = req.url?.split('?')[0] ?? ''
+        const query = req.url?.includes('?') ? req.url.slice(req.url.indexOf('?')) : ''
+        const bare = pathname.replace(/^\//, '')
+        if (folders.includes(bare)) {
+          res.writeHead(301, { Location: `${pathname}/${query}` })
+          res.end()
+          return
+        }
+        next()
+      })
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const { trustId, channel } = parseViteMode(mode)
   const resolvedTrustId = trustId ?? resolveTrustId(mode)
   const resolvedChannel = trustId ? channel : mode === 'production' ? 'live' : channel
   const isProductionBuild = mode === 'production' || isTrustProductionMode(mode)
+  const isMultiPagePreview = process.env.VITE_PREVIEW_MPA === '1'
 
   return {
-    plugins: [react(), trustBuildPlugin(resolvedTrustId, resolvedChannel)],
+    appType: isMultiPagePreview ? 'mpa' : 'spa',
+    plugins: [
+      react(),
+      trustBuildPlugin(resolvedTrustId, resolvedChannel),
+      ...(isMultiPagePreview ? [multiPagePreviewPlugin()] : []),
+    ],
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __APP_BUILD_ISO__: JSON.stringify(appBuildIso),
