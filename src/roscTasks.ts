@@ -26,8 +26,11 @@ export const ROSC_TASK_ITEMS: readonly RoscTask[] = [
 
 export type TimerView = 'arrest' | 'rosc'
 
-export function getRoscPhaseLabel(actualSeconds: number): 'Transient ROSC' | 'Sustained ROSC' {
-  return toDisplaySeconds(actualSeconds) < ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS
+export function getRoscPhaseLabel(
+  actualSeconds: number,
+  timeScale: number,
+): 'Transient ROSC' | 'Sustained ROSC' {
+  return toDisplaySeconds(actualSeconds, timeScale) < ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS
     ? 'Transient ROSC'
     : 'Sustained ROSC'
 }

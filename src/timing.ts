@@ -1,61 +1,96 @@
-function readTimeScale(): number {
+import type { PreviewSpeedMultiplier } from './previewSpeed'
+
+function readBuildTimeScale(): number {
   const raw = import.meta.env.VITE_TIME_SCALE
   const parsed = raw ? Number(raw) : 1
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
 }
 
-/** Set via VITE_TIME_SCALE at build time. Live builds use 1; preview builds use a lower value. */
-export const TIME_SCALE: number = readTimeScale()
-
-export const RHYTHM_CHECK_INTERVAL = Math.round(120 * TIME_SCALE)
-export const ADRENALINE_INTERVAL_SECONDS = Math.round(240 * TIME_SCALE)
-export const SBP_REMINDER_INTERVAL_SECONDS = Math.round(240 * TIME_SCALE)
-/** SBP and pulse-rate ROSC reminders share this interval. */
-export const ROSC_MONITORING_REMINDER_INTERVAL_SECONDS = SBP_REMINDER_INTERVAL_SECONDS
-export const FORTY_FIVE_MINUTES_SECONDS = Math.round(2700 * TIME_SCALE)
-/** Display-time VOD wait (5:00). Actual wall-clock duration respects TIME_SCALE. */
-export const VOD_COUNTDOWN_DISPLAY_SECONDS = 300
-export const VOD_COUNTDOWN_ACTUAL_SECONDS = Math.round(VOD_COUNTDOWN_DISPLAY_SECONDS * TIME_SCALE)
-/** Display-time threshold (10:00) for sustained vs transient ROSC. */
-export const ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS = 600
-export const ROSC_SUSTAINED_THRESHOLD_ACTUAL_SECONDS = Math.round(
-  ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS * TIME_SCALE,
-)
-
-export const IS_TEST_TIMING = TIME_SCALE !== 1
+export const BUILD_TIME_SCALE = readBuildTimeScale()
 export const IS_PREVIEW_BUILD = import.meta.env.VITE_BUILD_CHANNEL === 'preview'
 
-/** Human-readable scale for the test-mode banner, e.g. 0.25 → "25%". */
-export function getTimeScalePercentLabel(): string {
-  const percent = TIME_SCALE * 100
-  const rounded = Math.round(percent * 10) / 10
-  return Number.isInteger(rounded) ? `${rounded}%` : `${rounded}%`
+export const VOD_COUNTDOWN_DISPLAY_SECONDS = 300
+export const ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS = 600
+export const TEST_JUMP_TO_DISPLAY_SECONDS = 44 * 60
+
+export interface TimingConfig {
+  timeScale: number
+  speedMultiplier: number
+  rhythmCheckInterval: number
+  adrenalineIntervalSeconds: number
+  sbpReminderIntervalSeconds: number
+  roscMonitoringReminderIntervalSeconds: number
+  fortyFiveMinutesSeconds: number
+  vodCountdownActualSeconds: number
+  roscSustainedThresholdActualSeconds: number
+  testJumpToActualSeconds: number
+  isTestTiming: boolean
 }
 
-export function getTestModeBannerText(): string {
+export function buildTimingConfig(previewSpeedMultiplier?: PreviewSpeedMultiplier): TimingConfig {
+  const timeScale =
+    IS_PREVIEW_BUILD && previewSpeedMultiplier != null
+      ? 1 / previewSpeedMultiplier
+      : BUILD_TIME_SCALE
+
+  const rhythmCheckInterval = Math.round(120 * timeScale)
+  const adrenalineIntervalSeconds = Math.round(240 * timeScale)
+  const sbpReminderIntervalSeconds = Math.round(240 * timeScale)
+
+  return {
+    timeScale,
+    speedMultiplier: timeScale >= 1 ? 1 : Math.round(1 / timeScale),
+    rhythmCheckInterval,
+    adrenalineIntervalSeconds,
+    sbpReminderIntervalSeconds,
+    roscMonitoringReminderIntervalSeconds: sbpReminderIntervalSeconds,
+    fortyFiveMinutesSeconds: Math.round(2700 * timeScale),
+    vodCountdownActualSeconds: Math.round(VOD_COUNTDOWN_DISPLAY_SECONDS * timeScale),
+    roscSustainedThresholdActualSeconds: Math.round(ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS * timeScale),
+    testJumpToActualSeconds: Math.round(TEST_JUMP_TO_DISPLAY_SECONDS * timeScale),
+    isTestTiming: timeScale !== 1,
+  }
+}
+
+/** Default config at module load (build-time scale; preview uses stored speed via context). */
+export const defaultTimingConfig = buildTimingConfig()
+
+export const IS_TEST_TIMING = defaultTimingConfig.isTestTiming
+
+export function getTestModeBannerText(timing: TimingConfig = defaultTimingConfig): string {
   if (IS_PREVIEW_BUILD) {
-    return `Preview build — for testing only. Not for live clinical use. Protocol times at ${getTimeScalePercentLabel()} (elapsed shows real protocol time).`
+    if (timing.speedMultiplier === 1) {
+      return 'Preview build — for testing only. Not for live clinical use. Protocol times at real-time (1×) speed.'
+    }
+    return `Preview build — for testing only. Not for live clinical use. Protocol times at ${timing.speedMultiplier}× speed (elapsed shows real protocol time).`
   }
 
-  return `Test mode — protocol times at ${getTimeScalePercentLabel()} (elapsed shows real protocol time)`
+  if (timing.isTestTiming) {
+    const percent = Math.round(timing.timeScale * 1000) / 10
+    return `Test mode — protocol times at ${percent}% (elapsed shows real protocol time)`
+  }
+
+  return ''
 }
 
-/** Test helper: jump arrest timer to 44:00 display time (1 min before 45:00 TOR). */
-export const TEST_JUMP_TO_DISPLAY_SECONDS = 44 * 60
-export const TEST_JUMP_TO_ACTUAL_SECONDS = Math.round(TEST_JUMP_TO_DISPLAY_SECONDS * TIME_SCALE)
-
-export function getRhythmCheckRemainingFraction(secondsRemaining: number): number {
-  if (RHYTHM_CHECK_INTERVAL <= 0) return 0
-  return Math.min(1, Math.max(0, secondsRemaining / RHYTHM_CHECK_INTERVAL))
+export function getRhythmCheckRemainingFraction(
+  secondsRemaining: number,
+  rhythmCheckInterval: number,
+): number {
+  if (rhythmCheckInterval <= 0) return 0
+  return Math.min(1, Math.max(0, secondsRemaining / rhythmCheckInterval))
 }
 
-export function getVodCountdownRemainingFraction(secondsRemaining: number): number {
-  if (VOD_COUNTDOWN_ACTUAL_SECONDS <= 0) return 0
-  return Math.min(1, Math.max(0, secondsRemaining / VOD_COUNTDOWN_ACTUAL_SECONDS))
+export function getVodCountdownRemainingFraction(
+  secondsRemaining: number,
+  vodCountdownActualSeconds: number,
+): number {
+  if (vodCountdownActualSeconds <= 0) return 0
+  return Math.min(1, Math.max(0, secondsRemaining / vodCountdownActualSeconds))
 }
 
 /** Map wall-clock seconds to protocol elapsed time shown in the UI. */
-export function toDisplaySeconds(actualSeconds: number): number {
-  if (TIME_SCALE === 1) return actualSeconds
-  return Math.floor(actualSeconds / TIME_SCALE)
+export function toDisplaySeconds(actualSeconds: number, timeScale = defaultTimingConfig.timeScale): number {
+  if (timeScale === 1) return actualSeconds
+  return Math.floor(actualSeconds / timeScale)
 }

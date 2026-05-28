@@ -1,6 +1,7 @@
 import { VOD_READY_MESSAGE } from '../protocol'
 import { VodTimestampsSummary } from './VodTimestampsSummary'
-import { getVodCountdownRemainingFraction, VOD_COUNTDOWN_ACTUAL_SECONDS } from '../timing'
+import { getVodCountdownRemainingFraction } from '../timing'
+import { useTimingConfig } from '../context/TimingConfigContext'
 import type { DisplayLogEntry } from '../types'
 
 interface TimerVodSectionProps {
@@ -18,6 +19,8 @@ export function TimerVodSection({
   onVod,
   formatRemaining,
 }: TimerVodSectionProps) {
+  const { timing } = useTimingConfig()
+
   return (
     <div className="timer-vod-section">
       <div className="timer-tor-stamp" role="status">
@@ -46,13 +49,13 @@ export function TimerVodSection({
           role="progressbar"
           aria-label="Time until verification of death"
           aria-valuemin={0}
-          aria-valuemax={VOD_COUNTDOWN_ACTUAL_SECONDS}
+          aria-valuemax={timing.vodCountdownActualSeconds}
           aria-valuenow={vodCountdownRemaining}
         >
           <div
             className="rhythm-check-progress-fill"
             style={{
-              width: `${getVodCountdownRemainingFraction(vodCountdownRemaining) * 100}%`,
+              width: `${getVodCountdownRemainingFraction(vodCountdownRemaining, timing.vodCountdownActualSeconds) * 100}%`,
             }}
           />
         </div>

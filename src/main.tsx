@@ -5,6 +5,7 @@ import { initTheme } from './theme'
 import { publicAssetUrl } from './publicAssetUrl'
 import { registerServiceWorker } from './registerServiceWorker'
 import './index.css'
+import { TimingConfigProvider } from './context/TimingConfigContext'
 import App from './App.tsx'
 
 document.title = serviceConfig.pageTitle
@@ -19,6 +20,8 @@ document.documentElement.style.setProperty(
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <TimingConfigProvider>
+      <App />
+    </TimingConfigProvider>
   </StrictMode>,
 )

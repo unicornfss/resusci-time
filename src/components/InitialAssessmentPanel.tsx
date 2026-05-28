@@ -9,7 +9,7 @@ import {
   VOD_OBSERVATION_CHECKLIST_HEADER,
   VOD_OBSERVATION_CHECKLIST_ITEMS,
 } from '../protocol'
-import { VOD_COUNTDOWN_ACTUAL_SECONDS } from '../timing'
+import { useTimingConfig } from '../context/TimingConfigContext'
 
 interface InitialAssessmentPanelProps {
   onCommenceResuscitation: () => void
@@ -33,13 +33,14 @@ export function InitialAssessmentPanel({
   onCompleteVod,
   formatCountdown,
 }: InitialAssessmentPanelProps) {
+  const { timing } = useTimingConfig()
   const [selectedMainIds, setSelectedMainIds] = useState<Set<InitialAssessmentItemId>>(() => new Set())
   const [selectedObviousIds, setSelectedObviousIds] = useState<Set<ObviouslyDeceasedCriterionId>>(
     () => new Set(),
   )
   const [phase, setPhase] = useState<AssessmentPhase>('list')
   const [observationActive, setObservationActive] = useState(false)
-  const [observationCountdown, setObservationCountdown] = useState(VOD_COUNTDOWN_ACTUAL_SECONDS)
+  const [observationCountdown, setObservationCountdown] = useState(timing.vodCountdownActualSeconds)
   const [observationChecklist, setObservationChecklist] = useState<Set<VodObservationChecklistId>>(
     () => new Set(),
   )
@@ -96,7 +97,7 @@ export function InitialAssessmentPanel({
 
   function resetObservation() {
     setObservationActive(false)
-    setObservationCountdown(VOD_COUNTDOWN_ACTUAL_SECONDS)
+    setObservationCountdown(timing.vodCountdownActualSeconds)
     setObservationChecklist(new Set())
   }
 
@@ -117,7 +118,7 @@ export function InitialAssessmentPanel({
   }
 
   function startObservation() {
-    setObservationCountdown(VOD_COUNTDOWN_ACTUAL_SECONDS)
+    setObservationCountdown(timing.vodCountdownActualSeconds)
     setObservationChecklist(new Set())
     setObservationActive(true)
   }

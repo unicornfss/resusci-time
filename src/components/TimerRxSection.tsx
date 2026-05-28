@@ -1,3 +1,4 @@
+import { useTimingConfig } from '../context/TimingConfigContext'
 import {
   buildRxDrugLines,
   getAdrenalineNextDueLabel,
@@ -33,6 +34,8 @@ export function TimerRxSection({
   onLogAmiodarone,
   formatRemaining,
 }: TimerRxSectionProps) {
+  const { timing } = useTimingConfig()
+
   const lines = buildRxDrugLines({
     initialRhythm,
     hasNonShockableRhythm,
@@ -43,7 +46,7 @@ export function TimerRxSection({
     nextAdrenalineAt,
   })
 
-  const visualState = getRxBoxVisualState(lines, toDisplaySeconds)
+  const visualState = getRxBoxVisualState(lines, (s) => toDisplaySeconds(s, timing.timeScale))
   const totals = getRxDrugTotals(initialRhythm, adrenalineDoseCount, amiodaroneDoseCount, shockCount)
 
   function handleLog(id: RxDrugId) {

@@ -237,6 +237,28 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
   margin-top: 0.5rem;
 }
 
+.preview-speed-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+}
+
+.preview-speed-label {
+  font-weight: 600;
+  color: var(--amber-700);
+}
+
+.preview-speed-select {
+  min-height: 2rem;
+  padding: 0.15rem 0.4rem;
+  font-weight: 600;
+  color: var(--amber-700);
+  background: var(--amber-100);
+  border: 1px solid var(--amber-600);
+  border-radius: 4px;
+}
+
 .test-timer-jump-btn {
   min-height: 2rem;
   font-weight: 600;
