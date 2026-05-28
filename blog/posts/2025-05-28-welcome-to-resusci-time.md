@@ -7,7 +7,7 @@ summary: Adult cardiac arrest timer and checklist to help front line emergency c
 
 Resusci-Time is a guided timer and checklist for **adult cardiac arrest** management. It is designed to support ambulance crews in the field with rhythm checks, drug reminders, reversible causes, termination review, and a structured event log. It is based on the Spring 2026 JRCALC / AACE clinical guidelines.
 
-Resusci-Time logo
+![Resusci-Time logo](../images/resusci-time-logo.png)
 
 ## What is available now
 

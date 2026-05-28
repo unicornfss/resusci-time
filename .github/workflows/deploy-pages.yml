@@ -55,6 +55,11 @@ jobs:
         run: BUILD_PREVIEW_ONLY=1 OUTPUT_DIR="${{ github.workspace }}/dist-pages" node scripts/build-pages.mjs
         working-directory: preview-src
 
+      - name: Update landing page from testing branch
+        if: github.ref_name == 'testing'
+        run: BUILD_LANDING_ONLY=1 OUTPUT_DIR="${{ github.workspace }}/dist-pages" node scripts/build-pages.mjs
+        working-directory: preview-src
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist-pages
