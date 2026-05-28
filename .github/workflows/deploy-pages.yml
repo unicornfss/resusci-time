@@ -9,7 +9,6 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  actions: write
 
 concurrency:
   group: pages
@@ -62,7 +61,6 @@ jobs:
 
   deploy:
     needs: build
-    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -70,23 +68,3 @@ jobs:
     steps:
       - uses: actions/deploy-pages@v4
         id: deployment
-
-  # testing branch cannot deploy directly (github-pages environment protection).
-  # Dispatch deploy-pages-artifact.yml on main, which downloads this run's artifact.
-  trigger-deploy-from-main:
-    needs: build
-    if: github.ref == 'refs/heads/testing'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-pages-artifact.yml',
-              ref: 'main',
-              inputs: {
-                artifact_run_id: String(context.runId),
-              },
-            })
