@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { serviceConfig } from './config'
+import { parseShareFromLocation, type SharedLogPayload } from './logShare'
+import {
+  autosaveLog,
+  clearAutosaveLog,
+  formatSavedLogLabel,
+  getAutosaveLog,
+  isLogStorageAvailable,
+  type SavedLogMeta,
+  type SavedLogRecord,
+} from './logStorage'
 import { useTimer } from './hooks/useTimer'
 import { MetronomeToggle } from './components/MetronomeToggle'
 import { useMetronome } from './hooks/useMetronome'
@@ -41,12 +51,15 @@ import { ResuscitationQualityChecklist } from './components/ResuscitationQuality
 import { InitialAssessmentPanel } from './components/InitialAssessmentPanel'
 import { ReversibleCausesModal } from './components/ReversibleCausesModal'
 import { AboutModal } from './components/AboutModal'
+import { AppVersionInfo } from './components/AppVersionInfo'
 import { InstallAppButton } from './components/InstallAppButton'
 import { RoscChecklist } from './components/RoscChecklist'
 import { TimerRxSection } from './components/TimerRxSection'
 import { TimerRoscRxSection } from './components/TimerRoscRxSection'
 import { ClinicalDiscussionTimerSection } from './components/ClinicalDiscussionTimerSection'
 import { EventLogPanel } from './components/EventLogPanel'
+import { SharedLogViewer } from './components/SharedLogViewer'
+import { SavedLogsModal } from './components/SavedLogsModal'
 import { TimerVodCompleteStamp, TimerVodSection } from './components/TimerVodSection'
 import { VodTimestampsSummary } from './components/VodTimestampsSummary'
 import { PulseRateReminderPanel } from './components/PulseRateReminderPanel'
@@ -66,6 +79,7 @@ import {
 import {
   allReversibleCausesComplete,
   getReversibleCauseLogLabel,
+  getReversibleCauseUncheckedLogLabel,
   REVERSIBLE_CAUSES,
   type ReversibleCauseId,
 } from './reversibleCauses'
@@ -97,7 +111,7 @@ import {
   SODIUM_CHLORIDE_OPTIONS,
 } from './interventions'
 import type { DisplayLogEntry, ProtocolStep, Rhythm, RoscStatus } from './types'
-import { FORTY_FIVE_MINUTES_SECONDS, ADRENALINE_INTERVAL_SECONDS, IS_TEST_TIMING, RHYTHM_CHECK_INTERVAL, ROSC_MONITORING_REMINDER_INTERVAL_SECONDS, ROSC_SUSTAINED_THRESHOLD_ACTUAL_SECONDS, TEST_JUMP_TO_ACTUAL_SECONDS, VOD_COUNTDOWN_ACTUAL_SECONDS, getRhythmCheckRemainingFraction, toDisplaySeconds } from './timing'
+import { FORTY_FIVE_MINUTES_SECONDS, ADRENALINE_INTERVAL_SECONDS, IS_TEST_TIMING, RHYTHM_CHECK_INTERVAL, ROSC_MONITORING_REMINDER_INTERVAL_SECONDS, ROSC_SUSTAINED_THRESHOLD_ACTUAL_SECONDS, TEST_JUMP_TO_ACTUAL_SECONDS, VOD_COUNTDOWN_ACTUAL_SECONDS, getRhythmCheckRemainingFraction, getTestModeBannerText, toDisplaySeconds } from './timing'
 import {
   ATROPINE_DOSE_MG,
   ATROPINE_MAX_MG,
@@ -166,6 +180,9 @@ function App() {
   >(() => new Set())
   const [showReversibleCausesModal, setShowReversibleCausesModal] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [savedLogsOpen, setSavedLogsOpen] = useState(false)
+  const [autosaveOffer, setAutosaveOffer] = useState<SavedLogRecord | null>(null)
+  const [sharedLog, setSharedLog] = useState<SharedLogPayload | null>(() => parseShareFromLocation())
   const preRhythmModalsRef = useRef<PreRhythmModalState | null>(null)
   const prevRhythmCheckAlertOpenRef = useRef(false)
   const pendingContinuousCompressionsFromChecklistRef = useRef(false)
@@ -507,6 +524,8 @@ function App() {
     setClinicalDiscussionPending(false)
     setClinicalDiscussionOpen(false)
     sustainedRoscLoggedRef.current = false
+    setAutosaveOffer(null)
+    void clearAutosaveLog()
     timer.reset()
   }
 
@@ -606,9 +625,25 @@ function App() {
   }
 
   function toggleReversibleCause(id: ReversibleCauseId) {
-    if (completedReversibleCauseIds.has(id)) return
     const label = REVERSIBLE_CAUSES.find((item) => item.id === id)?.label
     if (!label) return
+
+    if (completedReversibleCauseIds.has(id)) {
+      pushLogEntry(getReversibleCauseUncheckedLogLabel(label))
+      setCompletedReversibleCauseIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+      setCompletedQualityPromptIds((quality) => {
+        if (!quality.has('reversible-causes')) return quality
+        const next = new Set(quality)
+        next.delete('reversible-causes')
+        return next
+      })
+      return
+    }
+
     pushLogEntry(getReversibleCauseLogLabel(label))
     setCompletedReversibleCauseIds((prev) => {
       const next = new Set([...prev, id])
@@ -899,6 +934,59 @@ function App() {
 
   const hasLog = logEntries.length > 0
   const sortedLogEntries = sortDisplayLogEntries(logEntries)
+  const logDocumentTitle = serviceConfig.headerTitle
+  const logSaveMeta: SavedLogMeta = {
+    ...(initialRhythm ? { initialRhythm } : {}),
+    ...(hasLog ? { elapsed: displayElapsed(timer.elapsedSeconds) } : {}),
+    ...(torEndedAtLabel ? { torAt: torEndedAtLabel } : {}),
+    ...(vodAtLabel ? { vodAt: vodAtLabel } : {}),
+  }
+
+  useEffect(() => {
+    function syncShareFromHash() {
+      setSharedLog(parseShareFromLocation())
+    }
+    window.addEventListener('hashchange', syncShareFromHash)
+    return () => window.removeEventListener('hashchange', syncShareFromHash)
+  }, [])
+
+  useEffect(() => {
+    if (sharedLog) return
+    void getAutosaveLog().then((record) => {
+      if (record && record.entries.length > 0) {
+        setAutosaveOffer(record)
+      }
+    })
+  }, [sharedLog])
+
+  useEffect(() => {
+    if (!isLogStorageAvailable() || logEntries.length === 0) return
+
+    const timer = window.setTimeout(() => {
+      void autosaveLog({
+        trustId: serviceConfig.trustId,
+        documentTitle: logDocumentTitle,
+        entries: sortedLogEntries,
+        meta: logSaveMeta,
+      })
+    }, 800)
+
+    return () => window.clearTimeout(timer)
+  }, [
+    logEntries,
+    logDocumentTitle,
+    sortedLogEntries,
+    initialRhythm,
+    torEndedAtLabel,
+    vodAtLabel,
+    timer.elapsedSeconds,
+  ])
+
+  useEffect(() => {
+    if (logEntries.length > 0 || step !== 'start') {
+      setAutosaveOffer(null)
+    }
+  }, [logEntries.length, step])
 
   const showRxSection =
     timerView === 'arrest' &&
@@ -1004,6 +1092,9 @@ function App() {
             <button type="button" className="header-link-btn" onClick={() => setAboutOpen(true)}>
               About
             </button>
+            <button type="button" className="header-link-btn" onClick={() => setSavedLogsOpen(true)}>
+              Saved logs
+            </button>
             <InstallAppButton />
           </div>
           <ThemeToggle />
@@ -1022,7 +1113,7 @@ function App() {
         </p>
         {IS_TEST_TIMING && (
           <div className="test-mode-controls">
-            <p className="test-banner">Test mode — protocol times at 10% (elapsed shows real protocol time)</p>
+            <p className="test-banner">{getTestModeBannerText()}</p>
             {timerActive && showResuscitationTimerControls && timerView === 'arrest' && (
               <button type="button" className="btn btn-sm test-timer-jump-btn" onClick={handleJumpToTestFortyFour}>
                 Jump to 44:00
@@ -1031,6 +1122,45 @@ function App() {
           </div>
         )}
       </header>
+
+      {autosaveOffer && step === 'start' && logEntries.length === 0 && !sharedLog && (
+        <div className="autosave-restore-banner card" role="status">
+          <p>
+            Autosaved log from {formatSavedLogLabel(autosaveOffer.savedAt)} (
+            {autosaveOffer.entries.length} events). Restore log entries or discard?
+          </p>
+          <div className="autosave-restore-actions">
+            <button
+              type="button"
+              className="btn btn-primary btn-sm"
+              onClick={() => {
+                setLogEntries(autosaveOffer.entries.map((entry) => ({ ...entry })))
+                setShowRhythmLog(true)
+                setAutosaveOffer(null)
+              }}
+            >
+              Restore log
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                void clearAutosaveLog()
+                setAutosaveOffer(null)
+              }}
+            >
+              Discard
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setSavedLogsOpen(true)}
+            >
+              Saved logs
+            </button>
+          </div>
+        </div>
+      )}
 
       {timerActive && !postTorActive && !vodCompleteActive && (
         <MetronomeToggle
@@ -1379,17 +1509,11 @@ function App() {
                   {showRhythmLog ? 'Hide log' : 'View log'}
                 </button>
                 {showRhythmLog && (
-                  <>
-                    <p className="check-log-label">Log</p>
-                    <ul className="check-log">
-                      {sortedLogEntries.map((entry, i) => (
-                        <li key={`${entry.atEpochMs}-${entry.text}-${i}`}>
-                          <span className="check-time">{entry.label}</span>
-                          <span>{entry.text}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
+                  <EventLogPanel
+                    entries={sortedLogEntries}
+                    documentTitle={logDocumentTitle}
+                    saveMeta={logSaveMeta}
+                  />
                 )}
               </>
             )}
@@ -1470,7 +1594,11 @@ function App() {
               then record VOD when appropriate.
             </p>
             {torEndedAtLabel && <p className="tor-stamp-summary">TOR occurred at {torEndedAtLabel}</p>}
-            <EventLogPanel entries={sortedLogEntries} />
+            <EventLogPanel
+              entries={sortedLogEntries}
+              documentTitle={logDocumentTitle}
+              saveMeta={logSaveMeta}
+            />
           </section>
         )}
 
@@ -1485,7 +1613,13 @@ function App() {
               <VodTimestampsSummary entries={sortedLogEntries} vodAtLabel={vodAtLabel} />
             )}
             <p className="elapsed-summary">Total elapsed: {displayElapsed(timer.elapsedSeconds)}</p>
-            {vodAtLabel && hasLog && <EventLogPanel entries={sortedLogEntries} />}
+            {vodAtLabel && hasLog && (
+              <EventLogPanel
+                entries={sortedLogEntries}
+                documentTitle={logDocumentTitle}
+                saveMeta={logSaveMeta}
+              />
+            )}
             <button type="button" className="btn btn-primary btn-lg" onClick={resetAll}>
               New case
             </button>
@@ -1500,9 +1634,16 @@ function App() {
             About &amp; contact
           </button>
         </p>
+        <AppVersionInfo />
       </footer>
 
       {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
+
+      {savedLogsOpen && <SavedLogsModal onClose={() => setSavedLogsOpen(false)} />}
+
+      {sharedLog && (
+        <SharedLogViewer payload={sharedLog} onClose={() => setSharedLog(null)} />
+      )}
 
       {showInterventions && (
         <div

@@ -1,24 +1,31 @@
-import { defaultFeatures } from './defaults'
+import { defaultBrandBackgroundAsset, defaultFeatures } from './defaults'
 import { emasTrust } from './trusts/emas'
+import { standardTrust } from './trusts/standard'
 import { wmasTrust } from './trusts/wmas'
+import type { BuildChannel } from './trustIds'
 import type { ServiceConfig, TrustId } from './types'
 
 const TRUSTS = {
   wmas: wmasTrust,
   emas: emasTrust,
+  standard: standardTrust,
 } as const
 
-export function isTrustId(value: string): value is TrustId {
-  return value === 'wmas' || value === 'emas'
-}
+export { isTrustId } from './trustIds'
 
-export function getServiceConfig(trustId: TrustId): ServiceConfig {
+export function getServiceConfig(trustId: TrustId, channel: BuildChannel = 'live'): ServiceConfig {
   const trust = TRUSTS[trustId]
+  const isPreview = channel === 'preview'
+  const versionSuffix = isPreview ? ' version (Preview)' : ' version'
+
   return {
     trustId: trust.trustId,
     trustLabel: trust.trustLabel,
-    pageTitle: `Resusci-Time - ${trust.trustLabel} version`,
-    headerTitle: `Resusci-Time - ${trust.trustLabel} version`,
+    buildChannel: channel,
+    isPreview,
+    pageTitle: `Resusci-Time - ${trust.trustLabel}${versionSuffix}`,
+    headerTitle: `Resusci-Time - ${trust.trustLabel}${versionSuffix}`,
+    brandBackgroundAsset: trust.brandBackgroundAsset ?? defaultBrandBackgroundAsset,
     features: {
       codeShock: {
         ...defaultFeatures.codeShock,
@@ -31,7 +38,9 @@ export function getServiceConfig(trustId: TrustId): ServiceConfig {
 export function buildWebManifest(config: ServiceConfig) {
   return {
     name: config.pageTitle,
-    short_name: `Resusci-Time ${config.trustLabel}`,
+    short_name: config.isPreview
+      ? `Resusci-Time ${config.trustLabel} Preview`
+      : `Resusci-Time ${config.trustLabel}`,
     description:
       'Guided adult cardiac arrest protocol timer and checklist for ambulance resources.',
     start_url: './',

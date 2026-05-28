@@ -10,7 +10,8 @@ interface BeforeInstallPromptEvent extends Event {
 const STORAGE_PREFIX = 'resusci-time-pwa-installed-'
 
 function installedStorageKey(): string {
-  return `${STORAGE_PREFIX}${serviceConfig.trustId}`
+  const channel = serviceConfig.isPreview ? '-preview' : ''
+  return `${STORAGE_PREFIX}${serviceConfig.trustId}${channel}`
 }
 
 function isStandaloneDisplay(): boolean {

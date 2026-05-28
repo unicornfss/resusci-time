@@ -1,4 +1,5 @@
 import type { MouseEvent } from 'react'
+import { getAppVersionSummary } from '../appVersion'
 import { ABOUT_SECTIONS, SUPPORT_EMAIL } from '../aboutContent'
 
 interface AboutModalProps {
@@ -27,6 +28,8 @@ export function AboutModal({ onClose }: AboutModalProps) {
         </div>
 
         <div className="about-body">
+          <p className="about-version">{getAppVersionSummary()}</p>
+
           {ABOUT_SECTIONS.map((section) => (
             <section key={section.heading} className="about-section">
               <h3>{section.heading}</h3>

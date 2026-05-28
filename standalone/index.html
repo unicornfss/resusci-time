@@ -20,7 +20,7 @@
       --amber-100: #f5eacd; --amber-600: #d97706;
       --red-100: #f5dede; --red-600: #dc2626; --red-700: #b91c1c;
       --text: #1a2e1a; --text-muted: #4a5f4a; --bg: #dfe8df;
-      --brand-bg-image: url('ambulance-service-logo.png');
+      --brand-bg-image: url('backgrounds/resusci-time-logo.png');
       --brand-bg-opacity: 0.24;
       --brand-bg-filter: none;
       --card-bg: #ebf2eb; --surface: #ebf2eb; --border: #b0c4b0;
@@ -576,7 +576,7 @@
     .reversible-causes-checkbox:disabled { cursor: default; }
     .reversible-causes-label { flex: 1; line-height: 1.4; }
     .reversible-causes-item-done .reversible-causes-label { text-decoration: line-through; opacity: 0.65; }
-    .reversible-causes-item-done .reversible-causes-item { cursor: default; }
+    .reversible-causes-item-done .reversible-causes-item { cursor: pointer; }
   </style>
   <script src="shock-config.js"></script>
 </head>
@@ -592,7 +592,7 @@
       <p class="als-guide-link-wrap">
         <a class="als-guide-link" href="als-alogorhythm.png" target="_blank" rel="noopener noreferrer">Advanced Life Support (ALS) alogorhythm</a>
       </p>
-      <p id="test-banner" class="test-banner hidden">Test mode — protocol times at 10% (elapsed shows real protocol time)</p>
+      <p id="test-banner" class="test-banner hidden">Test mode</p>
       <button type="button" id="test-jump-44-btn" class="btn btn-sm test-timer-jump-btn hidden">Jump to 44:00</button>
     </header>
 
@@ -854,7 +854,17 @@
     }
     const RHYTHM_VF_PVT = 'VF / pVT';
     const RHYTHMS = [RHYTHM_VF_PVT, 'PEA', 'Asystole'];
-    const TIME_SCALE = 0.1; // 1 = production; 0.1 = 10% for testing
+    function getTimeScalePercentLabel() {
+      const percent = TIME_SCALE * 100;
+      const rounded = Math.round(percent * 10) / 10;
+      return rounded + '%';
+    }
+
+    function getTestModeBannerText() {
+      return 'Test mode — protocol times at ' + getTimeScalePercentLabel() + ' (elapsed shows real protocol time)';
+    }
+
+    const TIME_SCALE = 0.1; // 1 = production; 0.25 = 25% duration, etc.
     const METRONOME_BPM = 100;
     const RHYTHM_CHECK_INTERVAL = Math.round(120 * TIME_SCALE);
     const ADRENALINE_INTERVAL = Math.round(240 * TIME_SCALE);
@@ -876,6 +886,25 @@
       if (rhythmChecksLogged < 3) return false;
       return initialRhythm === RHYTHM_VF_PVT || initialRhythm === 'PEA';
     }
+
+    const TRUST_ID = location.pathname.includes('/emas')
+      ? 'emas'
+      : location.pathname.includes('/wmas')
+        ? 'wmas'
+        : location.pathname.includes('/standard')
+          ? 'standard'
+          : 'standard';
+    const TRUST_LABEL = TRUST_ID === 'emas' ? 'EMAS' : TRUST_ID === 'wmas' ? 'WMAS' : 'Standard';
+    const TRUST_PAGE_TITLE = 'Resusci-Time - ' + TRUST_LABEL + ' version';
+    const TRUST_BRAND_BG = {
+      wmas: 'backgrounds/wmas-crest.png',
+      emas: 'backgrounds/emas-crest.png',
+    };
+    const BRAND_BG_ASSET = TRUST_BRAND_BG[TRUST_ID] || 'backgrounds/resusci-time-logo.png';
+    document.title = TRUST_PAGE_TITLE;
+    document.documentElement.style.setProperty('--brand-bg-image', "url('" + BRAND_BG_ASSET + "')");
+    const appTitleEl = document.getElementById('app-title');
+    if (appTitleEl) appTitleEl.textContent = TRUST_PAGE_TITLE;
 
     const CODE_SHOCK_ENABLED = TRUST_ID === 'wmas';
     const CODE_SHOCK_MIN_SHOCKS = 3;
@@ -1735,7 +1764,7 @@
           return '<li class="' + (done ? 'reversible-causes-item-done' : '') + '">' +
             '<label class="reversible-causes-item">' +
             '<input type="checkbox" class="reversible-causes-checkbox" data-reversible-cause="' + item.id + '"' +
-            (done ? ' checked disabled' : '') + ' />' +
+            (done ? ' checked' : '') + ' />' +
             '<span class="reversible-causes-label">' + item.label + '</span>' +
             '</label></li>';
         }).join('') +
@@ -1775,10 +1804,20 @@
       modal.innerHTML = renderReversibleCausesModalHtml();
     }
 
+    function getReversibleCauseUncheckedLogLabel(label) {
+      return 'Reversible cause unchecked: ' + label;
+    }
+
     function toggleReversibleCause(id) {
-      if (state.completedReversibleCauses[id]) return;
       const item = REVERSIBLE_CAUSES.find(function (i) { return i.id === id; });
       if (!item) return;
+      if (state.completedReversibleCauses[id]) {
+        delete state.completedReversibleCauses[id];
+        pushLogEntry(getReversibleCauseUncheckedLogLabel(item.label));
+        delete state.completedQualityPrompts['reversible-causes'];
+        render();
+        return;
+      }
       state.completedReversibleCauses[id] = true;
       pushLogEntry(getReversibleCauseLogLabel(item.label));
       if (allReversibleCausesComplete()) {
@@ -3101,7 +3140,11 @@
         torBtn.classList.toggle('hidden', state.timerView === 'rosc');
         torBtn.classList.toggle('on', state.elapsed >= FORTY_FIVE_MINUTES && state.timerView !== 'rosc');
       }
-      document.getElementById('test-banner').classList.toggle('hidden', TIME_SCALE === 1);
+      const testBanner = document.getElementById('test-banner');
+      if (testBanner) {
+        testBanner.textContent = getTestModeBannerText();
+        testBanner.classList.toggle('hidden', TIME_SCALE === 1);
+      }
       const showTestJump =
         TIME_SCALE !== 1 &&
         show &&
@@ -3854,7 +3897,7 @@
 
     document.getElementById('reversible-causes-modal').addEventListener('change', function (e) {
       const cb = e.target.closest('[data-reversible-cause]');
-      if (cb && !cb.disabled) toggleReversibleCause(cb.dataset.reversibleCause);
+      if (cb) toggleReversibleCause(cb.dataset.reversibleCause);
     });
 
     render();

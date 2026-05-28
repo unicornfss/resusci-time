@@ -14,7 +14,7 @@ registerServiceWorker()
 
 document.documentElement.style.setProperty(
   '--brand-bg-image',
-  `url('${publicAssetUrl('ambulance-service-logo.png')}')`,
+  `url('${publicAssetUrl(serviceConfig.brandBackgroundAsset)}')`,
 )
 
 createRoot(document.getElementById('root')!).render(

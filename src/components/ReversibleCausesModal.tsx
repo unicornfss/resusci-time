@@ -30,7 +30,6 @@ function ReversibleCauseColumn({
                 type="checkbox"
                 className="reversible-causes-checkbox"
                 checked={done}
-                disabled={done}
                 onChange={() => onToggle(item.id)}
               />
               <span className="reversible-causes-label">{item.label}</span>

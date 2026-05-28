@@ -10,7 +10,9 @@ const PRECACHE_URLS = [
   './favicon-192.png',
   './favicon-512.png',
   './apple-touch-icon.png',
-  './ambulance-service-logo.png',
+  './backgrounds/resusci-time-logo.png',
+  './backgrounds/wmas-crest.png',
+  './backgrounds/emas-crest.png',
   './als-alogorhythm.png',
 ]
 

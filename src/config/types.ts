@@ -1,4 +1,4 @@
-export type TrustId = 'wmas' | 'emas'
+export type TrustId = 'wmas' | 'emas' | 'standard'
 
 export interface CodeShockFeature {
   enabled: boolean
@@ -11,12 +11,22 @@ export interface ServiceFeatures {
   codeShock: CodeShockFeature
 }
 
+import type { BuildChannel } from './trustIds'
+
 export interface ServiceConfig {
   trustId: TrustId
   trustLabel: string
+  buildChannel: BuildChannel
+  isPreview: boolean
   pageTitle: string
   headerTitle: string
+  brandBackgroundAsset: string
   features: ServiceFeatures
 }
 
-export type TrustOverrides = Pick<ServiceConfig, 'trustId' | 'trustLabel' | 'features'>
+export type TrustOverrides = Pick<
+  ServiceConfig,
+  'trustId' | 'trustLabel' | 'features'
+> & {
+  brandBackgroundAsset?: string
+}

@@ -32,6 +32,10 @@ export function getReversibleCauseLogLabel(label: string): string {
   return `Reversible cause considered: ${label}`
 }
 
+export function getReversibleCauseUncheckedLogLabel(label: string): string {
+  return `Reversible cause unchecked: ${label}`
+}
+
 export function allReversibleCausesComplete(completedIds: ReadonlySet<ReversibleCauseId>): boolean {
   return REVERSIBLE_CAUSES.every((item) => completedIds.has(item.id))
 }

@@ -1,5 +1,11 @@
-/** Set to 1 for production protocol times. 0.1 = 10% for testing. */
-export const TIME_SCALE: number = 0.1
+function readTimeScale(): number {
+  const raw = import.meta.env.VITE_TIME_SCALE
+  const parsed = raw ? Number(raw) : 1
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1
+}
+
+/** Set via VITE_TIME_SCALE at build time. Live builds use 1; preview builds use a lower value. */
+export const TIME_SCALE: number = readTimeScale()
 
 export const RHYTHM_CHECK_INTERVAL = Math.round(120 * TIME_SCALE)
 export const ADRENALINE_INTERVAL_SECONDS = Math.round(240 * TIME_SCALE)
@@ -17,6 +23,22 @@ export const ROSC_SUSTAINED_THRESHOLD_ACTUAL_SECONDS = Math.round(
 )
 
 export const IS_TEST_TIMING = TIME_SCALE !== 1
+export const IS_PREVIEW_BUILD = import.meta.env.VITE_BUILD_CHANNEL === 'preview'
+
+/** Human-readable scale for the test-mode banner, e.g. 0.25 → "25%". */
+export function getTimeScalePercentLabel(): string {
+  const percent = TIME_SCALE * 100
+  const rounded = Math.round(percent * 10) / 10
+  return Number.isInteger(rounded) ? `${rounded}%` : `${rounded}%`
+}
+
+export function getTestModeBannerText(): string {
+  if (IS_PREVIEW_BUILD) {
+    return `Preview build — for testing only. Not for live clinical use. Protocol times at ${getTimeScalePercentLabel()} (elapsed shows real protocol time).`
+  }
+
+  return `Test mode — protocol times at ${getTimeScalePercentLabel()} (elapsed shows real protocol time)`
+}
 
 /** Test helper: jump arrest timer to 44:00 display time (1 min before 45:00 TOR). */
 export const TEST_JUMP_TO_DISPLAY_SECONDS = 44 * 60

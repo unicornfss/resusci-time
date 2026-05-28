@@ -14,7 +14,7 @@ export const ABOUT_SECTIONS = [
   {
     heading: 'Privacy',
     body:
-      'Resusci-Time runs entirely in your browser. It does not send patient data to a server. Event log entries and theme preference are kept locally on the device for the duration of the session (and theme choice may persist in browser storage).',
+      'Resusci-Time runs entirely in your browser. It does not send patient data to a server. Event log entries during an active case are kept in memory until you close the tab. You can save logs on the device (Saved logs) or export CSV/PDF. Theme preference may persist in browser storage.',
   },
   {
     heading: 'Install on your device',
