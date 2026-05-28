@@ -17,7 +17,7 @@ const outputRoot = process.env.OUTPUT_DIR
   : join(root, 'dist-pages')
 
 const packageJson = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
-const buildLabel = `Version ${packageJson.version} · Last updated ${new Date().toLocaleString('en-GB', {
+const buildLabel = `Version ${packageJson.version} - Last updated ${new Date().toLocaleString('en-GB', {
   dateStyle: 'medium',
   timeStyle: 'short',
 })}`
@@ -25,7 +25,7 @@ const buildLabel = `Version ${packageJson.version} · Last updated ${new Date().t
 const liveLinks = trustManifest
   .map(
     ({ id, label }) =>
-      `<li><a href="./${id}/">Resusci-Time ? ${label} version</a></li>`,
+      `<li><a href="./${id}/">Resusci-Time - ${label} version</a></li>`,
   )
   .join('\n        ')
 
@@ -40,7 +40,7 @@ const landingHtml = renderSitePage({
       </ul>
       <p class="hint">Standard has no trust-specific options. Bookmark the link for your service.</p>
       <ul class="link-list">
-        <li><a href="./blog/">Blog ? updates &amp; guides</a></li>
+        <li><a href="./blog/">Blog - updates &amp; guides</a></li>
       </ul>
       <p class="version">${buildLabel}</p>
     `,

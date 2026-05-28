@@ -40,7 +40,7 @@ export const INSTALL_HELP: Record<
     steps: [
       'Run: npm run build:all',
       'Then run: npm run preview:all',
-      'Open http://localhost:4173/standard/, /wmas/, or /emas/ in Chrome or Edge.',
+      'Open http://localhost:4173/standard-preview/ (preview) or /standard/ (live) — include the trailing slash.',
       'The Install app button should appear in the header.',
     ],
     note: 'On the live site, the button works the same way in Chrome, Edge, and on Android.',

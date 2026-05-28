@@ -1,14 +1,19 @@
 export type TrustId = 'wmas' | 'emas' | 'standard'
 
 export interface CodeShockFeature {
-  enabled: boolean
   minShocks: number
   prompt: string
   logLabel: string
 }
 
+export interface MedicationOption {
+  id: string
+  label: string
+}
+
 export interface ServiceFeatures {
-  codeShock: CodeShockFeature
+  codeShock?: CodeShockFeature
+  extraMedications: readonly MedicationOption[]
 }
 
 import type { BuildChannel } from './trustIds'
@@ -24,9 +29,10 @@ export interface ServiceConfig {
   features: ServiceFeatures
 }
 
-export type TrustOverrides = Pick<
-  ServiceConfig,
-  'trustId' | 'trustLabel' | 'features'
-> & {
+export type TrustOverrides = Pick<ServiceConfig, 'trustId' | 'trustLabel'> & {
   brandBackgroundAsset?: string
+  features?: {
+    codeShock?: CodeShockFeature
+    extraMedications?: readonly MedicationOption[]
+  }
 }

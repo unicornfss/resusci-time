@@ -22,7 +22,7 @@
     "build:all": "node scripts/build-pages.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "preview:all": "vite preview --outDir dist-pages",
+    "preview:all": "node scripts/preview-all.mjs",
     "preview:wmas": "npm run build:wmas && vite preview",
     "preview:emas": "npm run build:emas && vite preview",
     "preview:standard": "npm run build:standard && vite preview",

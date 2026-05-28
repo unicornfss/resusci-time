@@ -5,11 +5,6 @@ export const emasTrust: TrustOverrides = {
   trustLabel: 'EMAS',
   brandBackgroundAsset: 'backgrounds/emas-crest.png',
   features: {
-    codeShock: {
-      enabled: false,
-      minShocks: 3,
-      prompt: 'CODE SHOCK notified to EOC',
-      logLabel: 'CODE SHOCK notified to EOC',
-    },
+    extraMedications: [{ id: 'sodium-bicarbonate', label: 'Sodium bicarbonate' }],
   },
 }

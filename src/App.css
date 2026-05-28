@@ -1190,22 +1190,18 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
   color: var(--green-800);
 }
 
-.interventions-list {
-  display: flex;
-  flex-direction: column;
+.interventions-list,
+.intervention-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--touch-gap);
   margin-bottom: 0.75rem;
 }
 
 .intervention-option {
   min-height: var(--touch-min);
-}
-
-.intervention-options {
-  display: flex;
-  flex-direction: column;
-  gap: var(--touch-gap);
-  margin-bottom: 0.75rem;
+  white-space: normal;
+  line-height: 1.25;
 }
 
 .intervention-option-saved {
