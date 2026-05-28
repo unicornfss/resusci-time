@@ -5,9 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev:wmas": "vite --mode wmas",
+    "dev:emas": "vite --mode emas",
+    "build": "node scripts/build-pages.mjs",
+    "build:wmas": "tsc -b && vite build --mode wmas",
+    "build:emas": "tsc -b && vite build --mode emas",
+    "build:all": "node scripts/build-pages.mjs",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:all": "vite preview --outDir dist-pages",
+    "preview:wmas": "npm run build:wmas && vite preview",
+    "preview:emas": "npm run build:emas && vite preview"
   },
   "dependencies": {
     "react": "^19.2.4",

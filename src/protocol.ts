@@ -129,19 +129,21 @@ export function getEarlyTransferLogLabel(): string {
   return 'Early transfer to hospital — considered'
 }
 
-export const CODE_SHOCK_MIN_SHOCKS = 3
+import { serviceConfig } from './config'
 
 export function shouldShowCodeShockReminder(shockCount: number, acknowledged: boolean): boolean {
+  const { codeShock } = serviceConfig.features
+  if (!codeShock.enabled) return false
   if (acknowledged) return false
-  return shockCount >= CODE_SHOCK_MIN_SHOCKS
+  return shockCount >= codeShock.minShocks
 }
 
 export function getCodeShockPrompt(): string {
-  return 'CODE SHOCK notified to EOC'
+  return serviceConfig.features.codeShock.prompt
 }
 
 export function getCodeShockLogLabel(): string {
-  return 'CODE SHOCK notified to EOC'
+  return serviceConfig.features.codeShock.logLabel
 }
 
 export const CONSECUTIVE_SHOCKS_FOR_VECTOR_REMINDER = 3

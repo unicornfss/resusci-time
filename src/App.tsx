@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { serviceConfig } from './config'
 import { useTimer } from './hooks/useTimer'
 import { MetronomeToggle } from './components/MetronomeToggle'
 import { useMetronome } from './hooks/useMetronome'
@@ -40,6 +41,7 @@ import { ResuscitationQualityChecklist } from './components/ResuscitationQuality
 import { InitialAssessmentPanel } from './components/InitialAssessmentPanel'
 import { ReversibleCausesModal } from './components/ReversibleCausesModal'
 import { AboutModal } from './components/AboutModal'
+import { InstallAppButton } from './components/InstallAppButton'
 import { RoscChecklist } from './components/RoscChecklist'
 import { TimerRxSection } from './components/TimerRxSection'
 import { TimerRoscRxSection } from './components/TimerRoscRxSection'
@@ -998,12 +1000,15 @@ function App() {
     <div className="app">
       <header className="header">
         <div className="header-toolbar">
-          <button type="button" className="header-link-btn" onClick={() => setAboutOpen(true)}>
-            About
-          </button>
+          <div className="header-toolbar-start">
+            <button type="button" className="header-link-btn" onClick={() => setAboutOpen(true)}>
+              About
+            </button>
+            <InstallAppButton />
+          </div>
           <ThemeToggle />
         </div>
-        <h1>Resusci-Time</h1>
+        <h1>{serviceConfig.headerTitle}</h1>
         <p className="subtitle">Adult Cardiac Arrest · Ambulance Resource Protocol</p>
         <p className="als-guide-link-wrap">
           <a

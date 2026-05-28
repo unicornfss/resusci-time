@@ -587,7 +587,7 @@
         <button type="button" id="about-open-btn" class="header-link-btn">About</button>
         <button type="button" id="theme-toggle" class="theme-toggle" aria-pressed="false">Night mode</button>
       </div>
-      <h1>Resusci-Time</h1>
+      <h1 id="app-title">Resusci-Time</h1>
       <p class="subtitle">Adult Cardiac Arrest · Ambulance Resource Protocol</p>
       <p class="als-guide-link-wrap">
         <a class="als-guide-link" href="als-alogorhythm.png" target="_blank" rel="noopener noreferrer">Advanced Life Support (ALS) alogorhythm</a>
@@ -877,9 +877,11 @@
       return initialRhythm === RHYTHM_VF_PVT || initialRhythm === 'PEA';
     }
 
+    const CODE_SHOCK_ENABLED = TRUST_ID === 'wmas';
     const CODE_SHOCK_MIN_SHOCKS = 3;
 
     function shouldShowCodeShockReminder(shockCount, acknowledged) {
+      if (!CODE_SHOCK_ENABLED) return false;
       if (acknowledged) return false;
       return shockCount >= CODE_SHOCK_MIN_SHOCKS;
     }

@@ -117,6 +117,33 @@ body::before {
   margin-bottom: 0.35rem;
 }
 
+.header-toolbar-start {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.header-link-btn--install {
+  color: var(--green-800);
+  border-color: var(--green-600);
+  background: var(--green-50, var(--card-bg));
+}
+
+.header-link-btn--install:hover {
+  background: var(--green-100, var(--card-bg));
+}
+
+.install-help-steps {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  line-height: 1.55;
+}
+
+.install-help-steps li + li {
+  margin-top: 0.5rem;
+}
+
 .header-link-btn {
   font-size: 0.8rem;
   font-weight: 600;
