@@ -2,6 +2,7 @@
 title: Getting started with Resusci-Time
 date: 2025-05-28
 category: guide
+audience: all
 summary: Standard build capabilities and day-to-day use on shift.
 ---
 
@@ -58,6 +59,7 @@ Saved “Other” entries reappear for quick re-use during the same case.
 **App features**
 
 - Install as an app (PWA) on supported phones and tablets
+- **Screen stays awake during a case** — while the timer is running, the app tries to prevent the display sleeping (works best in Chrome / Edge; allow if prompted)
 - Day / night theme
 - Works offline after first load
 
@@ -88,10 +90,12 @@ See **End of case** above. Follow the on-screen flow that matches your clinical 
 
 Use the **event log** panel to export, share, or save the record. Autosave keeps a draft on the device if you leave mid-case — you will be offered a restore when you return.
 
+When you are finished, tap **New case** to clear the timer and log. If entries exist, the app asks you to confirm first so nothing is wiped by accident.
+
 ## Tips
 
 - Run through a **training case** before first live use.
-- Keep screen brightness up and **Do Not Disturb** on if possible.
+- Keep screen brightness up and **Do Not Disturb** on if possible — the app also tries to keep the screen awake during an active case.
 - The app supports **day/night** theme from the header toggle.
 
 More guides will be added here as features grow. If you spot a bug, need a custom service build, or have a feature idea, contact your local clinical lead or the project maintainer.

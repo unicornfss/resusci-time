@@ -1,12 +1,16 @@
 import type { MouseEvent } from 'react'
 import { getAppVersionSummary } from '../appVersion'
 import { ABOUT_SECTIONS, SUPPORT_EMAIL } from '../aboutContent'
+import { serviceConfig } from '../config'
+import { getBlogUrl } from '../blogUrl'
 
 interface AboutModalProps {
   onClose: () => void
 }
 
 export function AboutModal({ onClose }: AboutModalProps) {
+  const blogUrl = getBlogUrl(serviceConfig.trustId)
+
   function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
     if (event.target === event.currentTarget) onClose()
   }
@@ -36,6 +40,17 @@ export function AboutModal({ onClose }: AboutModalProps) {
               <p>{section.body}</p>
             </section>
           ))}
+
+          <section className="about-section">
+            <h3>Updates &amp; guides</h3>
+            <p>
+              <a className="about-email-link" href={blogUrl}>
+                Open the blog
+              </a>
+              {' '}
+              for release notes and how-to guides for this build.
+            </p>
+          </section>
 
           <p className="about-contact">
             <a className="about-email-link" href={`mailto:${SUPPORT_EMAIL}`}>

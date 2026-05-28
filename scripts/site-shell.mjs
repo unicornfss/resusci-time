@@ -146,9 +146,13 @@ export function siteStyles(assetPrefix = './') {
 `
 }
 
-export function renderSitePage({ title, assetPrefix = './', body, wide = false }) {
+export function renderSitePage({ title, assetPrefix = './', body, wide = false, includeBlog = true }) {
   const homeHref = assetPrefix
   const blogHref = `${assetPrefix}blog/`
+  const blogNav = includeBlog
+    ? `<span class="sep" aria-hidden="true">·</span>
+        <a href="${blogHref}">Blog</a>`
+    : ''
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -161,9 +165,7 @@ export function renderSitePage({ title, assetPrefix = './', body, wide = false }
   <body>
     <div class="page${wide ? ' wide' : ''}">
       <nav class="site-nav" aria-label="Site">
-        <a href="${homeHref}">Home</a>
-        <span class="sep" aria-hidden="true">·</span>
-        <a href="${blogHref}">Blog</a>
+        <a href="${homeHref}">Home</a>${blogNav}
       </nav>
       ${body}
     </div>

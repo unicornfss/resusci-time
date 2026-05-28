@@ -24,3 +24,6 @@ LOCAL-DEV.md
 *.njsproj
 *.sln
 *.sw?
+
+Resusci-Time-QI-and-Technical-Overview.pptx
+scripts/create-qi-presentation.py

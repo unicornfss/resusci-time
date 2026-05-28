@@ -13,6 +13,7 @@ import {
 import { useTimer } from './hooks/useTimer'
 import { MetronomeToggle } from './components/MetronomeToggle'
 import { useMetronome } from './hooks/useMetronome'
+import { useWakeLock } from './hooks/useWakeLock'
 import { useScrollWhenShown } from './hooks/useScrollWhenShown'
 import {
   createDisplayLogEntry,
@@ -52,6 +53,7 @@ import { InitialAssessmentPanel } from './components/InitialAssessmentPanel'
 import { ReversibleCausesModal } from './components/ReversibleCausesModal'
 import { AboutModal } from './components/AboutModal'
 import { AppVersionInfo } from './components/AppVersionInfo'
+import { getBlogUrl } from './blogUrl'
 import { InstallAppButton } from './components/InstallAppButton'
 import { RoscChecklist } from './components/RoscChecklist'
 import { TimerRxSection } from './components/TimerRxSection'
@@ -475,6 +477,14 @@ function App() {
     (step !== 'complete' || vodAtLabel != null)
 
   useMetronome(metronomeEnabled && timerActive)
+  useWakeLock(timerActive)
+
+  function handleNewCase() {
+    if (logEntries.length > 0 && !window.confirm('Start a new case? The current log will be cleared.')) {
+      return
+    }
+    resetAll()
+  }
 
   function resetAll() {
     setStep('start')
@@ -1116,7 +1126,7 @@ function App() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Advanced Life Support (ALS) alogorhythm
+            Advanced Life Support (ALS) algorithm
           </a>
         </p>
         {IS_TEST_TIMING && (
@@ -1628,7 +1638,7 @@ function App() {
                 saveMeta={logSaveMeta}
               />
             )}
-            <button type="button" className="btn btn-primary btn-lg" onClick={resetAll}>
+            <button type="button" className="btn btn-primary btn-lg" onClick={handleNewCase}>
               New case
             </button>
           </section>
@@ -1637,7 +1647,13 @@ function App() {
 
       <footer className="footer">
         <p>Refer to guideline for details. This tool supports clinical decision-making — it does not replace local protocols or senior clinical judgement.</p>
-        <p>
+        <p className="footer-actions">
+          <a className="footer-link-btn" href={getBlogUrl(serviceConfig.trustId)}>
+            Blog — updates &amp; guides
+          </a>
+          <span className="footer-sep" aria-hidden="true">
+            ·
+          </span>
           <button type="button" className="footer-link-btn" onClick={() => setAboutOpen(true)}>
             About &amp; contact
           </button>
