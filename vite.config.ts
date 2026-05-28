@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { buildWebManifest, getServiceConfig } from './src/config/getServiceConfig'
-import { isTrustId, parseViteMode, TRUST_IDS } from './src/config/trustIds'
+import { isTrustId, liveOutputFolder, parseViteMode, previewOutputFolder, TRUST_IDS } from './src/config/trustIds'
 import type { TrustId } from './src/config/types'
 
 const packageJson = JSON.parse(
@@ -67,8 +67,8 @@ function trustBuildPlugin(trustId: TrustId, channel: 'live' | 'preview'): Plugin
 
 function multiPagePreviewPlugin(): Plugin {
   const folders = [
-    ...TRUST_IDS,
-    ...TRUST_IDS.map((id) => `${id}-preview`),
+    ...TRUST_IDS.map((id) => liveOutputFolder(id)),
+    ...TRUST_IDS.map((id) => previewOutputFolder(id)),
     'blog',
   ]
 

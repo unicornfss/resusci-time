@@ -1,5 +1,15 @@
 [
   { "id": "standard", "label": "Standard" },
-  { "id": "wmas", "label": "WMAS" },
-  { "id": "emas", "label": "EMAS" }
+  {
+    "id": "wmas",
+    "label": "WMAS",
+    "liveSlug": "7kpm3xnq",
+    "previewSlug": "w2ht9vrl"
+  },
+  {
+    "id": "emas",
+    "label": "EMAS",
+    "liveSlug": "b6fj4myc",
+    "previewSlug": "q8nd5kzp"
+  }
 ]
