@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { marked } from 'marked'
@@ -6,7 +6,7 @@ import { categoryBadge, formatDate, renderSitePage } from './site-shell.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const postsDir = join(root, 'blog', 'posts')
-const blogOut = join(root, 'dist-pages', 'blog')
+const blogImagesDir = join(root, 'blog', 'images')
 
 marked.setOptions({ gfm: true, breaks: false })
 
@@ -78,6 +78,10 @@ export function buildBlog(outputRoot) {
   const blogRoot = join(outputRoot, 'blog')
   const postsOut = join(blogRoot, 'posts')
   mkdirSync(postsOut, { recursive: true })
+
+  if (existsSync(blogImagesDir)) {
+    cpSync(blogImagesDir, join(blogRoot, 'images'), { recursive: true })
+  }
 
   const news = posts.filter((post) => post.category === 'news')
   const guides = posts.filter((post) => post.category === 'guide')
