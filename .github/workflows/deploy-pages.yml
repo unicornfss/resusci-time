@@ -30,8 +30,13 @@ jobs:
           ref: ${{ github.ref_name == 'testing' && 'testing' || 'main' }}
           path: preview-src
 
-      - name: Use current build script for main checkout
-        run: cp preview-src/scripts/build-pages.mjs live-src/scripts/build-pages.mjs
+      - name: Sync build config onto live checkout
+        run: |
+          cp preview-src/scripts/build-pages.mjs live-src/scripts/build-pages.mjs
+          cp preview-src/scripts/trustPaths.mjs live-src/scripts/trustPaths.mjs
+          cp preview-src/src/config/trust-manifest.json live-src/src/config/trust-manifest.json
+          cp preview-src/src/config/trustIds.ts live-src/src/config/trustIds.ts
+          cp preview-src/vite.config.ts live-src/vite.config.ts
 
       - uses: actions/setup-node@v4
         with:
