@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import trustManifest from '../src/config/trust-manifest.json' with { type: 'json' }
 import { buildBlog } from './build-blog.mjs'
-import { previewOutputFolder } from './trustPaths.mjs'
+import { previewOutputFolder, liveOutputFolder } from './trustPaths.mjs'
 import { renderSitePage } from './site-shell.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -63,7 +63,7 @@ function copyStaticSiteAssets() {
 
 function buildLiveTrusts() {
   for (const { id } of trustManifest) {
-    buildTrustMode(id, id)
+    buildTrustMode(id, liveOutputFolder(id))
   }
 }
 
@@ -102,8 +102,8 @@ if (buildAll || buildLiveOnly || buildLandingOnly) {
   console.log('Landing page and blog updated')
 }
 if (buildAll || buildLiveOnly) {
-  const liveIds = trustManifest.map(({ id }) => id).join(', ')
-  console.log(`Live folders: ${liveIds}`)
+  const liveFolders = trustManifest.map(({ id }) => liveOutputFolder(id)).join(', ')
+  console.log(`Live folders: ${liveFolders}`)
 }
 if (buildAll || buildPreviewOnly) {
   const previewIds = trustManifest.map(({ id }) => previewOutputFolder(id)).join(', ')

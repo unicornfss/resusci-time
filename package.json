@@ -20,6 +20,7 @@
     "build:emas-preview": "npm run build:trust -- --mode emas-preview",
     "build:standard-preview": "npm run build:trust -- --mode standard-preview",
     "build:all": "node scripts/build-pages.mjs",
+    "trust:paths": "node scripts/list-trust-paths.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "preview:all": "node scripts/preview-all.mjs",
