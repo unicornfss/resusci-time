@@ -13,6 +13,7 @@ import {
 import { useTimer } from './hooks/useTimer'
 import { MetronomeToggle } from './components/MetronomeToggle'
 import { useMetronome } from './hooks/useMetronome'
+import { useWakeLock } from './hooks/useWakeLock'
 import { useScrollWhenShown } from './hooks/useScrollWhenShown'
 import {
   createDisplayLogEntry,
@@ -52,6 +53,7 @@ import { InitialAssessmentPanel } from './components/InitialAssessmentPanel'
 import { ReversibleCausesModal } from './components/ReversibleCausesModal'
 import { AboutModal } from './components/AboutModal'
 import { AppVersionInfo } from './components/AppVersionInfo'
+import { getBlogUrl } from './blogUrl'
 import { InstallAppButton } from './components/InstallAppButton'
 import { RoscChecklist } from './components/RoscChecklist'
 import { TimerRxSection } from './components/TimerRxSection'
@@ -113,7 +115,10 @@ import {
   SODIUM_CHLORIDE_OPTIONS,
 } from './interventions'
 import type { DisplayLogEntry, ProtocolStep, Rhythm, RoscStatus } from './types'
-import { FORTY_FIVE_MINUTES_SECONDS, ADRENALINE_INTERVAL_SECONDS, IS_TEST_TIMING, RHYTHM_CHECK_INTERVAL, ROSC_MONITORING_REMINDER_INTERVAL_SECONDS, ROSC_SUSTAINED_THRESHOLD_ACTUAL_SECONDS, TEST_JUMP_TO_ACTUAL_SECONDS, VOD_COUNTDOWN_ACTUAL_SECONDS, getRhythmCheckRemainingFraction, getTestModeBannerText, toDisplaySeconds } from './timing'
+import { PreviewSpeedControl } from './components/PreviewSpeedControl'
+import { useTimingConfig } from './context/TimingConfigContext'
+import { IS_PREVIEW_BUILD, getRhythmCheckRemainingFraction, getTestModeBannerText, toDisplaySeconds } from './timing'
+import type { PreviewSpeedMultiplier } from './previewSpeed'
 import {
   ATROPINE_DOSE_MG,
   ATROPINE_MAX_MG,
@@ -130,8 +135,8 @@ import './App.css'
 type ShockContext = 'initial' | 'check'
 type RhythmCheckEntry = { minute: number; label: string; rhythm: Rhythm; shockJoules?: number }
 
-function displayElapsed(actualSeconds: number) {
-  return formatElapsed(toDisplaySeconds(actualSeconds))
+function displayElapsed(actualSeconds: number, timeScale: number) {
+  return formatElapsed(toDisplaySeconds(actualSeconds, timeScale))
 }
 
 type PreRhythmModalState = {
@@ -144,6 +149,13 @@ type PreRhythmModalState = {
 }
 
 function App() {
+  const {
+    timing,
+    previewSpeedMultiplier,
+    setPreviewSpeedMultiplier,
+    showPreviewSpeedControl,
+  } = useTimingConfig()
+
   const [step, setStep] = useState<ProtocolStep>('start')
   const [initialRhythm, setInitialRhythm] = useState<Rhythm | null>(null)
   const [currentRhythm, setCurrentRhythm] = useState<Rhythm | null>(null)
@@ -194,7 +206,7 @@ function App() {
   const codeShockReminderRef = useRef<HTMLDivElement>(null)
   const vascularAccessReminderRef = useRef<HTMLDivElement>(null)
   const roscMonitoringReminderRef = useRef<HTMLDivElement>(null)
-  const roscNextReminderAtRef = useRef(ROSC_MONITORING_REMINDER_INTERVAL_SECONDS)
+  const roscNextReminderAtRef = useRef(timing.roscMonitoringReminderIntervalSeconds)
   const sbpAdrenaline50AwaitingNextReminderRef = useRef(false)
   const sustainedRoscLoggedRef = useRef(false)
   const timerViewRef = useRef<TimerView>('arrest')
@@ -210,7 +222,7 @@ function App() {
   const [atropineTotalMg, setAtropineTotalMg] = useState(0)
   const [peaTorCriteriaMet, setPeaTorCriteriaMet] = useState<boolean | null>(null)
   const [torEndedAtLabel, setTorEndedAtLabel] = useState<string | null>(null)
-  const [vodCountdownRemaining, setVodCountdownRemaining] = useState(VOD_COUNTDOWN_ACTUAL_SECONDS)
+  const [vodCountdownRemaining, setVodCountdownRemaining] = useState(timing.vodCountdownActualSeconds)
   const [vodAtLabel, setVodAtLabel] = useState<string | null>(null)
   const [sustainedRoscEverAchieved, setSustainedRoscEverAchieved] = useState(false)
   const [clinicalDiscussionPending, setClinicalDiscussionPending] = useState(false)
@@ -224,6 +236,11 @@ function App() {
   const vfvtShockCount = totalShocks
   const hasNonShockableRhythm = hasNonShockableRhythmLogged(rhythmChecks.map((c) => c.rhythm))
 
+  const formatProtocolElapsed = useCallback(
+    (actualSeconds: number) => displayElapsed(actualSeconds, timing.timeScale),
+    [timing.timeScale],
+  )
+
   const openShockForm = (context: ShockContext) => {
     setShockFormContext(context)
   }
@@ -231,6 +248,7 @@ function App() {
   const closeShockForm = () => setShockFormContext(null)
 
   const timer = useTimer({
+    timing,
     onRhythmCheckDue: useCallback(() => setShowRhythmCheckAlert(true), []),
     onFortyFiveMinutes: useCallback(() => {
       if (timerViewRef.current === 'rosc') return
@@ -327,7 +345,7 @@ function App() {
 
   useEffect(() => {
     if (timerView !== 'rosc' || sustainedRoscLoggedRef.current) return
-    if (roscElapsedSeconds >= ROSC_SUSTAINED_THRESHOLD_ACTUAL_SECONDS) {
+    if (roscElapsedSeconds >= timing.roscSustainedThresholdActualSeconds) {
       sustainedRoscLoggedRef.current = true
       pushLogEntry(getSustainedRoscAchievedLogLabel())
       setSustainedRoscEverAchieved(true)
@@ -338,7 +356,7 @@ function App() {
     if (timerView !== 'rosc') return
     if (roscElapsedSeconds > 0 && roscElapsedSeconds >= roscNextReminderAtRef.current) {
       showRoscMonitoringReminders()
-      roscNextReminderAtRef.current = roscElapsedSeconds + ROSC_MONITORING_REMINDER_INTERVAL_SECONDS
+      roscNextReminderAtRef.current = roscElapsedSeconds + timing.roscMonitoringReminderIntervalSeconds
     }
   }, [roscElapsedSeconds, timerView])
 
@@ -360,7 +378,7 @@ function App() {
     setSbpReminderExpanded(false)
     setPulseReminderExpanded(false)
     setPulseShowAtropineMaxMessage(false)
-    roscNextReminderAtRef.current = ROSC_MONITORING_REMINDER_INTERVAL_SECONDS
+    roscNextReminderAtRef.current = timing.roscMonitoringReminderIntervalSeconds
   }
 
   function applyRoscMonitoringShownSideEffects() {
@@ -381,7 +399,7 @@ function App() {
 
   function startRoscMonitoringOnRoscEntry() {
     showRoscMonitoringReminders()
-    roscNextReminderAtRef.current = ROSC_MONITORING_REMINDER_INTERVAL_SECONDS
+    roscNextReminderAtRef.current = timing.roscMonitoringReminderIntervalSeconds
   }
 
   function dismissSbpReminder() {
@@ -437,7 +455,7 @@ function App() {
     setTimerView('arrest')
     resetRoscMonitoringOnArrest()
     sustainedRoscLoggedRef.current = false
-    if (timer.elapsedSeconds >= FORTY_FIVE_MINUTES_SECONDS && !fortyFiveAcknowledged) {
+    if (timer.elapsedSeconds >= timing.fortyFiveMinutesSeconds && !fortyFiveAcknowledged) {
       setShowFortyFiveAlert(true)
     }
   }
@@ -475,6 +493,14 @@ function App() {
     (step !== 'complete' || vodAtLabel != null)
 
   useMetronome(metronomeEnabled && timerActive)
+  useWakeLock(timerActive)
+
+  function handleNewCase() {
+    if (logEntries.length > 0 && !window.confirm('Start a new case? The current log will be cleared.')) {
+      return
+    }
+    resetAll()
+  }
 
   function resetAll() {
     setStep('start')
@@ -520,7 +546,7 @@ function App() {
     setMetronomeEnabled(false)
     setPeaTorCriteriaMet(null)
     setTorEndedAtLabel(null)
-    setVodCountdownRemaining(VOD_COUNTDOWN_ACTUAL_SECONDS)
+    setVodCountdownRemaining(timing.vodCountdownActualSeconds)
     setVodAtLabel(null)
     setSustainedRoscEverAchieved(false)
     setClinicalDiscussionPending(false)
@@ -528,7 +554,23 @@ function App() {
     sustainedRoscLoggedRef.current = false
     setAutosaveOffer(null)
     void clearAutosaveLog()
+    roscNextReminderAtRef.current = timing.roscMonitoringReminderIntervalSeconds
     timer.reset()
+  }
+
+  function handlePreviewSpeedChange(speed: PreviewSpeedMultiplier) {
+    if (speed === previewSpeedMultiplier) return
+    const caseInProgress =
+      step !== 'start' &&
+      step !== 'initial-assessment' &&
+      step !== 'do-not-resuscitate' &&
+      (logEntries.length > 0 || timer.isRunning || step !== 'complete')
+    if (caseInProgress) {
+      const ok = window.confirm('Change preview speed? This will reset the current case.')
+      if (!ok) return
+      resetAll()
+    }
+    setPreviewSpeedMultiplier(speed)
   }
 
   function pushLogEntry(text: string, at?: Date): number {
@@ -545,9 +587,9 @@ function App() {
 
   function logInitialRhythm(rhythm: Rhythm, joules?: number) {
     const elapsed = timer.elapsedSeconds
-    const label = displayElapsed(elapsed)
+    const label = formatProtocolElapsed(elapsed)
     const entry: RhythmCheckEntry = {
-      minute: Math.floor(toDisplaySeconds(elapsed) / 60),
+      minute: Math.floor(toDisplaySeconds(elapsed, timing.timeScale) / 60),
       label,
       rhythm,
     }
@@ -762,7 +804,7 @@ function App() {
     const dose = adrenalineDoseCount + 1
     setAdrenalineDoseCount(dose)
     const atEpochMs = pushLogEntry(getAdrenalineLogLabel(dose))
-    setNextAdrenalineAt(timer.elapsedSeconds + ADRENALINE_INTERVAL_SECONDS)
+    setNextAdrenalineAt(timer.elapsedSeconds + timing.adrenalineIntervalSeconds)
     if (needsVascularPrompt) maybePromptVascularAccessAfterFirstMedication(atEpochMs)
   }
 
@@ -812,10 +854,10 @@ function App() {
   }
 
   function appendRhythmCheck(rhythm: Rhythm, joules?: number) {
-    const label = displayElapsed(timer.elapsedSeconds)
+    const label = formatProtocolElapsed(timer.elapsedSeconds)
     setRhythmChecks((prev) => {
       const entry: RhythmCheckEntry = {
-        minute: Math.floor(toDisplaySeconds(timer.elapsedSeconds) / 60),
+        minute: Math.floor(toDisplaySeconds(timer.elapsedSeconds, timing.timeScale) / 60),
         label,
         rhythm,
       }
@@ -865,7 +907,7 @@ function App() {
     setClinicalDiscussionOpen(false)
     pushLogEntry(TOR_END_LABEL, now)
     setTorEndedAtLabel(formatActualTime(now))
-    setVodCountdownRemaining(VOD_COUNTDOWN_ACTUAL_SECONDS)
+    setVodCountdownRemaining(timing.vodCountdownActualSeconds)
     setVodAtLabel(null)
     setStep('post-tor')
   }
@@ -944,7 +986,7 @@ function App() {
   const logDocumentTitle = serviceConfig.headerTitle
   const logSaveMeta: SavedLogMeta = {
     ...(initialRhythm ? { initialRhythm } : {}),
-    ...(hasLog ? { elapsed: displayElapsed(timer.elapsedSeconds) } : {}),
+    ...(hasLog ? { elapsed: formatProtocolElapsed(timer.elapsedSeconds) } : {}),
     ...(torEndedAtLabel ? { torAt: torEndedAtLabel } : {}),
     ...(vodAtLabel ? { vodAt: vodAtLabel } : {}),
   }
@@ -1004,7 +1046,7 @@ function App() {
       step === 'rosc-assessment')
 
   const displayTimerSeconds = timerView === 'rosc' ? roscElapsedSeconds : timer.elapsedSeconds
-  const roscPhaseLabel = timerView === 'rosc' ? getRoscPhaseLabel(roscElapsedSeconds) : null
+  const roscPhaseLabel = timerView === 'rosc' ? getRoscPhaseLabel(roscElapsedSeconds, timing.timeScale) : null
 
   useEffect(() => {
     function updateModalTopOffset() {
@@ -1054,7 +1096,7 @@ function App() {
     timerView === 'arrest'
 
   function handleJumpToTestFortyFour() {
-    timer.jumpToElapsed(TEST_JUMP_TO_ACTUAL_SECONDS)
+    timer.jumpToElapsed(timing.testJumpToActualSeconds)
   }
 
   function acknowledgeEarlyTransfer() {
@@ -1116,12 +1158,15 @@ function App() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            Advanced Life Support (ALS) alogorhythm
+            Advanced Life Support (ALS) algorithm
           </a>
         </p>
-        {IS_TEST_TIMING && (
+        {(IS_PREVIEW_BUILD || timing.isTestTiming) && (
           <div className="test-mode-controls">
-            <p className="test-banner">{getTestModeBannerText()}</p>
+            <p className="test-banner">{getTestModeBannerText(timing)}</p>
+            {showPreviewSpeedControl && previewSpeedMultiplier != null && (
+              <PreviewSpeedControl value={previewSpeedMultiplier} onChange={handlePreviewSpeedChange} />
+            )}
             {timerActive && showResuscitationTimerControls && timerView === 'arrest' && (
               <button type="button" className="btn btn-sm test-timer-jump-btn" onClick={handleJumpToTestFortyFour}>
                 Jump to 44:00
@@ -1188,13 +1233,13 @@ function App() {
               <span className="timer-label">
                 {postTorActive || vodCompleteActive ? 'Resuscitation ended' : timerView === 'rosc' ? 'ROSC' : 'Elapsed'}
               </span>
-              <span className="timer-value">{displayElapsed(displayTimerSeconds)}</span>
+              <span className="timer-value">{formatProtocolElapsed(displayTimerSeconds)}</span>
               {!postTorActive && !vodCompleteActive && (
               <span className="timer-mins">
                 {timerView === 'rosc' && roscPhaseLabel ? (
                   <span className="timer-rosc-phase">{roscPhaseLabel}</span>
                 ) : (
-                  `${Math.floor(toDisplaySeconds(timer.elapsedSeconds) / 60)} min`
+                  `${Math.floor(toDisplaySeconds(timer.elapsedSeconds, timing.timeScale) / 60)} min`
                 )}
               </span>
               )}
@@ -1256,31 +1301,31 @@ function App() {
               vodCountdownRemaining={vodCountdownRemaining}
               vodReady={vodReady}
               onVod={handleVod}
-              formatRemaining={displayElapsed}
+              formatRemaining={formatProtocolElapsed}
             />
           )}
           {vodCompleteActive && vodAtLabel && (
             <TimerVodCompleteStamp vodAtLabel={vodAtLabel} logEntries={sortedLogEntries} />
           )}
-          {showResuscitationTimerControls && step === 'active-resuscitation' && timer.elapsedSeconds < FORTY_FIVE_MINUTES_SECONDS && (
+          {showResuscitationTimerControls && step === 'active-resuscitation' && timer.elapsedSeconds < timing.fortyFiveMinutesSeconds && (
             <div className="timer-next-check">
               {!showRhythmCheckAlert ? (
                 <>
                   <span className="timer-next-check-label">
-                    Next rhythm check: {displayElapsed(timer.secondsToNextCheck)}
+                    Next rhythm check: {formatProtocolElapsed(timer.secondsToNextCheck)}
                   </span>
                   <div
                     className="rhythm-check-progress-track"
                     role="progressbar"
                     aria-label="Time until next rhythm check"
                     aria-valuemin={0}
-                    aria-valuemax={RHYTHM_CHECK_INTERVAL}
+                    aria-valuemax={timing.rhythmCheckInterval}
                     aria-valuenow={timer.secondsToNextCheck}
                   >
                     <div
                       className="rhythm-check-progress-fill"
                       style={{
-                        width: `${getRhythmCheckRemainingFraction(timer.secondsToNextCheck) * 100}%`,
+                        width: `${getRhythmCheckRemainingFraction(timer.secondsToNextCheck, timing.rhythmCheckInterval) * 100}%`,
                       }}
                     />
                   </div>
@@ -1301,7 +1346,7 @@ function App() {
               nextAdrenalineAt={nextAdrenalineAt}
               onLogAdrenaline={logAdrenaline}
               onLogAmiodarone={logAmiodarone}
-              formatRemaining={displayElapsed}
+              formatRemaining={formatProtocolElapsed}
             />
           )}
           {timerView === 'rosc' && step === 'active-resuscitation' && (
@@ -1461,7 +1506,7 @@ function App() {
           <InitialAssessmentPanel
             onCommenceResuscitation={commenceResuscitation}
             onCompleteVod={finishInitialAssessmentVod}
-            formatCountdown={displayElapsed}
+            formatCountdown={formatProtocolElapsed}
           />
         )}
 
@@ -1620,7 +1665,7 @@ function App() {
             {vodAtLabel && (
               <VodTimestampsSummary entries={sortedLogEntries} vodAtLabel={vodAtLabel} />
             )}
-            <p className="elapsed-summary">Total elapsed: {displayElapsed(timer.elapsedSeconds)}</p>
+            <p className="elapsed-summary">Total elapsed: {formatProtocolElapsed(timer.elapsedSeconds)}</p>
             {vodAtLabel && hasLog && (
               <EventLogPanel
                 entries={sortedLogEntries}
@@ -1628,7 +1673,7 @@ function App() {
                 saveMeta={logSaveMeta}
               />
             )}
-            <button type="button" className="btn btn-primary btn-lg" onClick={resetAll}>
+            <button type="button" className="btn btn-primary btn-lg" onClick={handleNewCase}>
               New case
             </button>
           </section>
@@ -1637,7 +1682,13 @@ function App() {
 
       <footer className="footer">
         <p>Refer to guideline for details. This tool supports clinical decision-making — it does not replace local protocols or senior clinical judgement.</p>
-        <p>
+        <p className="footer-actions">
+          <a className="footer-link-btn" href={getBlogUrl(serviceConfig.trustId)}>
+            Blog — updates &amp; guides
+          </a>
+          <span className="footer-sep" aria-hidden="true">
+            ·
+          </span>
           <button type="button" className="footer-link-btn" onClick={() => setAboutOpen(true)}>
             About &amp; contact
           </button>
@@ -1681,7 +1732,7 @@ function App() {
         >
           <div className="alert alert-warning rhythm-check-modal-panel">
             <strong id="rhythm-check-title">
-              Rhythm assessment due — {displayElapsed(timer.elapsedSeconds)}
+              Rhythm assessment due — {formatProtocolElapsed(timer.elapsedSeconds)}
             </strong>
             <p>Select the current monitored rhythm.</p>
             {shockFormContext !== 'check' && (

@@ -10,6 +10,20 @@ const blogImagesDir = join(root, 'blog', 'images')
 
 marked.setOptions({ gfm: true, breaks: false })
 
+/** @param {string | undefined} raw */
+function normalizeAudience(raw) {
+  if (!raw || !raw.trim() || raw.trim().toLowerCase() === 'all') {
+    return 'all'
+  }
+
+  const parts = raw
+    .split(',')
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean)
+
+  return parts.length > 0 ? parts.join(',') : 'all'
+}
+
 function parseFrontmatter(content, filename) {
   const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/)
   if (!match) {
@@ -19,7 +33,7 @@ function parseFrontmatter(content, filename) {
   const meta = {}
   for (const line of match[1].split('\n')) {
     const trimmed = line.trim()
-    if (!trimmed) continue
+    if (!trimmed || trimmed.startsWith('#')) continue
     const colon = trimmed.indexOf(':')
     if (colon === -1) continue
     const key = trimmed.slice(0, colon).trim()
@@ -51,6 +65,7 @@ function loadPosts() {
         date: meta.date,
         category,
         summary: meta.summary || '',
+        audience: normalizeAudience(meta.audience),
         body,
         html: marked.parse(body),
       }
@@ -65,13 +80,48 @@ function renderPostList(posts, assetPrefix) {
 
   return `<div class="post-grid">${posts
     .map(
-      (post) => `<a class="post-card" href="${assetPrefix}posts/${post.slug}.html">
+      (post) => `<a class="post-card" data-audience="${post.audience}" href="${assetPrefix}posts/${post.slug}.html">
         <h3>${categoryBadge(post.category)}${post.title}</h3>
         <p>${post.summary || ''}</p>
       </a>`,
     )
     .join('')}</div>`
 }
+
+const blogAudienceFilterScript = `
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var trust = (params.get('trust') || 'standard').toLowerCase();
+
+  function isVisible(audience) {
+    var list = audience.split(',').map(function (part) { return part.trim().toLowerCase(); });
+    return list.indexOf('all') !== -1 || list.indexOf(trust) !== -1;
+  }
+
+  document.querySelectorAll('[data-audience]').forEach(function (el) {
+    if (!isVisible(el.getAttribute('data-audience') || 'all')) {
+      el.style.display = 'none';
+    }
+  });
+
+  ['Latest updates', 'Guides'].forEach(function (headingText) {
+    document.querySelectorAll('h2').forEach(function (heading) {
+      if (heading.textContent !== headingText) return;
+      var grid = heading.nextElementSibling;
+      if (!grid || !grid.classList.contains('post-grid')) return;
+      var anyVisible = false;
+      grid.querySelectorAll('[data-audience]').forEach(function (card) {
+        if (card.style.display !== 'none') anyVisible = true;
+      });
+      if (!anyVisible) {
+        heading.style.display = 'none';
+        grid.style.display = 'none';
+      }
+    });
+  });
+})();
+</script>`
 
 export function buildBlog(outputRoot) {
   const posts = loadPosts()
@@ -89,11 +139,21 @@ export function buildBlog(outputRoot) {
   const indexBody = `
       <h1>Resusci-Time blog</h1>
       <p>Updates, release notes, and guides for using the app in practice.</p>
+      <p class="hint" id="blog-audience-note">Showing posts for the <strong>Standard</strong> build.</p>
       <h2>Latest updates</h2>
       ${renderPostList(news, './')}
       <h2>Guides</h2>
       ${renderPostList(guides, './')}
-      <p class="hint">New posts are published when changes are pushed to the main branch.</p>
+      ${blogAudienceFilterScript}
+      <script>
+        (function () {
+          var trust = (new URLSearchParams(window.location.search).get('trust') || 'standard').toLowerCase();
+          var labels = { standard: 'Standard', wmas: 'WMAS', emas: 'EMAS' };
+          var label = labels[trust] || trust.toUpperCase();
+          var note = document.getElementById('blog-audience-note');
+          if (note) note.innerHTML = 'Showing posts for the <strong>' + label + '</strong> build.';
+        })();
+      </script>
     `
 
   writeFileSync(join(blogRoot, 'index.html'), renderSitePage({

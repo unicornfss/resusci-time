@@ -17,6 +17,11 @@ export const ABOUT_SECTIONS = [
       'Resusci-Time runs entirely in your browser. It does not send patient data to a server. Event log entries during an active case are kept in memory until you close the tab. You can save logs on the device (Saved logs) or export CSV/PDF. Theme preference may persist in browser storage.',
   },
   {
+    heading: 'During a case',
+    body:
+      'While a case is running, the app tries to keep your screen awake so the timer stays visible. Allow this if your browser prompts you. For best results on shift, install the app, turn brightness up, and use Do Not Disturb if possible.',
+  },
+  {
     heading: 'Install on your device',
     body:
       'Add Resusci-Time to your home screen for quick access and offline use. On iPhone or iPad (Safari): tap Share, then Add to Home Screen — your Resusci-Time icon will appear on the home screen. On Android (Chrome): open the menu and choose Install app or Add to Home screen.',

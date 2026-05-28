@@ -1,25 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import {
-  FORTY_FIVE_MINUTES_SECONDS,
-  RHYTHM_CHECK_INTERVAL,
-} from '../timing'
+import type { TimingConfig } from '../timing'
 
 interface UseTimerOptions {
+  timing: TimingConfig
   onRhythmCheckDue?: () => void
   onFortyFiveMinutes?: () => void
 }
 
-export { RHYTHM_CHECK_INTERVAL } from '../timing'
-
-export function useTimer({ onRhythmCheckDue, onFortyFiveMinutes }: UseTimerOptions = {}) {
+export function useTimer({ timing, onRhythmCheckDue, onFortyFiveMinutes }: UseTimerOptions) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [isRunning, setIsRunning] = useState(false)
-  const nextCheckAt = useRef(RHYTHM_CHECK_INTERVAL)
+  const nextCheckAt = useRef(timing.rhythmCheckInterval)
   const fortyFiveFired = useRef(false)
   const checkDueFired = useRef(false)
+  const timingRef = useRef(timing)
+
+  timingRef.current = timing
 
   const start = useCallback(() => {
-    nextCheckAt.current = RHYTHM_CHECK_INTERVAL
+    nextCheckAt.current = timingRef.current.rhythmCheckInterval
     fortyFiveFired.current = false
     checkDueFired.current = false
     setElapsedSeconds(0)
@@ -32,20 +31,21 @@ export function useTimer({ onRhythmCheckDue, onFortyFiveMinutes }: UseTimerOptio
   const reset = useCallback(() => {
     setElapsedSeconds(0)
     setIsRunning(false)
-    nextCheckAt.current = RHYTHM_CHECK_INTERVAL
+    nextCheckAt.current = timingRef.current.rhythmCheckInterval
     fortyFiveFired.current = false
     checkDueFired.current = false
   }, [])
 
   const recordRhythmEntry = useCallback((atElapsed: number) => {
-    nextCheckAt.current = atElapsed + RHYTHM_CHECK_INTERVAL
+    nextCheckAt.current = atElapsed + timingRef.current.rhythmCheckInterval
     checkDueFired.current = false
   }, [])
 
   const jumpToElapsed = useCallback(
     (actualSeconds: number) => {
+      const { fortyFiveMinutesSeconds } = timingRef.current
       setElapsedSeconds(actualSeconds)
-      if (actualSeconds >= FORTY_FIVE_MINUTES_SECONDS) {
+      if (actualSeconds >= fortyFiveMinutesSeconds) {
         if (!fortyFiveFired.current) {
           fortyFiveFired.current = true
           onFortyFiveMinutes?.()
@@ -68,22 +68,24 @@ export function useTimer({ onRhythmCheckDue, onFortyFiveMinutes }: UseTimerOptio
   }, [isRunning])
 
   useEffect(() => {
+    const { fortyFiveMinutesSeconds } = timingRef.current
+
     if (
       elapsedSeconds >= nextCheckAt.current &&
-      elapsedSeconds <= FORTY_FIVE_MINUTES_SECONDS &&
+      elapsedSeconds <= fortyFiveMinutesSeconds &&
       !checkDueFired.current
     ) {
       checkDueFired.current = true
       onRhythmCheckDue?.()
     }
-    if (elapsedSeconds >= FORTY_FIVE_MINUTES_SECONDS && !fortyFiveFired.current) {
+    if (elapsedSeconds >= fortyFiveMinutesSeconds && !fortyFiveFired.current) {
       fortyFiveFired.current = true
       onFortyFiveMinutes?.()
     }
   }, [elapsedSeconds, onRhythmCheckDue, onFortyFiveMinutes])
 
   const minutes = Math.floor(elapsedSeconds / 60)
-  const atFortyFiveMinutes = elapsedSeconds >= FORTY_FIVE_MINUTES_SECONDS
+  const atFortyFiveMinutes = elapsedSeconds >= timing.fortyFiveMinutesSeconds
   const secondsToNextCheck = Math.max(0, nextCheckAt.current - elapsedSeconds)
 
   return {

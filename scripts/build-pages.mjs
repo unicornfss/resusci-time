@@ -12,6 +12,7 @@ const buildLiveOnly = process.env.BUILD_LIVE_ONLY === '1'
 const buildPreviewOnly = process.env.BUILD_PREVIEW_ONLY === '1'
 const buildLandingOnly = process.env.BUILD_LANDING_ONLY === '1'
 const buildAll = !buildLiveOnly && !buildPreviewOnly && !buildLandingOnly
+const includeBlog = process.env.INCLUDE_BLOG !== '0'
 
 const outputRoot = process.env.OUTPUT_DIR
   ? resolve(process.env.OUTPUT_DIR)
@@ -26,12 +27,12 @@ const buildLabel = `Version ${packageJson.version} - Last updated ${new Date().t
 const landingHtml = renderSitePage({
   title: 'Resusci-Time',
   assetPrefix: './',
+  includeBlog,
   body: `
       <h1>Resusci-Time</h1>
       <p>Adult cardiac arrest protocol timer and checklist.</p>
       <ul class="link-list">
-        <li><a href="./standard/">Open Resusci-Time</a></li>
-        <li><a href="./blog/">Blog - updates &amp; guides</a></li>
+        <li><a href="./standard/">Open Resusci-Time</a></li>${includeBlog ? '\n        <li><a href="./blog/">Blog - updates &amp; guides</a></li>' : ''}
       </ul>
       <p class="hint">Custom versions for individual ambulance services and NHS trusts are provided by separate arrangement.</p>
       <p class="version">${buildLabel}</p>
@@ -51,7 +52,9 @@ function copyStaticSiteAssets() {
     cpSync(backgroundsSrc, join(outputRoot, 'backgrounds'), { recursive: true })
   }
 
-  buildBlog(outputRoot)
+  if (includeBlog) {
+    buildBlog(outputRoot)
+  }
 
   for (const cnamePath of [join(root, 'public', 'CNAME'), join(root, 'CNAME')]) {
     if (existsSync(cnamePath)) {
@@ -79,7 +82,7 @@ if (buildAll) {
   buildLiveTrusts()
   buildPreviewTrusts()
   copyStaticSiteAssets()
-  console.log('Built full dist-pages (live + preview + blog + landing)')
+  console.log(`Built full dist-pages (live + preview${includeBlog ? ' + blog' : ''} + landing)`)
 } else if (buildLiveOnly) {
   rmSync(outputRoot, { recursive: true, force: true })
   mkdirSync(outputRoot, { recursive: true })
@@ -93,13 +96,13 @@ if (buildAll) {
 } else if (buildLandingOnly) {
   mkdirSync(outputRoot, { recursive: true })
   copyStaticSiteAssets()
-  console.log('Built landing page and blog into existing dist-pages (from current checkout)')
+  console.log(`Built landing page${includeBlog ? ' and blog' : ''} into existing dist-pages (from current checkout)`)
 } else {
   throw new Error('Invalid build flags')
 }
 
 if (buildAll || buildLiveOnly || buildLandingOnly) {
-  console.log('Landing page and blog updated')
+  console.log(includeBlog ? 'Landing page and blog updated' : 'Landing page updated (blog omitted)')
 }
 if (buildAll || buildLiveOnly) {
   const liveFolders = trustManifest.map(({ id }) => liveOutputFolder(id)).join(', ')
