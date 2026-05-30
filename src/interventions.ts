@@ -28,7 +28,7 @@ export const AIRWAY_OPTIONS = [
   'Tracheostomy',
 ] as const
 
-export const BREATHING_OPTIONS = ['BVM', 'Mechanical vent.'] as const
+export const BREATHING_OPTIONS = ['BVM', 'Mechanical vent.', 'Needle decompression'] as const
 
 export const CIRCULATION_OPTIONS = ['Thoracotomy', 'Mechanical compressions'] as const
 
@@ -81,6 +81,9 @@ export function getAirwayLogLabel(option: string): string {
 }
 
 export function getBreathingLogEntries(option: (typeof BREATHING_OPTIONS)[number]): string[] {
+  if (option === 'Needle decompression') {
+    return [`Breathing — ${option}`]
+  }
   return [`Breathing — ${option}`, 'Oxygen']
 }
 

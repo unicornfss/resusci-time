@@ -34,6 +34,8 @@ export function getServiceConfig(trustId: TrustId, channel: BuildChannel = 'live
 }
 
 export function buildWebManifest(config: ServiceConfig) {
+  const iconPrefix = config.isPreview ? 'preview-icons/' : ''
+
   return {
     name: config.pageTitle,
     short_name: config.isPreview
@@ -48,10 +50,15 @@ export function buildWebManifest(config: ServiceConfig) {
     theme_color: '#1f4f1f',
     background_color: '#dfe8df',
     icons: [
-      { src: 'favicon-192.png', sizes: '192x192', type: 'image/png' },
-      { src: 'apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-      { src: 'favicon-512.png', sizes: '512x512', type: 'image/png' },
-      { src: 'favicon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: `${iconPrefix}favicon-192.png`, sizes: '192x192', type: 'image/png' },
+      { src: `${iconPrefix}apple-touch-icon.png`, sizes: '180x180', type: 'image/png' },
+      { src: `${iconPrefix}favicon-512.png`, sizes: '512x512', type: 'image/png' },
+      {
+        src: `${iconPrefix}favicon-512.png`,
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
     ],
   }
 }

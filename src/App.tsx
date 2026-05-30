@@ -29,6 +29,9 @@ import {
   getRoscGuidance,
   getVectorChangeLogLabel,
   getVectorChangePrompt,
+  getProlongedVfPrompt,
+  PROLONGED_VF_LOG_LABEL,
+  shouldTriggerProlongedVf,
   getVodCriteriaLogLabel,
   RHYTHM_OPTIONS,
   RHYTHM_VF_PVT,
@@ -165,6 +168,7 @@ function App() {
   const [fortyFiveAcknowledged, setFortyFiveAcknowledged] = useState(false)
   const [earlyTransferAcknowledged, setEarlyTransferAcknowledged] = useState(false)
   const [codeShockAcknowledged, setCodeShockAcknowledged] = useState(false)
+  const [prolongedVfAcknowledged, setProlongedVfAcknowledged] = useState(false)
   const [showFortyFiveAlert, setShowFortyFiveAlert] = useState(false)
   const [showRhythmCheckAlert, setShowRhythmCheckAlert] = useState(false)
   const [rhythmChecks, setRhythmChecks] = useState<RhythmCheckEntry[]>([])
@@ -204,10 +208,12 @@ function App() {
   const vectorChangeReminderRef = useRef<HTMLDivElement>(null)
   const earlyTransferReminderRef = useRef<HTMLDivElement>(null)
   const codeShockReminderRef = useRef<HTMLDivElement>(null)
+  const prolongedVfAlertRef = useRef<HTMLDivElement>(null)
   const vascularAccessReminderRef = useRef<HTMLDivElement>(null)
   const roscMonitoringReminderRef = useRef<HTMLDivElement>(null)
   const roscNextReminderAtRef = useRef(timing.roscMonitoringReminderIntervalSeconds)
   const sbpAdrenaline50AwaitingNextReminderRef = useRef(false)
+  const prolongedVfLoggedRef = useRef(false)
   const sustainedRoscLoggedRef = useRef(false)
   const timerViewRef = useRef<TimerView>('arrest')
   const [timerView, setTimerView] = useState<TimerView>('arrest')
@@ -512,6 +518,8 @@ function App() {
     setFortyFiveAcknowledged(false)
     setEarlyTransferAcknowledged(false)
     setCodeShockAcknowledged(false)
+    setProlongedVfAcknowledged(false)
+    prolongedVfLoggedRef.current = false
     setShowFortyFiveAlert(false)
     setShowRhythmCheckAlert(false)
     setRhythmChecks([])
@@ -824,8 +832,16 @@ function App() {
   function afterRhythmLogged(rhythm: Rhythm, joules?: number) {
     const nextCount = nextConsecutiveShockCount(consecutiveShockCount, rhythm, joules)
     setConsecutiveShockCount(nextCount)
+    if (nextCount === 0) {
+      prolongedVfLoggedRef.current = false
+      setProlongedVfAcknowledged(false)
+    }
     if (shouldShowVectorChangeReminder(nextCount)) {
       setShowVectorChangeReminder(true)
+    }
+    if (shouldTriggerProlongedVf(nextCount) && !prolongedVfLoggedRef.current) {
+      prolongedVfLoggedRef.current = true
+      pushLogEntry(PROLONGED_VF_LOG_LABEL)
     }
   }
 
@@ -966,6 +982,12 @@ function App() {
     timerView === 'arrest' &&
     shouldShowCodeShockReminder(totalShocks, codeShockAcknowledged)
 
+  const showProlongedVf =
+    step === 'active-resuscitation' &&
+    timerView === 'arrest' &&
+    shouldTriggerProlongedVf(consecutiveShockCount) &&
+    !prolongedVfAcknowledged
+
   const showVascularAccessPanel =
     showVascularAccessReminder &&
     (step === 'select-rhythm' || step === 'active-resuscitation')
@@ -978,6 +1000,7 @@ function App() {
   useScrollWhenShown(showVectorChangeReminder, vectorChangeReminderRef)
   useScrollWhenShown(showEarlyTransfer, earlyTransferReminderRef)
   useScrollWhenShown(showCodeShock, codeShockReminderRef)
+  useScrollWhenShown(showProlongedVf, prolongedVfAlertRef)
   useScrollWhenShown(showVascularAccessPanel, vascularAccessReminderRef)
   useScrollWhenShown(showRoscMonitoringArea, roscMonitoringReminderRef)
 
@@ -1107,6 +1130,10 @@ function App() {
   function acknowledgeCodeShock() {
     setCodeShockAcknowledged(true)
     pushLogEntry(getCodeShockLogLabel())
+  }
+
+  function acknowledgeProlongedVf() {
+    setProlongedVfAcknowledged(true)
   }
 
   const interventionsPanel = showInterventions ? (
@@ -1422,6 +1449,15 @@ function App() {
         <div ref={codeShockReminderRef} className="code-shock-panel" role="status">
           <p>{getCodeShockPrompt()}</p>
           <button type="button" className="btn btn-primary btn-lg" onClick={acknowledgeCodeShock}>
+            Acknowledge
+          </button>
+        </div>
+      )}
+
+      {showProlongedVf && (
+        <div ref={prolongedVfAlertRef} className="prolonged-vf-panel" role="status">
+          <p>{getProlongedVfPrompt()}</p>
+          <button type="button" className="btn btn-primary btn-lg" onClick={acknowledgeProlongedVf}>
             Acknowledge
           </button>
         </div>

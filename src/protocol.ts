@@ -78,6 +78,7 @@ export const RESUSCITATION_QUALITY_HEADER =
   'High-quality chest compressions and ventilations, and:'
 
 export type ResuscitationQualityPromptId =
+  | 'additional-resources'
   | 'pad-placement'
   | 'oxygen'
   | 'continuous-compressions'
@@ -99,6 +100,7 @@ export interface ResuscitationQualityPrompt {
 }
 
 export const RESUSCITATION_QUALITY_ITEMS: readonly ResuscitationQualityPrompt[] = [
+  { id: 'additional-resources', label: 'Request additional resources (if required)', action: 'log' },
   { id: 'minimise-interruptions', label: 'Minimise interruptions to chest compressions', action: 'log' },
   { id: 'pad-placement', label: 'Ensure optimal defibrillator pad placement', action: 'log' },
   { id: 'oxygen', label: 'Give oxygen', action: 'log' },
@@ -161,6 +163,16 @@ export function getVectorChangePrompt(): string {
 
 export function getVectorChangeLogLabel(changed: boolean): string {
   return changed ? 'Vector change — changed' : 'Vector change — not changed'
+}
+
+export function shouldTriggerProlongedVf(consecutiveShockCount: number): boolean {
+  return consecutiveShockCount >= CONSECUTIVE_SHOCKS_FOR_VECTOR_REMINDER
+}
+
+export const PROLONGED_VF_LOG_LABEL = 'Prolonged VF'
+
+export function getProlongedVfPrompt(): string {
+  return 'Prolonged VF — senior advice will be required before any termination of resuscitation.'
 }
 
 export function nextConsecutiveShockCount(

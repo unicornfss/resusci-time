@@ -27,7 +27,8 @@
     "preview:wmas": "npm run build:wmas && vite preview",
     "preview:emas": "npm run build:emas && vite preview",
     "preview:standard": "npm run build:standard && vite preview",
-    "preview:wmas-preview": "npm run build:wmas-preview && vite preview"
+    "preview:wmas-preview": "npm run build:wmas-preview && vite preview",
+    "icons:generate": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "jspdf": "^4.2.0",
@@ -48,6 +49,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "marked": "^15.0.12",
+    "sharp": "^0.34.5",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
     "vite": "^8.0.1"

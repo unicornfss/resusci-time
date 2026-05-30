@@ -1007,7 +1007,8 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
 }
 
 .early-transfer-panel,
-.code-shock-panel {
+.code-shock-panel,
+.prolonged-vf-panel {
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;
   border-radius: 10px;
@@ -1017,7 +1018,8 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
 }
 
 .early-transfer-panel p,
-.code-shock-panel p {
+.code-shock-panel p,
+.prolonged-vf-panel p {
   margin: 0 0 1rem;
   font-size: 1.05rem;
   font-weight: 700;
@@ -1025,7 +1027,8 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
 }
 
 .early-transfer-panel .btn,
-.code-shock-panel .btn {
+.code-shock-panel .btn,
+.prolonged-vf-panel .btn {
   min-height: var(--touch-min);
 }
 
