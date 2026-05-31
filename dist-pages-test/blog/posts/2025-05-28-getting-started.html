@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f4f1f" />
+    <title>Getting started with Resusci-Time · Resusci-Time</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #dfe8df;
+        --panel: #f4f8f4;
+        --text: #1a2e1a;
+        --text-muted: #4a5f4a;
+        --accent: #2d6a2d;
+        --border: #b8c9b8;
+        --brand-bg-image: url('../../backgrounds/resusci-time-logo.png');
+        --brand-bg-opacity: 0.24;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 1.5rem;
+        position: relative;
+        line-height: 1.5;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background: var(--brand-bg-image) center / min(85vw, 540px) no-repeat;
+        opacity: var(--brand-bg-opacity);
+      }
+      .page {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 40rem);
+        margin: 0 auto;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.75rem;
+        box-shadow: 0 8px 24px rgba(26, 46, 26, 0.08);
+      }
+      .page.wide { width: min(100%, 48rem); }
+      .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        margin-bottom: 1.25rem;
+        font-size: 0.9rem;
+      }
+      .site-nav a {
+        color: var(--accent);
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .site-nav a:hover, .site-nav a:focus-visible { text-decoration: underline; outline: none; }
+      .site-nav .sep { color: var(--text-muted); user-select: none; }
+      h1 { margin: 0 0 0.35rem; font-size: 1.65rem; line-height: 1.25; }
+      h2 { margin: 1.75rem 0 0.75rem; font-size: 1.15rem; }
+      h2:first-child { margin-top: 0; }
+      p { margin: 0 0 1rem; }
+      ul, ol { margin: 0 0 1rem; padding-left: 1.35rem; }
+      li { margin-bottom: 0.35rem; }
+      .hint { font-size: 0.9rem; color: var(--text-muted); margin-top: 1rem; }
+      .version { font-size: 0.8rem; color: var(--text-muted); margin-top: 1.25rem; margin-bottom: 0; }
+      .link-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+      .link-list a {
+        display: block;
+        padding: 0.9rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .link-list a:hover, .link-list a:focus-visible { border-color: var(--accent); outline: none; }
+      .post-card {
+        display: block;
+        padding: 1rem 1.1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: inherit;
+        text-decoration: none;
+      }
+      .post-card:hover, .post-card:focus-visible { border-color: var(--accent); outline: none; }
+      .post-card h3 { margin: 0 0 0.35rem; font-size: 1.05rem; color: var(--accent); }
+      .post-card p { margin: 0; font-size: 0.92rem; color: var(--text-muted); font-weight: 400; }
+      .post-meta { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; }
+      .badge {
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        margin-right: 0.35rem;
+        vertical-align: middle;
+      }
+      .badge-news { background: #dbeafe; color: #1e40af; }
+      .badge-guide { background: #dcfce7; color: #166534; }
+      .post-grid { display: grid; gap: 0.75rem; margin-bottom: 1.5rem; }
+      .prose h2 { margin-top: 1.5rem; }
+      .prose h3 { margin: 1.25rem 0 0.5rem; font-size: 1rem; }
+      .prose code {
+        font-family: ui-monospace, Consolas, monospace;
+        font-size: 0.88em;
+        background: #e8f0e8;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+      .prose pre {
+        background: #1a2e1a;
+        color: #e8f0e8;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 0 0 1rem;
+      }
+      .prose pre code { background: none; padding: 0; color: inherit; }
+      .prose a { color: var(--accent); }
+      .prose img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 1rem auto;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 16px rgba(26, 46, 26, 0.1);
+      }
+      .prose figure { margin: 1.25rem 0; }
+      .prose figcaption {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-align: center;
+      }
+      .back-link { display: inline-block; margin-top: 1.5rem; font-weight: 600; color: var(--accent); }
+</style>
+  </head>
+  <body>
+    <div class="page wide">
+      <nav class="site-nav" aria-label="Site">
+        <a href="../../">Home</a><span class="sep" aria-hidden="true">·</span>
+        <a href="../../blog/">Blog</a>
+      </nav>
+      
+      <article>
+        <h1>Getting started with Resusci-Time</h1>
+        <p class="post-meta"><span class="badge badge-guide">Guide</span>28 May 2025</p>
+        <div class="prose"><p>This guide covers the basics for crews using Resusci-Time on a phone or tablet.</p>
+<p><img src="../images/resusci-time-logo.png" alt="Resusci-Time logo"></p>
+<p>Resusci-Time is based on the <strong>Spring 2026 JRCALC / AACE adult resuscitation and verification of death guidelines</strong>. It is <strong>not intended to replace clinical knowledge and skill</strong> — it is a support tool only. Mistakes may be present; any identified errors will be corrected as soon as possible.</p>
+<h2>1. Open the Standard build</h2>
+<p>The <strong>Standard</strong> version is what we are publishing for general use. Open <a href="../../standard/">Resusci-Time</a> from the <a href="../../">home page</a> and bookmark the URL so you can open it quickly from the home screen.</p>
+<p><strong>Custom versions</strong> catering for individual ambulance services or NHS trusts can be provided on request — for example service crest or logo, trust-specific reminders, additional medication buttons, or other protocol-aligned options agreed with your clinical team. Contact the project maintainer if you would like to discuss a tailored build.</p>
+<h2>2. What the Standard build includes</h2>
+<p>The Standard version provides the full core arrest workflow:</p>
+<p><strong>Timer and protocol</strong></p>
+<ul>
+<li>Elapsed timer with rhythm-check, adrenaline, and amiodarone reminders</li>
+<li>Shockable rhythm flow with energy selection and shock logging</li>
+<li>Non-shockable rhythm support (PEA / asystole)</li>
+<li>Reversible causes checklist (4 Hs and 4 Ts)</li>
+<li>Early transfer and vector-change prompts where applicable</li>
+</ul>
+<p><strong>Interventions menu</strong></p>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Options</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Vascular access</td>
+<td>IO or IV (22g–14g)</td>
+</tr>
+<tr>
+<td>Airway</td>
+<td>Head tilt / jaw thrust, OPA, NPA, SGA (i-gel), ET, Needle cric., Suction, Tracheostomy</td>
+</tr>
+<tr>
+<td>Breathing</td>
+<td>BVM, Mechanical vent. (logs oxygen automatically)</td>
+</tr>
+<tr>
+<td>Circulation</td>
+<td>Thoracotomy, Mechanical compressions</td>
+</tr>
+<tr>
+<td>Medications</td>
+<td>Sodium chloride (flush / 250 ml / 500 ml), 10% glucose, Naloxone, plus free-text <strong>Other</strong></td>
+</tr>
+</tbody></table>
+<p>Saved “Other” entries reappear for quick re-use during the same case.</p>
+<p><strong>End of case</strong></p>
+<ul>
+<li><strong>ROSC</strong> — post-ROSC monitoring reminders</li>
+<li><strong>Termination of resuscitation (TOR)</strong> — structured review</li>
+<li><strong>Verification of death (VoD)</strong> — separate flow with observation criteria where applicable</li>
+</ul>
+<p><strong>Event log</strong></p>
+<ul>
+<li>Timestamped log of actions</li>
+<li><strong>Export</strong> to CSV or PDF</li>
+<li><strong>Share</strong> via link or QR code</li>
+<li><strong>Save on device</strong> for later review</li>
+<li>Autosave offers to restore an interrupted case</li>
+</ul>
+<p><strong>App features</strong></p>
+<ul>
+<li>Install as an app (PWA) on supported phones and tablets</li>
+<li><strong>Screen stays awake during a case</strong> — while the timer is running, the app tries to prevent the display sleeping (works best in Chrome / Edge; allow if prompted)</li>
+<li>Day / night theme</li>
+<li>Works offline after first load</li>
+</ul>
+<h2>3. Install on your device (optional)</h2>
+<p>On <strong>Chrome</strong> or <strong>Edge</strong>, use <strong>Install app</strong> (or <strong>Add to Home screen</strong> on mobile). The timer then opens full-screen like a native app. You need <strong>HTTPS</strong> — the live site or a local preview build, not plain HTTP on a LAN address for some features.</p>
+<h2>4. Start a case</h2>
+<ol>
+<li>Confirm <strong>patient details</strong> if prompted.</li>
+<li>Select the <strong>initial rhythm</strong> (VF/pVT, PEA, or Asystole).</li>
+<li>The <strong>timer bar</strong> shows elapsed time and upcoming actions (rhythm check, adrenaline, etc.).</li>
+</ol>
+<p>Tap buttons on the timer bar when you complete actions — they are logged with a timestamp.</p>
+<h2>5. During the arrest</h2>
+<ul>
+<li><strong>Rhythm checks</strong> — log each check; the app tracks the 2-minute cycle.</li>
+<li><strong>Shocks</strong> — for shockable rhythms, use the shock panel and energy selection.</li>
+<li><strong>Reversible causes</strong> — open the 4 Hs and 4 Ts checklist; tick causes as you address them (you can untick if needed).</li>
+<li><strong>Interventions</strong> — open the menu for vascular access, airway, breathing, circulation, and medications.</li>
+</ul>
+<h2>6. ROSC, termination, or VoD</h2>
+<p>See <strong>End of case</strong> above. Follow the on-screen flow that matches your clinical decision.</p>
+<h2>7. After the case</h2>
+<p>Use the <strong>event log</strong> panel to export, share, or save the record. Autosave keeps a draft on the device if you leave mid-case — you will be offered a restore when you return.</p>
+<p>When you are finished, tap <strong>New case</strong> to clear the timer and log. If entries exist, the app asks you to confirm first so nothing is wiped by accident.</p>
+<h2>Tips</h2>
+<ul>
+<li>Run through a <strong>training case</strong> before first live use.</li>
+<li>Keep screen brightness up and <strong>Do Not Disturb</strong> on if possible — the app also tries to keep the screen awake during an active case.</li>
+<li>The app supports <strong>day/night</strong> theme from the header toggle.</li>
+</ul>
+<p>More guides will be added here as features grow. If you spot a bug, need a custom service build, or have a feature idea, contact your local clinical lead or the project maintainer.</p>
+</div>
+        <a class="back-link" href="../">← Back to blog</a>
+      </article>
+    
+    </div>
+  </body>
+</html>

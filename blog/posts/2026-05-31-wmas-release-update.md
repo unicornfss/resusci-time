@@ -1,14 +1,16 @@
 ---
 title: "WMAS release update — Documents, TOR, and CODE SHOCK"
-date: 2026-05-27
+date: 2026-05-31
 category: news
 audience: wmas
 summary: What’s new in the WMAS live build — Documents tab, TOR improvements, CODE SHOCK after the first shock, prolonged VF rules, and VOD updates.
 ---
 
-This update is now rolling out on the **WMAS live** build of Resusci-Time (version **1.1.0**). It brings shared improvements for all builds, plus **WMAS-specific** reminders and reference documents.
+This update is now rolling out on the **WMAS live** build of Resusci-Time (version **1.1.1**). It brings shared improvements for all builds, plus **WMAS-specific** reminders and reference documents.
 
 If you use the **preview** URL for training, you will also see DEMO icons and speed controls — those are **not** on the live field build.
+
+> **Looking for the CODE SHOCK article?** This page is the general release summary. The dedicated CODE SHOCK post — with the banner graphic and step-by-step walkthrough — is **[CODE SHOCK reminder for WMAS crews](./2026-05-31-wmas-code-shock-reminder.html)** (also listed below on this blog).
 
 ## Documents (new)
 
@@ -30,7 +32,7 @@ When it appears:
 1. An amber panel shows **CODE SHOCK notified to EOC**.
 2. After you have notified EOC, tap **Acknowledge** — the event log records `CODE SHOCK notified to EOC`.
 
-See also: [CODE SHOCK reminder for WMAS crews](./2026-05-26-wmas-code-shock-reminder.html).
+See also: [CODE SHOCK reminder for WMAS crews](./2026-05-31-wmas-code-shock-reminder.html).
 
 ## Prolonged VF
 

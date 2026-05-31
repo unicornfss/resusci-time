@@ -1,6 +1,6 @@
 ---
 title: CODE SHOCK reminder for WMAS crews
-date: 2026-05-26
+date: 2026-05-31
 category: news
 audience: wmas
 summary: After the first shock, Resusci-Time prompts WMAS crews to notify EOC — supporting early specialist support where it may improve outcomes.

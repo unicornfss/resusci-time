@@ -1,12 +1,12 @@
 ---
-title: "Standard build release update — Documents, TOR, and VoD"
-date: 2026-05-27
+title: Standard build release update — Documents, TOR, and VoD
+date: 2026-05-31
 category: news
 audience: standard
-summary: What’s new in the Standard live build — Documents tab, prolonged VF reminder, TOR and VoD improvements, and intervention updates (version 1.1.0).
+summary: What’s new in the Standard live build — Documents tab, prolonged VF reminder, TOR and VoD improvements, and intervention updates (version 1.1.1).
 ---
 
-This update is rolling out on the **Standard live** build of Resusci-Time (version **1.1.0**). It focuses on reference documents, clearer termination and VoD flows, and small clinical prompts — without trust-specific features such as CODE SHOCK (those exist only on custom service builds such as WMAS).
+This update is rolling out on the **Standard live** build of Resusci-Time (version **1.1.1**). It focuses on reference documents, clearer termination and VoD flows, and small clinical prompts — without trust-specific features such as CODE SHOCK (those exist only on custom service builds such as WMAS).
 
 ## Documents (new)
 
