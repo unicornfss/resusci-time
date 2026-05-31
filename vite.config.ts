@@ -46,11 +46,27 @@ function trustBuildPlugin(trustId: TrustId, channel: 'live' | 'preview'): Plugin
       })
     },
     transformIndexHtml() {
+      const iconPrefix = config.isPreview ? 'preview-icons/' : ''
       return [
         { tag: 'title', children: config.pageTitle, injectTo: 'head' },
         {
           tag: 'meta',
           attrs: { name: 'apple-mobile-web-app-title', content: config.pageTitle },
+          injectTo: 'head',
+        },
+        {
+          tag: 'link',
+          attrs: { rel: 'icon', type: 'image/png', sizes: '32x32', href: `${iconPrefix}favicon-32x32.png` },
+          injectTo: 'head',
+        },
+        {
+          tag: 'link',
+          attrs: { rel: 'icon', type: 'image/png', sizes: '16x16', href: `${iconPrefix}favicon-16x16.png` },
+          injectTo: 'head',
+        },
+        {
+          tag: 'link',
+          attrs: { rel: 'apple-touch-icon', sizes: '180x180', href: `${iconPrefix}apple-touch-icon.png` },
           injectTo: 'head',
         },
       ]
@@ -108,6 +124,8 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __APP_BUILD_ISO__: JSON.stringify(appBuildIso),
+      'import.meta.env.VITE_BUILD_CHANNEL': JSON.stringify(resolvedChannel),
+      'import.meta.env.VITE_TRUST': JSON.stringify(resolvedTrustId),
     },
     base: isProductionBuild ? './' : '/',
     server: {

@@ -1,25 +1,25 @@
 ---
 title: CODE SHOCK reminder for WMAS crews
-date: 2026-05-26
+date: 2026-05-31
 category: news
 audience: wmas
-summary: After three shocks, Resusci-Time prompts WMAS crews to notify EOC — supporting early specialist support where it may improve outcomes.
+summary: After the first shock, Resusci-Time prompts WMAS crews to notify EOC — supporting early specialist support where it may improve outcomes.
 ---
 
-The **WMAS build** of Resusci-Time includes a **CODE SHOCK** reminder. It appears once a patient has received **three shocks** during active resuscitation, prompting the crew to **inform EOC** that a CODE SHOCK situation exists.
+The **WMAS build** of Resusci-Time includes a **CODE SHOCK** reminder. It appears once a patient has received their **first shock** during active resuscitation, prompting the crew to **inform EOC** that a CODE SHOCK situation exists.
 
-![CODE SHOCK reminder — notify EOC after three shocks](../images/code-shock-wmas.png)
+![CODE SHOCK reminder — notify EOC after the first shock](../images/code-shock-wmas.png)
 
 ## Why it matters
 
-Refractory shockable cardiac arrest may benefit from **early coordination with EOC** and the **possible deployment of specialist clinicians** to the scene or to support remote clinical decision-making. Notifying EOC at the right time helps the wider system respond sooner, which can lead to **better patient outcomes**.
+Shockable cardiac arrest may benefit from **early coordination with EOC** and the **possible deployment of specialist clinicians** to the scene or to support remote clinical decision-making. Notifying EOC at the right time helps the wider system respond sooner, which can lead to **better patient outcomes**.
 
 The reminder is a **prompt only** — it does not replace local WMAS policy, crew judgement, or direct communication with EOC. It is there so the notification step is less likely to be missed under pressure.
 
 ## What you will see in the app
 
 1. Run a shockable rhythm case as usual and **log each shock** in Resusci-Time.
-2. After the **third shock** is recorded, an **amber alert panel** appears below the timer with the message:
+2. After the **first shock** is recorded, an **amber alert panel** appears below the timer with the message:
 
    **CODE SHOCK notified to EOC**
 
@@ -35,7 +35,7 @@ Open the WMAS app from your service link or bookmark — see your local Resusci-
 
 ## Training tip
 
-Run through a **preview** or training case and deliver three logged shocks to see the panel and acknowledgement flow before you rely on it on a real job. The preview build also lets you change protocol speed (1×–10×) from the header if you want a quicker walkthrough.
+Run through a **preview** or training case and log the **first shock** to see the panel and acknowledgement flow before you rely on it on a real job. The preview build also lets you change protocol speed (1×–10×) from the header if you want a quicker walkthrough.
 
 ## Feedback
 

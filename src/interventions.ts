@@ -28,7 +28,7 @@ export const AIRWAY_OPTIONS = [
   'Tracheostomy',
 ] as const
 
-export const BREATHING_OPTIONS = ['BVM', 'Mechanical vent.'] as const
+export const BREATHING_OPTIONS = ['BVM', 'Mechanical vent.', 'Needle decompression'] as const
 
 export const CIRCULATION_OPTIONS = ['Thoracotomy', 'Mechanical compressions'] as const
 
@@ -76,11 +76,22 @@ export function hasVascularAccessLogged(entries: readonly { text: string }[]): b
   return entries.some((entry) => isVascularAccessLogEntry(entry.text))
 }
 
+/** Prompt vascular access when first adrenaline is given without IV/IO logged. */
+export function shouldPromptVascularAccessAfterFirstAdrenaline(
+  adrenalineDoseCountBeforeDose: number,
+  entries: readonly { text: string }[],
+): boolean {
+  return adrenalineDoseCountBeforeDose === 0 && !hasVascularAccessLogged(entries)
+}
+
 export function getAirwayLogLabel(option: string): string {
   return `Airway — ${option}`
 }
 
 export function getBreathingLogEntries(option: (typeof BREATHING_OPTIONS)[number]): string[] {
+  if (option === 'Needle decompression') {
+    return [`Breathing — ${option}`]
+  }
   return [`Breathing — ${option}`, 'Oxygen']
 }
 

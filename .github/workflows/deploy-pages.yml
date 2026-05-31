@@ -33,6 +33,8 @@ jobs:
       - name: Sync build config onto live checkout
         run: |
           cp preview-src/scripts/build-pages.mjs live-src/scripts/build-pages.mjs
+          cp preview-src/scripts/build-preview-changelog.mjs live-src/scripts/build-preview-changelog.mjs
+          cp preview-src/scripts/sync-preview-changelog.mjs live-src/scripts/sync-preview-changelog.mjs
           cp preview-src/scripts/trustPaths.mjs live-src/scripts/trustPaths.mjs
           cp preview-src/src/config/trust-manifest.json live-src/src/config/trust-manifest.json
           cp preview-src/src/config/trustIds.ts live-src/src/config/trustIds.ts
@@ -40,7 +42,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
           cache-dependency-path: live-src/package-lock.json
 
@@ -62,7 +64,7 @@ jobs:
 
       - name: Update landing page from testing branch
         if: github.ref_name == 'testing'
-        run: BUILD_LANDING_ONLY=1 OUTPUT_DIR="${{ github.workspace }}/dist-pages" node scripts/build-pages.mjs
+        run: INCLUDE_BLOG=0 BUILD_LANDING_ONLY=1 OUTPUT_DIR="${{ github.workspace }}/dist-pages" node scripts/build-pages.mjs
         working-directory: preview-src
 
       - uses: actions/upload-pages-artifact@v3

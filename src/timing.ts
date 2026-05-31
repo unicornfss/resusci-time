@@ -1,4 +1,5 @@
 import type { PreviewSpeedMultiplier } from './previewSpeed'
+import { parseViteMode } from './config/trustIds'
 
 function readBuildTimeScale(): number {
   const raw = import.meta.env.VITE_TIME_SCALE
@@ -7,7 +8,10 @@ function readBuildTimeScale(): number {
 }
 
 export const BUILD_TIME_SCALE = readBuildTimeScale()
-export const IS_PREVIEW_BUILD = import.meta.env.VITE_BUILD_CHANNEL === 'preview'
+
+const viteMode = parseViteMode(import.meta.env.MODE)
+/** True for wmas-preview / standard-preview builds (dev and deployed). */
+export const IS_PREVIEW_BUILD = viteMode.trustId !== null && viteMode.channel === 'preview'
 
 export const VOD_COUNTDOWN_DISPLAY_SECONDS = 300
 export const ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS = 600
@@ -59,10 +63,7 @@ export const IS_TEST_TIMING = defaultTimingConfig.isTestTiming
 
 export function getTestModeBannerText(timing: TimingConfig = defaultTimingConfig): string {
   if (IS_PREVIEW_BUILD) {
-    if (timing.speedMultiplier === 1) {
-      return 'Preview build — for testing only. Not for live clinical use. Protocol times at real-time (1×) speed.'
-    }
-    return `Preview build — for testing only. Not for live clinical use. Protocol times at ${timing.speedMultiplier}× speed (elapsed shows real protocol time).`
+    return ''
   }
 
   if (timing.isTestTiming) {

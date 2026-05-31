@@ -10,11 +10,17 @@ import {
   VOD_OBSERVATION_CHECKLIST_ITEMS,
 } from '../protocol'
 import { useTimingConfig } from '../context/TimingConfigContext'
+import { getVodCountdownRemainingFraction } from '../timing'
+
+export type InitialAssessmentMode = 'initial' | 'tor-reassessment'
 
 interface InitialAssessmentPanelProps {
+  mode?: InitialAssessmentMode
   onCommenceResuscitation: () => void
   onCompleteVod: (criteriaLabels: string[]) => void
+  onLogObservationCriteria: (criteriaLabels: string[]) => void
   formatCountdown: (actualSeconds: number) => string
+  onCancel?: () => void
 }
 
 type AssessmentPhase = 'list' | 'commence-command'
@@ -29,11 +35,15 @@ function toggleSetItem<T>(set: Set<T>, item: T): Set<T> {
 }
 
 export function InitialAssessmentPanel({
+  mode = 'initial',
   onCommenceResuscitation,
   onCompleteVod,
+  onLogObservationCriteria,
   formatCountdown,
+  onCancel,
 }: InitialAssessmentPanelProps) {
   const { timing } = useTimingConfig()
+  const isTorReassessment = mode === 'tor-reassessment'
   const [selectedMainIds, setSelectedMainIds] = useState<Set<InitialAssessmentItemId>>(() => new Set())
   const [selectedObviousIds, setSelectedObviousIds] = useState<Set<ObviouslyDeceasedCriterionId>>(
     () => new Set(),
@@ -121,6 +131,7 @@ export function InitialAssessmentPanel({
     setObservationCountdown(timing.vodCountdownActualSeconds)
     setObservationChecklist(new Set())
     setObservationActive(true)
+    onLogObservationCriteria(observationLabels)
   }
 
   function handleAsystoleNo() {
@@ -181,22 +192,48 @@ export function InitialAssessmentPanel({
     )
   }
 
-  function renderObservationPanel() {
-    if (!observationActive || !requiresAsystoleObservation) return null
+  function renderObservationTimerBox() {
+    const progressFraction = getVodCountdownRemainingFraction(
+      observationCountdown,
+      timing.vodCountdownActualSeconds,
+    )
 
     return (
-      <div className="assessment-combined-confirm assessment-observation-panel">
-        <p className="assessment-observation-criterion">Selected criteria:</p>
-        <ul className="assessment-confirm-list">
-          {observationLabels.map((label) => (
-            <li key={label}>{label}</li>
-          ))}
-        </ul>
-        <div className="assessment-countdown" role="status">
-          {observationExpired
-            ? '5-minute observation period complete'
-            : `Observation period: ${formatCountdown(observationCountdown)} remaining`}
+      <div className="assessment-observation-timer-box" role="status" aria-live="polite">
+        <div className="assessment-observation-timer-top">
+          <div className="timer-display">
+            <span className="timer-label">Observation</span>
+            <span className="timer-value">{formatCountdown(observationCountdown)}</span>
+          </div>
         </div>
+        <div
+          className="rhythm-check-progress-track assessment-observation-progress-track"
+          role="progressbar"
+          aria-label="Observation period remaining"
+          aria-valuemin={0}
+          aria-valuemax={timing.vodCountdownActualSeconds}
+          aria-valuenow={observationCountdown}
+        >
+          <div
+            className="rhythm-check-progress-fill"
+            style={{ width: `${progressFraction * 100}%` }}
+          />
+        </div>
+        <p className="assessment-observation-wait-hint">
+          Confirm each item when the 5-minute observation period ends.
+        </p>
+      </div>
+    )
+  }
+
+  function renderObservationChecklist() {
+    return (
+      <>
+        {observationExpired && (
+          <p className="assessment-observation-complete" role="status">
+            5-minute observation period complete
+          </p>
+        )}
         <p className="assessment-observation-header">{VOD_OBSERVATION_CHECKLIST_HEADER}</p>
         <ul className="quality-prompt-checklist">
           {VOD_OBSERVATION_CHECKLIST_ITEMS.map((item) => {
@@ -225,10 +262,27 @@ export function InitialAssessmentPanel({
           type="button"
           className="btn btn-danger btn-lg assessment-vod-btn"
           disabled={!observationExpired || !allObservationChecked}
-          onClick={() => onCompleteVod(observationLabels)}
+          onClick={() => onCompleteVod([])}
         >
           VOD
         </button>
+      </>
+    )
+  }
+
+  function renderObservationFlow() {
+    if (!observationActive || !requiresAsystoleObservation) return null
+
+    return (
+      <div className="assessment-observation-panel">
+        <p className="assessment-observation-criterion">Selected criteria:</p>
+        <ul className="assessment-confirm-list">
+          {observationLabels.map((label) => (
+            <li key={label}>{label}</li>
+          ))}
+        </ul>
+        {!observationExpired && renderObservationTimerBox()}
+        {renderObservationChecklist()}
       </div>
     )
   }
@@ -262,74 +316,101 @@ export function InitialAssessmentPanel({
     )
   }
 
+  const showObservationFlow = observationActive && requiresAsystoleObservation
+
   return (
     <section className="card">
-      <div className="card-badge">Initial assessment</div>
-      <h2>Any of the following identified?</h2>
-      <p className="assessment-tap-hint">
-        Tap options to select one or more. Expandable items show sub-criteria below.
-      </p>
+      <div className="card-badge">{isTorReassessment ? 'TOR re-assessment' : 'Initial assessment'}</div>
 
-      <ul className="assessment-tree" role="tree">
-        {INITIAL_ASSESSMENT_OPTIONS.map((option) => {
-          const selected = selectedMainIds.has(option.id)
-          const isObviously = option.id === OBVIOUSLY_DECEASED_ID
-          const expanded = isObviously && obviouslyExpanded
-
-          return (
-            <li
-              key={option.id}
-              className={`assessment-tree-node${selected ? ' is-selected' : ''}${expanded ? ' is-expanded' : ''}`}
-              role="treeitem"
-              aria-expanded={isObviously ? expanded : undefined}
-            >
-              <button
-                type="button"
-                className={`assessment-tree-row${selected ? ' selected' : ''}${isObviously ? ' is-branch' : ''}`}
-                disabled={observationActive && !isObviously}
-                onClick={() => handleMainSelect(option.id)}
-              >
-                <span className="assessment-tree-icon" aria-hidden="true">
-                  {isObviously ? (expanded ? '▼' : '▶') : '○'}
-                </span>
-                <span className="assessment-tree-check" aria-hidden="true">
-                  {selected ? '✓' : ''}
-                </span>
-                <span className="assessment-tree-label">{option.label}</span>
-                {!observationActive && <span className="assessment-tree-hint">Tap to select</span>}
-              </button>
-
-              {isObviously && obviouslyExpanded && (
-                <div className="assessment-tree-children">{renderObviouslySubList()}</div>
-              )}
-            </li>
-          )
-        })}
-      </ul>
-
-      {renderUnifiedConfirmPanel()}
-      {renderObservationPanel()}
-
-      {phase === 'commence-command' && (
-        <div className="assessment-confirm-panel assessment-commence-panel" role="status">
-          <p>
-            <strong>Commence resuscitation immediately.</strong> Patient is not in asystole.
+      {showObservationFlow ? (
+        <>
+          <h2>Asystole observation</h2>
+          {renderObservationFlow()}
+        </>
+      ) : (
+        <>
+          <h2>Any of the following identified?</h2>
+          <p className="assessment-tap-hint">
+            {isTorReassessment
+              ? 'Re-assess before termination review. More information may have come to light since resuscitation began. Tap options to select one or more.'
+              : 'Tap options to select one or more. Expandable items show sub-criteria below.'}
           </p>
-          <button type="button" className="btn btn-primary btn-lg" onClick={onCommenceResuscitation}>
-            Commence resuscitation
-          </button>
-          <button type="button" className="btn btn-secondary btn-lg" onClick={() => setPhase('list')}>
-            Back to assessment
-          </button>
-        </div>
-      )}
 
-      {phase === 'list' && !observationActive && (
-        <div className="actions">
-          <button type="button" className="btn btn-primary btn-lg" onClick={onCommenceResuscitation}>
-            No — commence resuscitation
-          </button>
-        </div>
+          <ul className="assessment-tree" role="tree">
+            {INITIAL_ASSESSMENT_OPTIONS.map((option) => {
+              const selected = selectedMainIds.has(option.id)
+              const isObviously = option.id === OBVIOUSLY_DECEASED_ID
+              const expanded = isObviously && obviouslyExpanded
+
+              return (
+                <li
+                  key={option.id}
+                  className={`assessment-tree-node${selected ? ' is-selected' : ''}${expanded ? ' is-expanded' : ''}`}
+                  role="treeitem"
+                  aria-expanded={isObviously ? expanded : undefined}
+                >
+                  <button
+                    type="button"
+                    className={`assessment-tree-row${selected ? ' selected' : ''}${isObviously ? ' is-branch' : ''}`}
+                    onClick={() => handleMainSelect(option.id)}
+                  >
+                    <span className="assessment-tree-icon" aria-hidden="true">
+                      {isObviously ? (expanded ? '▼' : '▶') : '○'}
+                    </span>
+                    <span className="assessment-tree-check" aria-hidden="true">
+                      {selected ? '✓' : ''}
+                    </span>
+                    <span className="assessment-tree-label">{option.label}</span>
+                    <span className="assessment-tree-hint">Tap to select</span>
+                  </button>
+
+                  {isObviously && obviouslyExpanded && (
+                    <div className="assessment-tree-children">{renderObviouslySubList()}</div>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+
+          {renderUnifiedConfirmPanel()}
+
+          {phase === 'commence-command' && (
+            <div className="assessment-confirm-panel assessment-commence-panel" role="status">
+              <p>
+                {isTorReassessment ? (
+                  <>
+                    <strong>Continue to termination review.</strong> Patient is not in asystole.
+                  </>
+                ) : (
+                  <>
+                    <strong>Commence resuscitation immediately.</strong> Patient is not in asystole.
+                  </>
+                )}
+              </p>
+              <button type="button" className="btn btn-primary btn-lg" onClick={onCommenceResuscitation}>
+                {isTorReassessment ? 'Continue to termination review' : 'Commence resuscitation'}
+              </button>
+              <button type="button" className="btn btn-secondary btn-lg" onClick={() => setPhase('list')}>
+                Back to assessment
+              </button>
+            </div>
+          )}
+
+          {phase === 'list' && (
+            <div className="actions">
+              <button type="button" className="btn btn-primary btn-lg" onClick={onCommenceResuscitation}>
+                {isTorReassessment
+                  ? 'None apply — continue to termination review'
+                  : 'No — commence resuscitation'}
+              </button>
+              {isTorReassessment && onCancel && (
+                <button type="button" className="btn btn-secondary btn-lg" onClick={onCancel}>
+                  Cancel — return to resuscitation
+                </button>
+              )}
+            </div>
+          )}
+        </>
       )}
     </section>
   )

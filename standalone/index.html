@@ -266,12 +266,22 @@
     .assessment-confirm-note { margin: 0 0 1rem; font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; }
     .assessment-confirm-panel { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; }
     .assessment-commence-panel { border-color: var(--green-600); background: var(--green-50); }
-    .assessment-observation-panel { padding: 1rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 8px; }
+    .assessment-observation-panel { padding: 0; background: transparent; border: none; border-radius: 0; }
+    .assessment-observation-timer-box { display: flex; flex-direction: column; gap: 0.5rem; margin: 1rem 0 0; padding: 0.75rem 1.25rem; border-radius: 10px; background: #374151; color: white; }
+    .assessment-observation-timer-top { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+    .assessment-observation-timer-box .timer-display { display: flex; align-items: baseline; gap: 0.5rem; }
+    .assessment-observation-timer-box .timer-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.85; }
+    .assessment-observation-timer-box .timer-value { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; font-family: ui-monospace, Consolas, monospace; }
+    .assessment-observation-progress-track { flex: none; width: 100%; max-width: none; height: 0.45rem; border-radius: 999px; background: rgba(255, 255, 255, 0.28); overflow: hidden; }
+    .assessment-observation-progress-track .rhythm-check-progress-fill { background: rgba(255, 255, 255, 0.95); transition: width 1s linear; }
+    .assessment-observation-wait-hint { margin: 0.25rem 0 0; font-size: 0.9rem; line-height: 1.35; opacity: 0.9; }
+    .assessment-observation-complete { margin: 1rem 0 0.75rem; font-weight: 700; color: var(--green-800); }
     .assessment-countdown { margin: 0 0 1rem; font-weight: 600; color: var(--amber-600); }
     .assessment-observation-header { margin: 0 0 0.75rem; font-weight: 600; }
     .assessment-checklist-locked .quality-prompt-checkbox { opacity: 0.45; cursor: not-allowed; }
     .assessment-vod-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .vod-death-stamp { margin: 0; padding: 0.85rem 1rem; font-size: 1.05rem; font-weight: 700; background: var(--card-bg); border-left: 4px solid var(--red-600); border-radius: 0 6px 6px 0; }
+    .vod-death-stamp { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin: 0; padding: 0.85rem 1rem; font-size: 1.05rem; font-weight: 700; background: var(--card-bg); border-left: 4px solid var(--red-600); border-radius: 0 6px 6px 0; }
+    .vod-death-stamp-label { flex: 1 1 auto; min-width: 0; }
     .vod-timestamps-summary { margin: 1rem 0; }
     .vod-summary-heading { margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.02em; }
     .vod-criteria-stamps { list-style: none; padding: 0; margin: 0 0 0.75rem; }
@@ -336,6 +346,7 @@
     .timer-tor-time { font-size: 1.15rem; font-weight: 700; font-variant-numeric: tabular-nums; font-family: ui-monospace, Consolas, monospace; }
     .timer-vod-countdown-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
     .timer-vod-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .timer-vod-not-appropriate { font-size: 1.05rem; font-weight: 700; }
     .timer-vod-ready-message { margin: 0.65rem 0 0; font-size: 0.9rem; font-weight: 600; line-height: 1.35; }
     .tor-stamp-summary { margin: 0 0 1rem; font-weight: 600; }
     .event-log-panel { margin-top: 1rem; }
@@ -846,7 +857,8 @@
         });
         html += '</ul>';
       }
-      html += '<p class="vod-death-stamp">Verification of death recorded at ' + state.vodAtLabel + '</p></div>';
+      html += '<p class="vod-death-stamp"><span class="vod-death-stamp-label">Verification of death recorded</span>' +
+        '<span class="vod-criteria-time">' + state.vodAtLabel + '</span></p></div>';
       return html;
     }
     function isObviouslyDeceasedObservationCriterion(id) {
@@ -878,6 +890,7 @@
     const TEST_JUMP_TO_ACTUAL_SECONDS = Math.round(TEST_JUMP_TO_DISPLAY_SECONDS * TIME_SCALE);
     const VOD_READY_MESSAGE =
       'Verification of death can now take place if the patient has been in continuous asystole for a period of at least 5 minutes';
+    const VOD_RESUSCITATION_NOT_APPROPRIATE_MESSAGE = 'Resuscitation not appropriate';
     const ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS = 600;
     const ROSC_SUSTAINED_THRESHOLD_ACTUAL_SECONDS = Math.round(ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS * TIME_SCALE);
 
@@ -887,18 +900,15 @@
       return initialRhythm === RHYTHM_VF_PVT || initialRhythm === 'PEA';
     }
 
-    const TRUST_ID = location.pathname.includes('/emas')
-      ? 'emas'
-      : location.pathname.includes('/wmas')
-        ? 'wmas'
-        : location.pathname.includes('/standard')
-          ? 'standard'
-          : 'standard';
-    const TRUST_LABEL = TRUST_ID === 'emas' ? 'EMAS' : TRUST_ID === 'wmas' ? 'WMAS' : 'Standard';
+    const TRUST_ID = location.pathname.includes('/wmas')
+      ? 'wmas'
+      : location.pathname.includes('/standard')
+        ? 'standard'
+        : 'standard';
+    const TRUST_LABEL = TRUST_ID === 'wmas' ? 'WMAS' : 'Standard';
     const TRUST_PAGE_TITLE = 'Resusci-Time - ' + TRUST_LABEL + ' version';
     const TRUST_BRAND_BG = {
       wmas: 'backgrounds/wmas-crest.png',
-      emas: 'backgrounds/emas-crest.png',
     };
     const BRAND_BG_ASSET = TRUST_BRAND_BG[TRUST_ID] || 'backgrounds/resusci-time-logo.png';
     document.title = TRUST_PAGE_TITLE;
@@ -907,7 +917,7 @@
     if (appTitleEl) appTitleEl.textContent = TRUST_PAGE_TITLE;
 
     const CODE_SHOCK_ENABLED = TRUST_ID === 'wmas';
-    const CODE_SHOCK_MIN_SHOCKS = 3;
+    const CODE_SHOCK_MIN_SHOCKS = 1;
 
     function shouldShowCodeShockReminder(shockCount, acknowledged) {
       if (!CODE_SHOCK_ENABLED) return false;
@@ -1148,6 +1158,10 @@
       return entries.some(function (entry) { return isVascularAccessLogEntry(entry.text); });
     }
 
+    function shouldPromptVascularAccessAfterFirstAdrenaline(adrenalineDoseCountBeforeDose, entries) {
+      return adrenalineDoseCountBeforeDose === 0 && !hasVascularAccessLogged(entries);
+    }
+
     function vectorChangeLogLabel(changed) {
       return changed ? 'Vector change — changed' : 'Vector change — not changed';
     }
@@ -1225,6 +1239,7 @@
       clinicalDiscussionOpen: false,
       metronomeEnabled: false,
       peaTorCriteriaMet: null,
+      torSpecialCircumstancesBelieved: null,
       torEndedAtLabel: null,
       vodCountdownRemaining: VOD_COUNTDOWN_ACTUAL_SECONDS,
       vodAtLabel: null,
@@ -1400,8 +1415,8 @@
       return entry;
     }
 
-    function promptVascularAccessAfterFirstMedication(atEpochMs) {
-      if (hasVascularAccessLogged(state.logEntries)) return;
+    function promptVascularAccessIfNotEstablished(atEpochMs, entries) {
+      if (hasVascularAccessLogged(entries)) return;
       state.pendingVascularAccessAtEpochMs = atEpochMs;
       state.showVascularAccessReminder = true;
       state.vascularAccessStep = 'prompt';
@@ -1729,8 +1744,7 @@
       const trackEl = document.getElementById('next-check-progress-track');
       const fillEl = document.getElementById('next-check-progress-fill');
       const show = !['start', 'initial-assessment', 'do-not-resuscitate', 'complete'].includes(state.step) &&
-        state.step === 'active-resuscitation' &&
-        state.elapsed < FORTY_FIVE_MINUTES;
+        (state.step === 'active-resuscitation' || state.step === 'forty-five-minute-check');
       if (!show || !labelEl || !trackEl || !fillEl) {
         if (labelEl) labelEl.textContent = '';
         if (trackEl) trackEl.classList.add('hidden');
@@ -1996,6 +2010,7 @@
       document.getElementById('alert-45').classList.remove('visible');
       state.currentRhythm = null;
       state.peaTorCriteriaMet = null;
+      state.torSpecialCircumstancesBelieved = null;
       state.step = 'forty-five-minute-check';
       render();
     }
@@ -2066,6 +2081,25 @@
     function renderTerminationReviewHtml() {
       const initial = state.initialRhythm;
       const current = state.currentRhythm;
+      if (state.torSpecialCircumstancesBelieved === null) {
+        return '<div class="tor-special-circumstances">' +
+          '<p class="tor-special-circumstances-question">Do you believe any of the following to be true?</p>' +
+          '<ul class="tor-special-circumstances-list">' +
+          '<li>The primary cause of cardiac arrest is hypothermia</li>' +
+          '<li>Suspected drug overdose or poisoning</li>' +
+          '<li>The patient is pregnant</li>' +
+          '</ul>' +
+          '<div class="tor-actions">' +
+          '<button type="button" class="btn btn-primary btn-lg" data-tor-special-circumstances="yes">Yes</button>' +
+          '<button type="button" class="btn btn-secondary btn-lg" data-tor-special-circumstances="no">No</button>' +
+          '</div></div>';
+      }
+      if (state.torSpecialCircumstancesBelieved) {
+        return '<div class="guidance advice"><p>Senior clinical advice must always be sought when any of these circumstances are believed to apply.</p></div>' +
+          '<div class="tor-actions">' +
+          '<button type="button" class="btn btn-secondary btn-lg" data-tor-senior-advice>Seek senior clinical advice</button>' +
+          '</div>';
+      }
       let html = '<p>Initial rhythm: <strong>' + initial + '</strong>. Select the <em>current</em> monitored rhythm.</p>';
       if (!current) {
         html += '<div class="rhythm-grid">' +
@@ -2871,7 +2905,8 @@
           updateRoscMonitoringPanels();
         }
       }
-      if (state.step === 'active-resuscitation' && state.elapsed >= state.nextCheckAt && !state.showRhythmCheckAlert) {
+      if ((state.step === 'active-resuscitation' || state.step === 'forty-five-minute-check') &&
+        state.elapsed >= state.nextCheckAt && !state.showRhythmCheckAlert) {
         openRhythmCheckAlert();
       }
       if (state.elapsed >= FORTY_FIVE_MINUTES && !state.fortyFiveFired) {
@@ -2900,13 +2935,15 @@
       if (state.timerView !== 'arrest') return;
       if (!state.initialRhythm) return;
       if (!canLogAdrenaline(state.initialRhythm, state.adrenalineDoseCount, countShocksDelivered(), hasNonShockableRhythmLogged(state.rhythmChecks))) return;
-      const isFirstMedication = state.adrenalineDoseCount + state.amiodaroneDoseCount === 0;
-      const needsVascularPrompt = isFirstMedication && !hasVascularAccessLogged(state.logEntries);
+      const needsVascularPrompt = shouldPromptVascularAccessAfterFirstAdrenaline(
+        state.adrenalineDoseCount,
+        state.logEntries,
+      );
       state.adrenalineDoseCount++;
       const entry = pushLogEntry(getAdrenalineLogLabel(state.adrenalineDoseCount));
       state.nextAdrenalineAt = state.elapsed + ADRENALINE_INTERVAL;
       updateTimerUI();
-      if (needsVascularPrompt) promptVascularAccessAfterFirstMedication(entry.atEpochMs);
+      if (needsVascularPrompt) promptVascularAccessIfNotEstablished(entry.atEpochMs, state.logEntries);
     }
 
     function logAmiodarone() {
@@ -2920,7 +2957,7 @@
       state.amiodaroneDoseCount++;
       const entry = pushLogEntry(getAmiodaroneLogLabel(state.amiodaroneDoseCount));
       updateTimerUI();
-      if (needsVascularPrompt) promptVascularAccessAfterFirstMedication(entry.atEpochMs);
+      if (needsVascularPrompt) promptVascularAccessIfNotEstablished(entry.atEpochMs, state.logEntries);
       render();
     }
 
@@ -3082,15 +3119,19 @@
           '<span class="timer-tor-time">' + state.torEndedAtLabel + '</span></div>' +
           '<div class="timer-vod-countdown">' +
           '<div class="timer-vod-countdown-header">' +
-          '<span class="timer-next-check-label">' +
           (vodReady
-            ? 'Verification of death wait complete'
-            : 'Verification of death in: ' + formatDisplayElapsed(state.vodCountdownRemaining)) +
-          '</span>' +
+            ? '<span class="timer-vod-not-appropriate">' + VOD_RESUSCITATION_NOT_APPROPRIATE_MESSAGE + '</span>'
+            : '<span class="timer-next-check-label">Verification of death in: ' +
+              formatDisplayElapsed(state.vodCountdownRemaining) +
+              '</span>') +
           '<button type="button" class="timer-action-box timer-vod-btn' + (vodReady ? ' on' : '') + '" id="timer-vod-btn"' +
           (vodReady ? '' : ' disabled') + '>VOD</button></div>' +
-          '<div class="rhythm-check-progress-track" role="progressbar" aria-label="Time until verification of death">' +
-          '<div class="rhythm-check-progress-fill" style="width:' + (getVodCountdownRemainingFraction(state.vodCountdownRemaining) * 100) + '%"></div></div>' +
+          (vodReady
+            ? ''
+            : '<div class="rhythm-check-progress-track" role="progressbar" aria-label="Time until verification of death">' +
+              '<div class="rhythm-check-progress-fill" style="width:' +
+              (getVodCountdownRemainingFraction(state.vodCountdownRemaining) * 100) +
+              '%"></div></div>') +
           (vodReady ? '<p class="timer-vod-ready-message">' + VOD_READY_MESSAGE + '</p>' : '') +
           '</div>';
         const vodBtn = document.getElementById('timer-vod-btn');
@@ -3229,6 +3270,7 @@
       resetRoscMonitoringProgress();
       state.metronomeEnabled = false;
       state.peaTorCriteriaMet = null;
+      state.torSpecialCircumstancesBelieved = null;
       state.torEndedAtLabel = null;
       state.vodCountdownRemaining = VOD_COUNTDOWN_ACTUAL_SECONDS;
       state.vodAtLabel = null;
@@ -3341,6 +3383,10 @@
       state.iaObservationActive = true;
       state.iaObservationCountdown = VOD_COUNTDOWN_ACTUAL_SECONDS;
       state.iaObservationChecklist = {};
+      const observationStartedAt = new Date();
+      getObservationLabels().forEach(function (label) {
+        pushLogEntry(getVodCriteriaLogLabel(label), observationStartedAt);
+      });
       observationIntervalId = setInterval(function () {
         if (!state.iaObservationActive) return;
         if (state.iaObservationCountdown <= 0) {
@@ -3357,9 +3403,15 @@
       const expired = state.iaObservationCountdown <= 0;
       const el = document.getElementById('ia-countdown');
       if (el) {
-        el.textContent = expired
-          ? '5-minute observation period complete'
-          : 'Observation period: ' + formatDisplayElapsed(state.iaObservationCountdown) + ' remaining';
+        el.textContent = formatDisplayElapsed(state.iaObservationCountdown);
+      }
+      const progressEl = document.getElementById('ia-countdown-progress');
+      if (progressEl) {
+        progressEl.style.width = (getVodCountdownRemainingFraction(state.iaObservationCountdown) * 100) + '%';
+      }
+      if (expired) {
+        render();
+        return;
       }
       const allChecked = VOD_OBSERVATION_CHECKLIST_ITEMS.every(function (item) {
         return state.iaObservationChecklist[item.id];
@@ -3416,6 +3468,16 @@
       const allChecked = VOD_OBSERVATION_CHECKLIST_ITEMS.every(function (item) {
         return state.iaObservationChecklist[item.id];
       });
+      const progressPct = getVodCountdownRemainingFraction(state.iaObservationCountdown) * 100;
+      const timerBox = expired
+        ? ''
+        : '<div class="assessment-observation-timer-box" role="status" aria-live="polite">' +
+          '<div class="assessment-observation-timer-top"><div class="timer-display">' +
+          '<span class="timer-label">Observation</span>' +
+          '<span class="timer-value" id="ia-countdown">' + formatDisplayElapsed(state.iaObservationCountdown) + '</span></div></div>' +
+          '<div class="rhythm-check-progress-track assessment-observation-progress-track" role="progressbar" aria-label="Observation period remaining">' +
+          '<div class="rhythm-check-progress-fill" id="ia-countdown-progress" style="width:' + progressPct + '%"></div></div>' +
+          '<p class="assessment-observation-wait-hint">Confirm each item when the 5-minute observation period ends.</p></div>';
       const checklist = VOD_OBSERVATION_CHECKLIST_ITEMS.map(function (item) {
         const done = !!state.iaObservationChecklist[item.id];
         return (
@@ -3425,14 +3487,16 @@
           '><span class="quality-prompt-label">' + item.label + '</span></label></li>'
         );
       }).join('');
+      const completeMsg = expired
+        ? '<p class="assessment-observation-complete" role="status">5-minute observation period complete</p>'
+        : '';
       return (
-        '<div class="assessment-combined-confirm assessment-observation-panel"><p class="assessment-observation-criterion">Selected criteria:</p>' +
+        '<div class="assessment-observation-panel"><h2>Asystole observation</h2>' +
+        '<p class="assessment-observation-criterion">Selected criteria:</p>' +
         '<ul class="assessment-confirm-list">' +
         observation.map(function (label) { return '<li>' + label + '</li>'; }).join('') +
-        '</ul>' +
-        '<div class="assessment-countdown" id="ia-countdown" role="status">' +
-        (expired ? '5-minute observation period complete' : 'Observation period: ' + formatDisplayElapsed(state.iaObservationCountdown) + ' remaining') +
-        '</div><p class="assessment-observation-header">' + VOD_OBSERVATION_CHECKLIST_HEADER + '</p>' +
+        '</ul>' + timerBox + completeMsg +
+        '<p class="assessment-observation-header">' + VOD_OBSERVATION_CHECKLIST_HEADER + '</p>' +
         '<ul class="quality-prompt-checklist">' + checklist + '</ul>' +
         '<button type="button" class="btn btn-danger btn-lg assessment-vod-btn" id="ia-vod-btn" data-ia-action="observation-vod"' +
         (!expired || !allChecked ? ' disabled' : '') + '>VOD</button></div>'
@@ -3474,6 +3538,14 @@
     }
 
     function renderInitialAssessmentHtml() {
+      if (state.iaObservationActive && requiresAsystoleObservationFlow()) {
+        return (
+          '<section class="card"><div class="badge">Initial assessment</div>' +
+          renderObservationPanelHtml() +
+          '</section>'
+        );
+      }
+
       const phase = state.iaPhase;
       const obviouslyExpanded = iaIsMainSelected('obviously-deceased');
       const mainList = INITIAL_ASSESSMENT_OPTIONS.map(function (option) {
@@ -3560,7 +3632,7 @@
             return;
           }
           if (action === 'observation-vod') {
-            finishInitialAssessmentVod(getObservationLabels());
+            finishInitialAssessmentVod([]);
           }
         };
       });
@@ -3719,6 +3791,20 @@
       });
       document.querySelectorAll('[data-rhythm]').forEach(el => {
         el.onclick = () => handleRhythmSelection(el.dataset.rhythm, 'initial');
+      });
+      document.querySelectorAll('[data-tor-special-circumstances]').forEach(function (el) {
+        el.onclick = function () {
+          const believed = el.dataset.torSpecialCircumstances === 'yes';
+          pushLogEntry(believed
+            ? 'TOR — special circumstances believed (hypothermia, overdose/poisoning, or pregnancy) — senior clinical advice required'
+            : 'TOR — no special circumstances believed');
+          state.torSpecialCircumstancesBelieved = believed;
+          if (believed) {
+            state.currentRhythm = null;
+            state.peaTorCriteriaMet = null;
+          }
+          render();
+        };
       });
       document.querySelectorAll('[data-tor-rhythm]').forEach(function (el) {
         el.onclick = function () {

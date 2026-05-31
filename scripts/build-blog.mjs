@@ -148,7 +148,7 @@ export function buildBlog(outputRoot) {
       <script>
         (function () {
           var trust = (new URLSearchParams(window.location.search).get('trust') || 'standard').toLowerCase();
-          var labels = { standard: 'Standard', wmas: 'WMAS', emas: 'EMAS' };
+          var labels = { standard: 'Standard', wmas: 'WMAS' };
           var label = labels[trust] || trust.toUpperCase();
           var note = document.getElementById('blog-audience-note');
           if (note) note.innerHTML = 'Showing posts for the <strong>' + label + '</strong> build.';

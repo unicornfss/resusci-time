@@ -13,7 +13,7 @@ export interface SharedLogPayload {
 /** Compact on-the-wire format — shorter URLs; times stored once, labels rebuilt on import. */
 interface CompactShareWire {
   v: 2
-  t: 'w' | 'e' | 's'
+  t: 'w' | 's' | 'e'
   a: number
   e: [number, string][]
 }
@@ -21,14 +21,12 @@ interface CompactShareWire {
 /** Conservative limit — QR scanners struggle above ~2.5 KB of URL data. */
 export const QR_SHARE_MAX_URL_LENGTH = 2500
 
-function trustToWire(trust: TrustId): 'w' | 'e' | 's' {
-  if (trust === 'emas') return 'e'
+function trustToWire(trust: TrustId): 'w' | 's' {
   if (trust === 'standard') return 's'
   return 'w'
 }
 
 function trustFromWire(trust: 'w' | 'e' | 's'): TrustId {
-  if (trust === 'e') return 'emas'
   if (trust === 's') return 'standard'
   return 'wmas'
 }

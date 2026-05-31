@@ -1,10 +1,9 @@
 import { getServiceConfig, isTrustId } from './getServiceConfig'
-import type { BuildChannel } from './trustIds'
-import { TRUST_IDS } from './trustIds'
+import { parseViteMode, TRUST_IDS } from './trustIds'
 
-const configuredTrust = import.meta.env.VITE_TRUST
-const configuredChannel: BuildChannel =
-  import.meta.env.VITE_BUILD_CHANNEL === 'preview' ? 'preview' : 'live'
+const viteMode = parseViteMode(import.meta.env.MODE)
+const configuredTrust = viteMode.trustId ?? import.meta.env.VITE_TRUST
+const configuredChannel = viteMode.trustId ? viteMode.channel : 'live'
 
 if (!isTrustId(configuredTrust)) {
   throw new Error(

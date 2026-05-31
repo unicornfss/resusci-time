@@ -1,5 +1,4 @@
 import { defaultBrandBackgroundAsset, defaultFeatures } from './defaults'
-import { emasTrust } from './trusts/emas'
 import { standardTrust } from './trusts/standard'
 import { wmasTrust } from './trusts/wmas'
 import type { BuildChannel } from './trustIds'
@@ -7,7 +6,6 @@ import type { ServiceConfig, TrustId } from './types'
 
 const TRUSTS = {
   wmas: wmasTrust,
-  emas: emasTrust,
   standard: standardTrust,
 } as const
 
@@ -28,12 +26,17 @@ export function getServiceConfig(trustId: TrustId, channel: BuildChannel = 'live
     brandBackgroundAsset: trust.brandBackgroundAsset ?? defaultBrandBackgroundAsset,
     features: {
       ...(trust.features?.codeShock ? { codeShock: trust.features.codeShock } : {}),
+      ...(trust.features?.prolongedVfTorGate
+        ? { prolongedVfTorGate: trust.features.prolongedVfTorGate }
+        : {}),
       extraMedications: trust.features?.extraMedications ?? defaultFeatures.extraMedications,
     },
   }
 }
 
 export function buildWebManifest(config: ServiceConfig) {
+  const iconPrefix = config.isPreview ? 'preview-icons/' : ''
+
   return {
     name: config.pageTitle,
     short_name: config.isPreview
@@ -48,10 +51,15 @@ export function buildWebManifest(config: ServiceConfig) {
     theme_color: '#1f4f1f',
     background_color: '#dfe8df',
     icons: [
-      { src: 'favicon-192.png', sizes: '192x192', type: 'image/png' },
-      { src: 'apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-      { src: 'favicon-512.png', sizes: '512x512', type: 'image/png' },
-      { src: 'favicon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: `${iconPrefix}favicon-192.png`, sizes: '192x192', type: 'image/png' },
+      { src: `${iconPrefix}apple-touch-icon.png`, sizes: '180x180', type: 'image/png' },
+      { src: `${iconPrefix}favicon-512.png`, sizes: '512x512', type: 'image/png' },
+      {
+        src: `${iconPrefix}favicon-512.png`,
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'maskable',
+      },
     ],
   }
 }

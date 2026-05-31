@@ -1,4 +1,4 @@
-const CACHE_NAME = 'resusci-time-v3'
+const CACHE_NAME = 'resusci-time-v4'
 
 const PRECACHE_URLS = [
   './',
@@ -10,9 +10,14 @@ const PRECACHE_URLS = [
   './favicon-192.png',
   './favicon-512.png',
   './apple-touch-icon.png',
+  './preview-icons/favicon.png',
+  './preview-icons/favicon-16x16.png',
+  './preview-icons/favicon-32x32.png',
+  './preview-icons/favicon-192.png',
+  './preview-icons/favicon-512.png',
+  './preview-icons/apple-touch-icon.png',
   './backgrounds/resusci-time-logo.png',
   './backgrounds/wmas-crest.png',
-  './backgrounds/emas-crest.png',
   './als-alogorhythm.png',
 ]
 

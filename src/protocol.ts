@@ -78,6 +78,7 @@ export const RESUSCITATION_QUALITY_HEADER =
   'High-quality chest compressions and ventilations, and:'
 
 export type ResuscitationQualityPromptId =
+  | 'additional-resources'
   | 'pad-placement'
   | 'oxygen'
   | 'continuous-compressions'
@@ -99,6 +100,7 @@ export interface ResuscitationQualityPrompt {
 }
 
 export const RESUSCITATION_QUALITY_ITEMS: readonly ResuscitationQualityPrompt[] = [
+  { id: 'additional-resources', label: 'Request additional resources (if required)', action: 'log' },
   { id: 'minimise-interruptions', label: 'Minimise interruptions to chest compressions', action: 'log' },
   { id: 'pad-placement', label: 'Ensure optimal defibrillator pad placement', action: 'log' },
   { id: 'oxygen', label: 'Give oxygen', action: 'log' },
@@ -163,6 +165,31 @@ export function getVectorChangeLogLabel(changed: boolean): string {
   return changed ? 'Vector change — changed' : 'Vector change — not changed'
 }
 
+export function shouldTriggerProlongedVf(consecutiveShockCount: number): boolean {
+  return consecutiveShockCount >= CONSECUTIVE_SHOCKS_FOR_VECTOR_REMINDER
+}
+
+export const PROLONGED_VF_LOG_LABEL = 'Prolonged VF'
+
+export function getProlongedVfPrompt(): string {
+  return 'Prolonged VF — senior advice will be required before any termination of resuscitation.'
+}
+
+export const PROLONGED_VF_TOR_MESSAGE =
+  'This patient has experienced at least one episode of prolonged VF (three consecutive shockable rhythms). Senior clinical discussion must take place before terminating resuscitation.'
+
+export function isProlongedVfTorGateEnabled(): boolean {
+  return serviceConfig.features.prolongedVfTorGate?.enabled === true
+}
+
+export function getProlongedVfTorMessage(): string {
+  return PROLONGED_VF_TOR_MESSAGE
+}
+
+export function hasProlongedVfLogged(logTexts: readonly string[]): boolean {
+  return logTexts.includes(PROLONGED_VF_LOG_LABEL)
+}
+
 export function nextConsecutiveShockCount(
   currentCount: number,
   rhythm: Rhythm,
@@ -197,6 +224,28 @@ export function getQualityPromptLogLabel(label: string): string {
 export const PEA_TOR_CRITERIA_QUESTION =
   'Is rate below 40 bpm and width of QRS complexes greater than 120 ms?'
 
+export const TOR_SPECIAL_CIRCUMSTANCES_QUESTION =
+  'Do you believe any of the following to be true?'
+
+export const TOR_SPECIAL_CIRCUMSTANCES_ITEMS = [
+  'The primary cause of cardiac arrest is hypothermia',
+  'Suspected drug overdose or poisoning',
+  'The patient is pregnant',
+] as const
+
+export const TOR_SPECIAL_CIRCUMSTANCES_ADVICE_MESSAGE =
+  'Senior clinical advice must always be sought when any of these circumstances are believed to apply.'
+
+export const TOR_SPECIAL_CIRCUMSTANCES_YES_LOG =
+  'TOR — special circumstances believed (hypothermia, overdose/poisoning, or pregnancy) — senior clinical advice required'
+
+export const TOR_SPECIAL_CIRCUMSTANCES_NO_LOG = 'TOR — no special circumstances believed'
+
+export const TOR_REASSESSMENT_STARTED_LOG = 'TOR — initial assessment re-visited'
+
+export const TOR_REASSESSMENT_CONTINUE_LOG =
+  'TOR reassessment — none apply, continuing to termination review'
+
 export const TOR_END_LABEL = 'Termination of resuscitation — resuscitation ended'
 
 export const TOR_CONTINUE_LABEL = 'Termination of resuscitation — resuscitation continued'
@@ -211,6 +260,8 @@ export const SUSTAINED_ROSC_REARREST_TOR_MESSAGE =
 
 export const VOD_READY_MESSAGE =
   'Verification of death can now take place if the patient has been in continuous asystole for a period of at least 5 minutes'
+
+export const VOD_RESUSCITATION_NOT_APPROPRIATE_MESSAGE = 'Resuscitation not appropriate'
 
 export const VOD_LOG_LABEL = 'Verification of death'
 
