@@ -1,5 +1,5 @@
 ---
-title: "WMAS release update — Documents, TOR, and CODE SHOCK"
+title: WMAS release update — Documents, TOR, and CODE SHOCK
 date: 2026-05-31
 category: news
 audience: wmas
