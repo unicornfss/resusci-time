@@ -33,6 +33,8 @@ jobs:
       - name: Sync build config onto live checkout
         run: |
           cp preview-src/scripts/build-pages.mjs live-src/scripts/build-pages.mjs
+          cp preview-src/scripts/build-preview-changelog.mjs live-src/scripts/build-preview-changelog.mjs
+          cp preview-src/scripts/sync-preview-changelog.mjs live-src/scripts/sync-preview-changelog.mjs
           cp preview-src/scripts/trustPaths.mjs live-src/scripts/trustPaths.mjs
           cp preview-src/src/config/trust-manifest.json live-src/src/config/trust-manifest.json
           cp preview-src/src/config/trustIds.ts live-src/src/config/trustIds.ts

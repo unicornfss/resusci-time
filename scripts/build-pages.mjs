@@ -4,7 +4,6 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import trustManifest from '../src/config/trust-manifest.json' with { type: 'json' }
 import { buildBlog } from './build-blog.mjs'
-import { buildPreviewChangelog } from './build-preview-changelog.mjs'
 import { previewOutputFolder, liveOutputFolder } from './trustPaths.mjs'
 import { renderSitePage } from './site-shell.mjs'
 
@@ -71,46 +70,54 @@ function buildLiveTrusts() {
   }
 }
 
-function buildPreviewTrusts() {
+async function buildPreviewTrusts() {
   for (const { id } of trustManifest) {
     buildTrustMode(`${id}-preview`, previewOutputFolder(id))
   }
+  const { buildPreviewChangelog } = await import('./build-preview-changelog.mjs')
   buildPreviewChangelog(outputRoot)
 }
 
-if (buildAll) {
-  rmSync(outputRoot, { recursive: true, force: true })
-  mkdirSync(outputRoot, { recursive: true })
-  buildLiveTrusts()
-  buildPreviewTrusts()
-  copyStaticSiteAssets()
-  console.log(`Built full dist-pages (live + preview${includeBlog ? ' + blog' : ''} + landing)`)
-} else if (buildLiveOnly) {
-  rmSync(outputRoot, { recursive: true, force: true })
-  mkdirSync(outputRoot, { recursive: true })
-  buildLiveTrusts()
-  copyStaticSiteAssets()
-  console.log('Built live dist-pages (from current checkout)')
-} else if (buildPreviewOnly) {
-  mkdirSync(outputRoot, { recursive: true })
-  buildPreviewTrusts()
-  console.log('Built preview dist-pages into existing output (from current checkout)')
-} else if (buildLandingOnly) {
-  mkdirSync(outputRoot, { recursive: true })
-  copyStaticSiteAssets()
-  console.log(`Built landing page${includeBlog ? ' and blog' : ''} into existing dist-pages (from current checkout)`)
-} else {
-  throw new Error('Invalid build flags')
+async function main() {
+  if (buildAll) {
+    rmSync(outputRoot, { recursive: true, force: true })
+    mkdirSync(outputRoot, { recursive: true })
+    buildLiveTrusts()
+    await buildPreviewTrusts()
+    copyStaticSiteAssets()
+    console.log(`Built full dist-pages (live + preview${includeBlog ? ' + blog' : ''} + landing)`)
+  } else if (buildLiveOnly) {
+    rmSync(outputRoot, { recursive: true, force: true })
+    mkdirSync(outputRoot, { recursive: true })
+    buildLiveTrusts()
+    copyStaticSiteAssets()
+    console.log('Built live dist-pages (from current checkout)')
+  } else if (buildPreviewOnly) {
+    mkdirSync(outputRoot, { recursive: true })
+    await buildPreviewTrusts()
+    console.log('Built preview dist-pages into existing output (from current checkout)')
+  } else if (buildLandingOnly) {
+    mkdirSync(outputRoot, { recursive: true })
+    copyStaticSiteAssets()
+    console.log(`Built landing page${includeBlog ? ' and blog' : ''} into existing dist-pages (from current checkout)`)
+  } else {
+    throw new Error('Invalid build flags')
+  }
+
+  if (buildAll || buildLiveOnly || buildLandingOnly) {
+    console.log(includeBlog ? 'Landing page and blog updated' : 'Landing page updated (blog omitted)')
+  }
+  if (buildAll || buildLiveOnly) {
+    const liveFolders = trustManifest.map(({ id }) => liveOutputFolder(id)).join(', ')
+    console.log(`Live folders: ${liveFolders}`)
+  }
+  if (buildAll || buildPreviewOnly) {
+    const previewIds = trustManifest.map(({ id }) => previewOutputFolder(id)).join(', ')
+    console.log(`Preview folders: ${previewIds}`)
+  }
 }
 
-if (buildAll || buildLiveOnly || buildLandingOnly) {
-  console.log(includeBlog ? 'Landing page and blog updated' : 'Landing page updated (blog omitted)')
-}
-if (buildAll || buildLiveOnly) {
-  const liveFolders = trustManifest.map(({ id }) => liveOutputFolder(id)).join(', ')
-  console.log(`Live folders: ${liveFolders}`)
-}
-if (buildAll || buildPreviewOnly) {
-  const previewIds = trustManifest.map(({ id }) => previewOutputFolder(id)).join(', ')
-  console.log(`Preview folders: ${previewIds}`)
-}
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})
