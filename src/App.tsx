@@ -1635,7 +1635,7 @@ function App() {
           <button
             type="button"
             className="btn btn-primary"
-            onClick={beginTorReview}
+            onClick={() => beginTorReview()}
           >
             Review termination guidance
           </button>
@@ -1724,7 +1724,7 @@ function App() {
               </>
             )}
             {timer.atFortyFiveMinutes && fortyFiveAcknowledged && timerView !== 'rosc' && (
-              <button type="button" className="btn btn-primary" onClick={beginTorReview}>
+              <button type="button" className="btn btn-primary" onClick={() => beginTorReview()}>
                 View 45-minute termination guidance
               </button>
             )}
