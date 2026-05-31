@@ -124,6 +124,8 @@ export default defineConfig(({ mode }) => {
     define: {
       __APP_VERSION__: JSON.stringify(appVersion),
       __APP_BUILD_ISO__: JSON.stringify(appBuildIso),
+      'import.meta.env.VITE_BUILD_CHANNEL': JSON.stringify(resolvedChannel),
+      'import.meta.env.VITE_TRUST': JSON.stringify(resolvedTrustId),
     },
     base: isProductionBuild ? './' : '/',
     server: {

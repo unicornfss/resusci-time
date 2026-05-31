@@ -1,21 +1,3 @@
-const SESSION_KEY = 'resusci-time-preview-warning-dismissed'
-
-export function isPreviewWarningDismissed(): boolean {
-  try {
-    return sessionStorage.getItem(SESSION_KEY) === '1'
-  } catch {
-    return false
-  }
-}
-
-export function dismissPreviewWarningSession(): void {
-  try {
-    sessionStorage.setItem(SESSION_KEY, '1')
-  } catch {
-    /* ignore */
-  }
-}
-
 interface PreviewDevelopmentWarningModalProps {
   onAcknowledge: () => void
 }

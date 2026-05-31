@@ -62,11 +62,7 @@ import { InitialAssessmentPanel } from './components/InitialAssessmentPanel'
 import { ReversibleCausesModal } from './components/ReversibleCausesModal'
 import { AboutModal } from './components/AboutModal'
 import { DocumentsModal } from './components/DocumentsModal'
-import {
-  dismissPreviewWarningSession,
-  isPreviewWarningDismissed,
-  PreviewDevelopmentWarningModal,
-} from './components/PreviewDevelopmentWarningModal'
+import { PreviewDevelopmentWarningModal } from './components/PreviewDevelopmentWarningModal'
 import { AppVersionInfo } from './components/AppVersionInfo'
 import { getBlogUrl } from './blogUrl'
 import { InstallAppButton } from './components/InstallAppButton'
@@ -211,9 +207,7 @@ function App() {
   const [showReversibleCausesModal, setShowReversibleCausesModal] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
   const [documentsOpen, setDocumentsOpen] = useState(false)
-  const [previewWarningOpen, setPreviewWarningOpen] = useState(
-    () => IS_PREVIEW_BUILD && !isPreviewWarningDismissed(),
-  )
+  const [previewWarningOpen, setPreviewWarningOpen] = useState(IS_PREVIEW_BUILD)
   const [savedLogsOpen, setSavedLogsOpen] = useState(false)
   const [autosaveOffer, setAutosaveOffer] = useState<SavedLogRecord | null>(null)
   const [sharedLog, setSharedLog] = useState<SharedLogPayload | null>(() => parseShareFromLocation())
@@ -1875,12 +1869,7 @@ function App() {
       </footer>
 
       {previewWarningOpen && (
-        <PreviewDevelopmentWarningModal
-          onAcknowledge={() => {
-            dismissPreviewWarningSession()
-            setPreviewWarningOpen(false)
-          }}
-        />
+        <PreviewDevelopmentWarningModal onAcknowledge={() => setPreviewWarningOpen(false)} />
       )}
 
       {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
