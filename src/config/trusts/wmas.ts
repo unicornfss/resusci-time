@@ -6,9 +6,10 @@ export const wmasTrust: TrustOverrides = {
   brandBackgroundAsset: 'backgrounds/wmas-crest.png',
   features: {
     codeShock: {
-      minShocks: 3,
+      minShocks: 1,
       prompt: 'CODE SHOCK notified to EOC',
       logLabel: 'CODE SHOCK notified to EOC',
     },
+    prolongedVfTorGate: { enabled: true },
   },
 }

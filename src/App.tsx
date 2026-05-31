@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { serviceConfig } from './config'
 import { parseShareFromLocation, type SharedLogPayload } from './logShare'
 import {
@@ -30,6 +30,8 @@ import {
   getVectorChangeLogLabel,
   getVectorChangePrompt,
   getProlongedVfPrompt,
+  hasProlongedVfLogged,
+  isProlongedVfTorGateEnabled,
   PROLONGED_VF_LOG_LABEL,
   shouldTriggerProlongedVf,
   getVodCriteriaLogLabel,
@@ -43,7 +45,11 @@ import {
   sortDisplayLogEntries,
   TOR_CONTINUE_LABEL,
   TOR_END_LABEL,
+  TOR_REASSESSMENT_CONTINUE_LOG,
+  TOR_REASSESSMENT_STARTED_LOG,
   TOR_SENIOR_ADVICE_LABEL,
+  TOR_SPECIAL_CIRCUMSTANCES_NO_LOG,
+  TOR_SPECIAL_CIRCUMSTANCES_YES_LOG,
   CLINICAL_DISCUSSION_CONTINUE_LABEL,
   VOD_LOG_LABEL,
   type ResuscitationQualityPromptId,
@@ -55,6 +61,12 @@ import { ResuscitationQualityChecklist } from './components/ResuscitationQuality
 import { InitialAssessmentPanel } from './components/InitialAssessmentPanel'
 import { ReversibleCausesModal } from './components/ReversibleCausesModal'
 import { AboutModal } from './components/AboutModal'
+import { DocumentsModal } from './components/DocumentsModal'
+import {
+  dismissPreviewWarningSession,
+  isPreviewWarningDismissed,
+  PreviewDevelopmentWarningModal,
+} from './components/PreviewDevelopmentWarningModal'
 import { AppVersionInfo } from './components/AppVersionInfo'
 import { getBlogUrl } from './blogUrl'
 import { InstallAppButton } from './components/InstallAppButton'
@@ -71,7 +83,6 @@ import { PulseRateReminderPanel } from './components/PulseRateReminderPanel'
 import { SbpReminderPanel } from './components/SbpReminderPanel'
 import { TerminationReview } from './components/TerminationReview'
 import { ThemeToggle } from './components/ThemeToggle'
-import { publicAssetUrl } from './publicAssetUrl'
 import {
   getRoscCommencedLogLabel,
   getRoscPhaseLabel,
@@ -115,6 +126,7 @@ import {
   getSodiumChlorideLogLabel,
   hasVascularAccessLogged,
   isContinuousCompressionsAirwayOption,
+  shouldPromptVascularAccessAfterFirstAdrenaline,
   SODIUM_CHLORIDE_OPTIONS,
 } from './interventions'
 import type { DisplayLogEntry, ProtocolStep, Rhythm, RoscStatus } from './types'
@@ -198,6 +210,10 @@ function App() {
   >(() => new Set())
   const [showReversibleCausesModal, setShowReversibleCausesModal] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [documentsOpen, setDocumentsOpen] = useState(false)
+  const [previewWarningOpen, setPreviewWarningOpen] = useState(
+    () => IS_PREVIEW_BUILD && !isPreviewWarningDismissed(),
+  )
   const [savedLogsOpen, setSavedLogsOpen] = useState(false)
   const [autosaveOffer, setAutosaveOffer] = useState<SavedLogRecord | null>(null)
   const [sharedLog, setSharedLog] = useState<SharedLogPayload | null>(() => parseShareFromLocation())
@@ -227,12 +243,14 @@ function App() {
   const [showSbpAdrenaline100, setShowSbpAdrenaline100] = useState(false)
   const [atropineTotalMg, setAtropineTotalMg] = useState(0)
   const [peaTorCriteriaMet, setPeaTorCriteriaMet] = useState<boolean | null>(null)
+  const [torSpecialCircumstancesBelieved, setTorSpecialCircumstancesBelieved] = useState<boolean | null>(null)
   const [torEndedAtLabel, setTorEndedAtLabel] = useState<string | null>(null)
   const [vodCountdownRemaining, setVodCountdownRemaining] = useState(timing.vodCountdownActualSeconds)
   const [vodAtLabel, setVodAtLabel] = useState<string | null>(null)
   const [sustainedRoscEverAchieved, setSustainedRoscEverAchieved] = useState(false)
   const [clinicalDiscussionPending, setClinicalDiscussionPending] = useState(false)
   const [clinicalDiscussionOpen, setClinicalDiscussionOpen] = useState(false)
+  const [clinicalDiscussionContinued, setClinicalDiscussionContinued] = useState(false)
   const [metronomeEnabled, setMetronomeEnabled] = useState(false)
   const [completedRoscTaskIds, setCompletedRoscTaskIds] = useState<Set<RoscTaskId>>(() => new Set())
 
@@ -553,12 +571,14 @@ function App() {
     resetRoscMonitoringProgress()
     setMetronomeEnabled(false)
     setPeaTorCriteriaMet(null)
+    setTorSpecialCircumstancesBelieved(null)
     setTorEndedAtLabel(null)
     setVodCountdownRemaining(timing.vodCountdownActualSeconds)
     setVodAtLabel(null)
     setSustainedRoscEverAchieved(false)
     setClinicalDiscussionPending(false)
     setClinicalDiscussionOpen(false)
+    setClinicalDiscussionContinued(false)
     sustainedRoscLoggedRef.current = false
     setAutosaveOffer(null)
     void clearAutosaveLog()
@@ -587,7 +607,8 @@ function App() {
     return entry.atEpochMs
   }
 
-  function maybePromptVascularAccessAfterFirstMedication(atEpochMs: number) {
+  function maybePromptVascularAccessIfNotEstablished(atEpochMs: number, entries: readonly DisplayLogEntry[]) {
+    if (hasVascularAccessLogged(entries)) return
     pendingVascularAccessAtRef.current = atEpochMs
     setShowVascularAccessReminder(true)
     setVascularAccessReminderStep('prompt')
@@ -612,11 +633,16 @@ function App() {
     setStep('select-rhythm')
   }
 
+  function logVodCriteria(labels: string[], at?: Date) {
+    const when = at ?? new Date()
+    for (const label of labels) {
+      pushLogEntry(getVodCriteriaLogLabel(label), when)
+    }
+  }
+
   function finishInitialAssessmentVod(criteriaLabels: string[] = []) {
     const now = new Date()
-    for (const label of criteriaLabels) {
-      pushLogEntry(getVodCriteriaLogLabel(label), now)
-    }
+    logVodCriteria(criteriaLabels, now)
     pushLogEntry(VOD_LOG_LABEL, now)
     setVodAtLabel(formatActualTime(now))
     setStep('complete')
@@ -807,13 +833,15 @@ function App() {
     if (timerView !== 'arrest') return
     if (!initialRhythm) return
     if (!canLogAdrenaline(initialRhythm, adrenalineDoseCount, totalShocks, hasNonShockableRhythm)) return
-    const isFirstMedication = adrenalineDoseCount + amiodaroneDoseCount === 0
-    const needsVascularPrompt = isFirstMedication && !hasVascularAccessLogged(logEntries)
+    const needsVascularPrompt = shouldPromptVascularAccessAfterFirstAdrenaline(
+      adrenalineDoseCount,
+      logEntries,
+    )
     const dose = adrenalineDoseCount + 1
     setAdrenalineDoseCount(dose)
     const atEpochMs = pushLogEntry(getAdrenalineLogLabel(dose))
     setNextAdrenalineAt(timer.elapsedSeconds + timing.adrenalineIntervalSeconds)
-    if (needsVascularPrompt) maybePromptVascularAccessAfterFirstMedication(atEpochMs)
+    if (needsVascularPrompt) maybePromptVascularAccessIfNotEstablished(atEpochMs, logEntries)
   }
 
   function logAmiodarone() {
@@ -826,7 +854,7 @@ function App() {
     const dose = amiodaroneDoseCount + 1
     setAmiodaroneDoseCount(dose)
     const atEpochMs = pushLogEntry(getAmiodaroneLogLabel(dose))
-    if (needsVascularPrompt) maybePromptVascularAccessAfterFirstMedication(atEpochMs)
+    if (needsVascularPrompt) maybePromptVascularAccessIfNotEstablished(atEpochMs, logEntries)
   }
 
   function afterRhythmLogged(rhythm: Rhythm, joules?: number) {
@@ -896,13 +924,56 @@ function App() {
     appendRhythmCheck(rhythm)
   }
 
-  function beginTorReview() {
-    if (timerView === 'rosc') return
+  function beginTorReview(source: 'manual' | 'scheduled' = 'scheduled') {
+    if (timerView === 'rosc' || initialRhythm == null) return
     setFortyFiveAcknowledged(true)
     setShowFortyFiveAlert(false)
     setCurrentRhythm(null)
     setPeaTorCriteriaMet(null)
+    setTorSpecialCircumstancesBelieved(null)
+    if (source === 'manual') {
+      pushLogEntry(TOR_REASSESSMENT_STARTED_LOG)
+      setStep('tor-reassessment')
+    } else {
+      setStep('forty-five-minute-check')
+    }
+    requestAnimationFrame(() => {
+      document.querySelector('.main')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
+  function completeTorReassessment() {
+    pushLogEntry(TOR_REASSESSMENT_CONTINUE_LOG)
     setStep('forty-five-minute-check')
+    requestAnimationFrame(() => {
+      document.querySelector('.main')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
+  function finishTorReassessmentVod(criteriaLabels: string[] = []) {
+    const now = new Date()
+    timer.pause()
+    setMetronomeEnabled(false)
+    logVodCriteria(criteriaLabels, now)
+    pushLogEntry(VOD_LOG_LABEL, now)
+    setVodAtLabel(formatActualTime(now))
+    setStep('complete')
+  }
+
+  function cancelTorReview() {
+    setCurrentRhythm(null)
+    setPeaTorCriteriaMet(null)
+    setTorSpecialCircumstancesBelieved(null)
+    setStep(initialRhythm != null ? 'active-resuscitation' : 'select-rhythm')
+  }
+
+  function handleTorSpecialCircumstancesAnswer(believed: boolean) {
+    pushLogEntry(believed ? TOR_SPECIAL_CIRCUMSTANCES_YES_LOG : TOR_SPECIAL_CIRCUMSTANCES_NO_LOG)
+    setTorSpecialCircumstancesBelieved(believed)
+    if (believed) {
+      setCurrentRhythm(null)
+      setPeaTorCriteriaMet(null)
+    }
   }
 
   function handleTorRhythmSelect(rhythm: Rhythm) {
@@ -921,6 +992,7 @@ function App() {
     setMetronomeEnabled(false)
     setClinicalDiscussionPending(false)
     setClinicalDiscussionOpen(false)
+    setClinicalDiscussionContinued(false)
     pushLogEntry(TOR_END_LABEL, now)
     setTorEndedAtLabel(formatActualTime(now))
     setVodCountdownRemaining(timing.vodCountdownActualSeconds)
@@ -945,6 +1017,7 @@ function App() {
     pushLogEntry(TOR_SENIOR_ADVICE_LABEL)
     setClinicalDiscussionPending(true)
     setClinicalDiscussionOpen(false)
+    setClinicalDiscussionContinued(false)
     setStep('active-resuscitation')
   }
 
@@ -952,6 +1025,7 @@ function App() {
     pushLogEntry(CLINICAL_DISCUSSION_CONTINUE_LABEL)
     setClinicalDiscussionPending(false)
     setClinicalDiscussionOpen(false)
+    setClinicalDiscussionContinued(true)
     if (!timer.isRunning && step !== 'post-tor') {
       timer.resume()
     }
@@ -960,6 +1034,7 @@ function App() {
   function handleClinicalDiscussionTerminate() {
     setClinicalDiscussionPending(false)
     setClinicalDiscussionOpen(false)
+    setClinicalDiscussionContinued(false)
     handleTorEndResuscitation()
   }
 
@@ -987,6 +1062,16 @@ function App() {
     timerView === 'arrest' &&
     shouldTriggerProlongedVf(consecutiveShockCount) &&
     !prolongedVfAcknowledged
+
+  const torProlongedVfGate =
+    isProlongedVfTorGateEnabled() &&
+    hasProlongedVfLogged(logEntries.map((entry) => entry.text))
+
+  const canBeginTorReview =
+    initialRhythm != null &&
+    timerView !== 'rosc' &&
+    step !== 'tor-reassessment' &&
+    step !== 'forty-five-minute-check'
 
   const showVascularAccessPanel =
     showVascularAccessReminder &&
@@ -1065,6 +1150,7 @@ function App() {
     shouldShowRxSection(initialRhythm) &&
     initialRhythm != null &&
     (step === 'active-resuscitation' ||
+      step === 'tor-reassessment' ||
       step === 'forty-five-minute-check' ||
       step === 'rosc-assessment')
 
@@ -1105,6 +1191,7 @@ function App() {
     vodAtLabel,
     clinicalDiscussionPending,
     clinicalDiscussionOpen,
+    clinicalDiscussionContinued,
   ])
 
   const showInterventionsButton = step === 'select-rhythm' || step === 'active-resuscitation'
@@ -1112,11 +1199,42 @@ function App() {
   const vodCompleteActive = step === 'complete' && vodAtLabel != null
   const vodReady = vodCountdownRemaining <= 0
   const showResuscitationTimerControls = !postTorActive && !vodCompleteActive
+  const resuscitationOngoing =
+    step === 'active-resuscitation' ||
+    step === 'tor-reassessment' ||
+    step === 'forty-five-minute-check'
   const showClinicalDiscussionTimer =
     clinicalDiscussionPending &&
     showResuscitationTimerControls &&
     step === 'active-resuscitation' &&
     timerView === 'arrest'
+  const clinicalDiscussionStatus = clinicalDiscussionOpen ? 'open' : 'collapsed'
+  const timerBarTone =
+    postTorActive || vodCompleteActive
+      ? 'post-tor'
+      : clinicalDiscussionPending && timerView === 'arrest'
+        ? 'amber'
+        : timer.atFortyFiveMinutes &&
+            !clinicalDiscussionContinued &&
+            timerView !== 'rosc' &&
+            showResuscitationTimerControls
+          ? 'critical'
+          : 'default'
+
+  function getTimerBarStyle(): CSSProperties | undefined {
+    if (timerBarTone === 'amber') {
+      return { background: '#d97706' }
+    }
+    return undefined
+  }
+
+  function getTimerBarClassName(): string {
+    const classes = ['timer-bar']
+    if (timerBarTone === 'post-tor') classes.push('timer-bar-post-tor')
+    if (timerBarTone === 'critical') classes.push('timer-critical')
+    if (timerBarTone === 'amber') classes.push('timer-clinical-discussion-active')
+    return classes.join(' ')
+  }
 
   function handleJumpToTestFortyFour() {
     timer.jumpToElapsed(timing.testJumpToActualSeconds)
@@ -1169,6 +1287,9 @@ function App() {
             <button type="button" className="header-link-btn" onClick={() => setAboutOpen(true)}>
               About
             </button>
+            <button type="button" className="header-link-btn" onClick={() => setDocumentsOpen(true)}>
+              Documents
+            </button>
             <button type="button" className="header-link-btn" onClick={() => setSavedLogsOpen(true)}>
               Saved logs
             </button>
@@ -1178,19 +1299,11 @@ function App() {
         </div>
         <h1>{serviceConfig.headerTitle}</h1>
         <p className="subtitle">Adult Cardiac Arrest · Ambulance Resource Protocol</p>
-        <p className="als-guide-link-wrap">
-          <a
-            className="als-guide-link"
-            href={publicAssetUrl('als-alogorhythm.png')}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Advanced Life Support (ALS) algorithm
-          </a>
-        </p>
         {(IS_PREVIEW_BUILD || timing.isTestTiming) && (
           <div className="test-mode-controls">
-            <p className="test-banner">{getTestModeBannerText(timing)}</p>
+            {timing.isTestTiming && !IS_PREVIEW_BUILD && (
+              <p className="test-banner">{getTestModeBannerText(timing)}</p>
+            )}
             {showPreviewSpeedControl && previewSpeedMultiplier != null && (
               <PreviewSpeedControl value={previewSpeedMultiplier} onChange={handlePreviewSpeedChange} />
             )}
@@ -1253,7 +1366,8 @@ function App() {
         <>
         <div
           ref={timerBarRef}
-          className={`timer-bar ${timer.atFortyFiveMinutes && timerView !== 'rosc' && showResuscitationTimerControls ? 'timer-critical' : ''}${postTorActive || vodCompleteActive ? ' timer-bar-post-tor' : ''}`}
+          className={getTimerBarClassName()}
+          style={getTimerBarStyle()}
         >
           <div className="timer-bar-top">
             <div className="timer-display">
@@ -1305,7 +1419,9 @@ function App() {
                 type="button"
                 className={`timer-action-box${timer.atFortyFiveMinutes ? ' on' : ''}`}
                 aria-label="Termination of resuscitation review"
-                onClick={beginTorReview}
+                title={canBeginTorReview ? undefined : 'Log the initial rhythm before opening TOR review'}
+                disabled={!canBeginTorReview}
+                onClick={() => beginTorReview('manual')}
               >
                 TOR
               </button>
@@ -1314,14 +1430,6 @@ function App() {
             </>
             )}
           </div>
-          {showClinicalDiscussionTimer && (
-            <ClinicalDiscussionTimerSection
-              open={clinicalDiscussionOpen}
-              onOpen={() => setClinicalDiscussionOpen(true)}
-              onContinueResuscitation={handleClinicalDiscussionContinue}
-              onTerminateResuscitation={handleClinicalDiscussionTerminate}
-            />
-          )}
           {postTorActive && torEndedAtLabel && (
             <TimerVodSection
               torEndedAtLabel={torEndedAtLabel}
@@ -1334,7 +1442,7 @@ function App() {
           {vodCompleteActive && vodAtLabel && (
             <TimerVodCompleteStamp vodAtLabel={vodAtLabel} logEntries={sortedLogEntries} />
           )}
-          {showResuscitationTimerControls && step === 'active-resuscitation' && timer.elapsedSeconds < timing.fortyFiveMinutesSeconds && (
+          {showResuscitationTimerControls && resuscitationOngoing && (
             <div className="timer-next-check">
               {!showRhythmCheckAlert ? (
                 <>
@@ -1378,6 +1486,14 @@ function App() {
           )}
           {timerView === 'rosc' && step === 'active-resuscitation' && (
             <TimerRoscRxSection atropineTotalMg={atropineTotalMg} />
+          )}
+          {showClinicalDiscussionTimer && (
+            <ClinicalDiscussionTimerSection
+              status={clinicalDiscussionStatus}
+              onOpen={() => setClinicalDiscussionOpen(true)}
+              onContinueResuscitation={handleClinicalDiscussionContinue}
+              onTerminateResuscitation={handleClinicalDiscussionTerminate}
+            />
           )}
         </div>
         </>
@@ -1542,6 +1658,7 @@ function App() {
           <InitialAssessmentPanel
             onCommenceResuscitation={commenceResuscitation}
             onCompleteVod={finishInitialAssessmentVod}
+            onLogObservationCriteria={logVodCriteria}
             formatCountdown={formatProtocolElapsed}
           />
         )}
@@ -1620,22 +1737,47 @@ function App() {
           </section>
         )}
 
-        {step === 'forty-five-minute-check' && initialRhythm && (
+        {step === 'tor-reassessment' && (
+          <InitialAssessmentPanel
+            mode="tor-reassessment"
+            onCommenceResuscitation={completeTorReassessment}
+            onCompleteVod={finishTorReassessmentVod}
+            onLogObservationCriteria={logVodCriteria}
+            formatCountdown={formatProtocolElapsed}
+            onCancel={cancelTorReview}
+          />
+        )}
+
+        {step === 'forty-five-minute-check' && (
           <section className="card">
             <div className="card-badge critical">TOR</div>
             <h2>Termination of resuscitation</h2>
-            <TerminationReview
-              initialRhythm={initialRhythm}
-              currentRhythm={currentRhythm}
-              peaTorCriteriaMet={peaTorCriteriaMet}
-              sustainedRoscEverAchieved={sustainedRoscEverAchieved}
-              onSelectRhythm={handleTorRhythmSelect}
-              onResetRhythm={resetTorRhythmSelection}
-              onPeaCriteriaAnswer={setPeaTorCriteriaMet}
-              onEndResuscitation={handleTorEndResuscitation}
-              onContinueResuscitation={handleTorContinueResuscitation}
-              onSeekSeniorAdvice={handleTorSeekSeniorAdvice}
-            />
+            {initialRhythm ? (
+              <TerminationReview
+                initialRhythm={initialRhythm}
+                currentRhythm={currentRhythm}
+                torProlongedVfGate={torProlongedVfGate}
+                specialCircumstancesBelieved={torSpecialCircumstancesBelieved}
+                peaTorCriteriaMet={peaTorCriteriaMet}
+                sustainedRoscEverAchieved={sustainedRoscEverAchieved}
+                onSpecialCircumstancesAnswer={handleTorSpecialCircumstancesAnswer}
+                onSelectRhythm={handleTorRhythmSelect}
+                onResetRhythm={resetTorRhythmSelection}
+                onPeaCriteriaAnswer={setPeaTorCriteriaMet}
+                onEndResuscitation={handleTorEndResuscitation}
+                onContinueResuscitation={handleTorContinueResuscitation}
+                onSeekSeniorAdvice={handleTorSeekSeniorAdvice}
+              />
+            ) : (
+              <>
+                <p className="lead">
+                  Log the initial monitored rhythm before reviewing termination of resuscitation.
+                </p>
+                <button type="button" className="btn btn-primary btn-lg" onClick={cancelTorReview}>
+                  Back to rhythm selection
+                </button>
+              </>
+            )}
           </section>
         )}
 
@@ -1732,7 +1874,18 @@ function App() {
         <AppVersionInfo />
       </footer>
 
+      {previewWarningOpen && (
+        <PreviewDevelopmentWarningModal
+          onAcknowledge={() => {
+            dismissPreviewWarningSession()
+            setPreviewWarningOpen(false)
+          }}
+        />
+      )}
+
       {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
+
+      {documentsOpen && <DocumentsModal onClose={() => setDocumentsOpen(false)} />}
 
       {savedLogsOpen && <SavedLogsModal onClose={() => setSavedLogsOpen(false)} />}
 
@@ -1759,7 +1912,7 @@ function App() {
         />
       )}
 
-      {showRhythmCheckAlert && step === 'active-resuscitation' && (
+      {showRhythmCheckAlert && resuscitationOngoing && (
         <div
           className="rhythm-check-modal"
           role="dialog"

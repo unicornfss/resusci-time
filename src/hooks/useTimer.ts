@@ -70,11 +70,7 @@ export function useTimer({ timing, onRhythmCheckDue, onFortyFiveMinutes }: UseTi
   useEffect(() => {
     const { fortyFiveMinutesSeconds } = timingRef.current
 
-    if (
-      elapsedSeconds >= nextCheckAt.current &&
-      elapsedSeconds <= fortyFiveMinutesSeconds &&
-      !checkDueFired.current
-    ) {
+    if (elapsedSeconds >= nextCheckAt.current && !checkDueFired.current) {
       checkDueFired.current = true
       onRhythmCheckDue?.()
     }

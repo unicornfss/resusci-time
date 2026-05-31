@@ -1,4 +1,4 @@
-import { VOD_READY_MESSAGE } from '../protocol'
+import { VOD_READY_MESSAGE, VOD_RESUSCITATION_NOT_APPROPRIATE_MESSAGE } from '../protocol'
 import { VodTimestampsSummary } from './VodTimestampsSummary'
 import { getVodCountdownRemainingFraction } from '../timing'
 import { useTimingConfig } from '../context/TimingConfigContext'
@@ -29,11 +29,13 @@ export function TimerVodSection({
       </div>
       <div className="timer-vod-countdown">
         <div className="timer-vod-countdown-header">
-          <span className="timer-next-check-label">
-            {vodReady
-              ? 'Verification of death wait complete'
-              : `Verification of death in: ${formatRemaining(vodCountdownRemaining)}`}
-          </span>
+          {vodReady ? (
+            <span className="timer-vod-not-appropriate">{VOD_RESUSCITATION_NOT_APPROPRIATE_MESSAGE}</span>
+          ) : (
+            <span className="timer-next-check-label">
+              {`Verification of death in: ${formatRemaining(vodCountdownRemaining)}`}
+            </span>
+          )}
           <button
             type="button"
             className={`timer-action-box timer-vod-btn${vodReady ? ' on' : ''}`}
@@ -44,21 +46,23 @@ export function TimerVodSection({
             VOD
           </button>
         </div>
-        <div
-          className="rhythm-check-progress-track"
-          role="progressbar"
-          aria-label="Time until verification of death"
-          aria-valuemin={0}
-          aria-valuemax={timing.vodCountdownActualSeconds}
-          aria-valuenow={vodCountdownRemaining}
-        >
+        {!vodReady && (
           <div
-            className="rhythm-check-progress-fill"
-            style={{
-              width: `${getVodCountdownRemainingFraction(vodCountdownRemaining, timing.vodCountdownActualSeconds) * 100}%`,
-            }}
-          />
-        </div>
+            className="rhythm-check-progress-track"
+            role="progressbar"
+            aria-label="Time until verification of death"
+            aria-valuemin={0}
+            aria-valuemax={timing.vodCountdownActualSeconds}
+            aria-valuenow={vodCountdownRemaining}
+          >
+            <div
+              className="rhythm-check-progress-fill"
+              style={{
+                width: `${getVodCountdownRemainingFraction(vodCountdownRemaining, timing.vodCountdownActualSeconds) * 100}%`,
+              }}
+            />
+          </div>
+        )}
         {vodReady && <p className="timer-vod-ready-message">{VOD_READY_MESSAGE}</p>}
       </div>
     </div>

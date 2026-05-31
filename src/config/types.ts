@@ -6,6 +6,11 @@ export interface CodeShockFeature {
   logLabel: string
 }
 
+export interface ProlongedVfTorFeature {
+  /** When true, TOR review requires senior clinical discussion if prolonged VF was logged. */
+  enabled: true
+}
+
 export interface MedicationOption {
   id: string
   label: string
@@ -13,6 +18,7 @@ export interface MedicationOption {
 
 export interface ServiceFeatures {
   codeShock?: CodeShockFeature
+  prolongedVfTorGate?: ProlongedVfTorFeature
   extraMedications: readonly MedicationOption[]
 }
 
@@ -33,6 +39,7 @@ export type TrustOverrides = Pick<ServiceConfig, 'trustId' | 'trustLabel'> & {
   brandBackgroundAsset?: string
   features?: {
     codeShock?: CodeShockFeature
+    prolongedVfTorGate?: ProlongedVfTorFeature
     extraMedications?: readonly MedicationOption[]
   }
 }

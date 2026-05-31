@@ -29,7 +29,10 @@ export function VodTimestampsSummary({ entries, vodAtLabel, compact = false }: V
           </ul>
         </>
       )}
-      <p className="vod-death-stamp">Verification of death recorded at {vodAtLabel}</p>
+      <p className="vod-death-stamp">
+        <span className="vod-death-stamp-label">Verification of death recorded</span>
+        <span className="vod-criteria-time">{vodAtLabel}</span>
+      </p>
     </div>
   )
 }

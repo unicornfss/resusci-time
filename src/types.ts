@@ -14,6 +14,7 @@ export type ProtocolStep =
   | 'select-rhythm'
   | 'active-resuscitation'
   | 'rhythm-check'
+  | 'tor-reassessment'
   | 'forty-five-minute-check'
   | 'termination-guidance'
   | 'rosc-assessment'

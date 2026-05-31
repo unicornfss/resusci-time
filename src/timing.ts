@@ -59,10 +59,7 @@ export const IS_TEST_TIMING = defaultTimingConfig.isTestTiming
 
 export function getTestModeBannerText(timing: TimingConfig = defaultTimingConfig): string {
   if (IS_PREVIEW_BUILD) {
-    if (timing.speedMultiplier === 1) {
-      return 'Preview build — for testing only. Not for live clinical use. Protocol times at real-time (1×) speed.'
-    }
-    return `Preview build — for testing only. Not for live clinical use. Protocol times at ${timing.speedMultiplier}× speed (elapsed shows real protocol time).`
+    return ''
   }
 
   if (timing.isTestTiming) {

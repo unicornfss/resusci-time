@@ -1,17 +1,24 @@
 import {
+  getProlongedVfTorMessage,
   getTerminationGuidance,
   needsPeaTorCriteriaQuestion,
   PEA_TOR_CRITERIA_QUESTION,
   RHYTHM_OPTIONS,
   rhythmCssClass,
+  TOR_SPECIAL_CIRCUMSTANCES_ADVICE_MESSAGE,
+  TOR_SPECIAL_CIRCUMSTANCES_ITEMS,
+  TOR_SPECIAL_CIRCUMSTANCES_QUESTION,
 } from '../protocol'
 import type { Rhythm } from '../types'
 
 interface TerminationReviewProps {
   initialRhythm: Rhythm
   currentRhythm: Rhythm | null
+  torProlongedVfGate: boolean
+  specialCircumstancesBelieved: boolean | null
   peaTorCriteriaMet: boolean | null
   sustainedRoscEverAchieved: boolean
+  onSpecialCircumstancesAnswer: (believed: boolean) => void
   onSelectRhythm: (rhythm: Rhythm) => void
   onResetRhythm: () => void
   onPeaCriteriaAnswer: (meetsCriteria: boolean) => void
@@ -29,8 +36,11 @@ function guidanceClass(kind: 'end-or-continue' | 'seek-advice' | 'asystole-initi
 export function TerminationReview({
   initialRhythm,
   currentRhythm,
+  torProlongedVfGate,
+  specialCircumstancesBelieved,
   peaTorCriteriaMet,
   sustainedRoscEverAchieved,
+  onSpecialCircumstancesAnswer,
   onSelectRhythm,
   onResetRhythm,
   onPeaCriteriaAnswer,
@@ -38,6 +48,65 @@ export function TerminationReview({
   onContinueResuscitation,
   onSeekSeniorAdvice,
 }: TerminationReviewProps) {
+  if (torProlongedVfGate) {
+    return (
+      <>
+        <div className="guidance guidance-seek-advice tor-prolonged-vf-gate">
+          <p>{getProlongedVfTorMessage()}</p>
+        </div>
+        <div className="tor-actions">
+          <button type="button" className="btn btn-secondary btn-lg btn-touch" onClick={onSeekSeniorAdvice}>
+            Seek senior clinical advice
+          </button>
+        </div>
+      </>
+    )
+  }
+
+  if (specialCircumstancesBelieved === null) {
+    return (
+      <div className="tor-special-circumstances" role="group" aria-label="Special circumstances">
+        <p className="tor-special-circumstances-question">{TOR_SPECIAL_CIRCUMSTANCES_QUESTION}</p>
+        <ul className="tor-special-circumstances-list">
+          {TOR_SPECIAL_CIRCUMSTANCES_ITEMS.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+        <div className="tor-actions">
+          <button
+            type="button"
+            className="btn btn-primary btn-lg btn-touch"
+            onClick={() => onSpecialCircumstancesAnswer(true)}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary btn-lg btn-touch"
+            onClick={() => onSpecialCircumstancesAnswer(false)}
+          >
+            No
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (specialCircumstancesBelieved) {
+    return (
+      <>
+        <div className="guidance guidance-seek-advice">
+          <p>{TOR_SPECIAL_CIRCUMSTANCES_ADVICE_MESSAGE}</p>
+        </div>
+        <div className="tor-actions">
+          <button type="button" className="btn btn-secondary btn-lg btn-touch" onClick={onSeekSeniorAdvice}>
+            Seek senior clinical advice
+          </button>
+        </div>
+      </>
+    )
+  }
+
   const showPeaQuestion =
     !sustainedRoscEverAchieved &&
     needsPeaTorCriteriaQuestion(initialRhythm, currentRhythm) &&

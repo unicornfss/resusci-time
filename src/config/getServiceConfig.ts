@@ -28,6 +28,9 @@ export function getServiceConfig(trustId: TrustId, channel: BuildChannel = 'live
     brandBackgroundAsset: trust.brandBackgroundAsset ?? defaultBrandBackgroundAsset,
     features: {
       ...(trust.features?.codeShock ? { codeShock: trust.features.codeShock } : {}),
+      ...(trust.features?.prolongedVfTorGate
+        ? { prolongedVfTorGate: trust.features.prolongedVfTorGate }
+        : {}),
       extraMedications: trust.features?.extraMedications ?? defaultFeatures.extraMedications,
     },
   }

@@ -76,6 +76,14 @@ export function hasVascularAccessLogged(entries: readonly { text: string }[]): b
   return entries.some((entry) => isVascularAccessLogEntry(entry.text))
 }
 
+/** Prompt vascular access when first adrenaline is given without IV/IO logged. */
+export function shouldPromptVascularAccessAfterFirstAdrenaline(
+  adrenalineDoseCountBeforeDose: number,
+  entries: readonly { text: string }[],
+): boolean {
+  return adrenalineDoseCountBeforeDose === 0 && !hasVascularAccessLogged(entries)
+}
+
 export function getAirwayLogLabel(option: string): string {
   return `Airway — ${option}`
 }
