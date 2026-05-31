@@ -900,18 +900,15 @@
       return initialRhythm === RHYTHM_VF_PVT || initialRhythm === 'PEA';
     }
 
-    const TRUST_ID = location.pathname.includes('/emas')
-      ? 'emas'
-      : location.pathname.includes('/wmas')
-        ? 'wmas'
-        : location.pathname.includes('/standard')
-          ? 'standard'
-          : 'standard';
-    const TRUST_LABEL = TRUST_ID === 'emas' ? 'EMAS' : TRUST_ID === 'wmas' ? 'WMAS' : 'Standard';
+    const TRUST_ID = location.pathname.includes('/wmas')
+      ? 'wmas'
+      : location.pathname.includes('/standard')
+        ? 'standard'
+        : 'standard';
+    const TRUST_LABEL = TRUST_ID === 'wmas' ? 'WMAS' : 'Standard';
     const TRUST_PAGE_TITLE = 'Resusci-Time - ' + TRUST_LABEL + ' version';
     const TRUST_BRAND_BG = {
       wmas: 'backgrounds/wmas-crest.png',
-      emas: 'backgrounds/emas-crest.png',
     };
     const BRAND_BG_ASSET = TRUST_BRAND_BG[TRUST_ID] || 'backgrounds/resusci-time-logo.png';
     document.title = TRUST_PAGE_TITLE;

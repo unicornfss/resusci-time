@@ -1,4 +1,4 @@
-export type TrustId = 'wmas' | 'emas' | 'standard'
+export type TrustId = 'wmas' | 'standard'
 
 export interface CodeShockFeature {
   minShocks: number

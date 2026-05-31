@@ -1,8 +1,8 @@
 # Resusci-Time — version comparison
 
-**App version:** 1.1.0 (see `package.json`)
+**App version:** 1.1.1 (see `package.json`)
 
-This document compares **preview (test) builds** vs **live (production) builds**, and **WMAS**, **EMAS**, and **Standard** trust variants. All six combinations use the same React codebase; differences come from build-time trust config and the `live` vs `preview` channel.
+This document compares **preview (test) builds** vs **live (production) builds**, and **WMAS** vs **Standard** trust variants. All four combinations use the same React codebase; differences come from build-time trust config and the `live` vs `preview` channel.
 
 ---
 
@@ -14,8 +14,6 @@ This document compares **preview (test) builds** vs **live (production) builds**
 | Standard | Preview | Internal testing only | `/standard-preview/` |
 | WMAS | Live | West Midlands crews (production) | `/7kpm3xnq/` (unlisted) |
 | WMAS | Preview | WMAS internal / dev testing | `/w2ht9vrl/` (unlisted) |
-| EMAS | Live | East Midlands crews (production) | `/b6fj4myc/` (unlisted) |
-| EMAS | Preview | EMAS internal / dev testing | `/q8nd5kzp/` (unlisted) |
 
 Production base: [https://resusci-time.adminforge.co.uk/](https://resusci-time.adminforge.co.uk/)
 
@@ -38,6 +36,7 @@ Preview and live builds for the **same trust** share the same clinical rules and
 | **Jump to 44:00** | Dev shortcut in header to jump near the 45-minute TOR point. |
 | **Separate PWA install** | Install prompt / storage key includes `-preview` so preview and live can coexist on one device. |
 | **Unlisted preview URL** | Deployed under the trust’s `previewSlug` (or `standard-preview`), not linked from the public home page. |
+| **Preview changelog** | About → *What's new in this preview* (from `TESTING-CHANGELOG.md`). |
 
 ### Live-only (all trusts)
 
@@ -55,27 +54,27 @@ Preview and live builds for the **same trust** share the same clinical rules and
 
 ---
 
-## Trust comparison (WMAS vs EMAS vs Standard)
+## Trust comparison (WMAS vs Standard)
 
 ### Branding & deployment
 
-| | Standard | WMAS | EMAS |
-|---|----------|------|------|
-| **Header label** | `Resusci-Time - Standard version` | `Resusci-Time - WMAS version` | `Resusci-Time - EMAS version` |
-| **Background crest** | Generic Resusci-Time logo | WMAS crest | EMAS crest |
-| **Listed on public home page** | Yes | No (unlisted slug) | No (unlisted slug) |
-| **Blog link** | `?trust=standard` | `?trust=wmas` | `?trust=emas` |
+| | Standard | WMAS |
+|---|----------|------|
+| **Header label** | `Resusci-Time - Standard version` | `Resusci-Time - WMAS version` |
+| **Background crest** | Generic Resusci-Time logo | WMAS crest |
+| **Listed on public home page** | Yes | No (unlisted slug) |
+| **Blog link** | `?trust=standard` | `?trust=wmas` |
 
 ### Trust-specific clinical / UI features
 
-| Feature | Standard | WMAS | EMAS |
-|--------|:--------:|:----:|:----:|
-| **CODE SHOCK reminder** | No | **Yes** — after **1st shock**, panel + log `CODE SHOCK notified to EOC` | No |
-| **Prolonged VF — in-case reminder** | Yes (3 consecutive shockable rhythms) | Yes | Yes |
-| **Prolonged VF — TOR impact** | No — normal TOR questionnaire | **Yes** — if prolonged VF logged, TOR shows **senior clinical discussion only** (skips special circumstances, rhythm, PEA questions) | No |
-| **Extra medications (Interventions)** | Default list only | Default list only | Hook for trust extras (`extraMedications`); **currently empty** (placeholders commented in config) |
+| Feature | Standard | WMAS |
+|--------|:--------:|:----:|
+| **CODE SHOCK reminder** | No | **Yes** — after **1st shock**, panel + log `CODE SHOCK notified to EOC` |
+| **Prolonged VF — in-case reminder** | Yes (3 consecutive shockable rhythms) | Yes |
+| **Prolonged VF — TOR impact** | No — normal TOR questionnaire | **Yes** — if prolonged VF logged, TOR shows **senior clinical discussion only** (skips special circumstances, rhythm, PEA questions) |
+| **WMAS ToR criteria document** | No | **Yes** — in Documents |
 
-Config source: `src/config/trusts/wmas.ts`, `emas.ts`, `standard.ts`.
+Config source: `src/config/trusts/wmas.ts`, `standard.ts`.
 
 ---
 
@@ -113,7 +112,7 @@ These behaviours are **not** trust-specific unless noted above.
 ### Logging & tools
 
 - Event log with autosave, device saved logs, PDF/share, QR share (trust-tagged)
-- About modal, day/night theme
+- About modal, day/night theme, Documents
 
 ---
 
@@ -123,18 +122,16 @@ These behaviours are **not** trust-specific unless noted above.
 |---------|-------|---------|--------|
 | `npm run dev:standard` | Standard | live config | Real-time (`VITE_TIME_SCALE=1`) |
 | `npm run dev:wmas` | WMAS | live config | Real-time |
-| `npm run dev:emas` | EMAS | live config | Real-time |
 | `npm run dev:*-preview` | As named | **preview** | Preview speed UI; build default scale 0.25 until user picks speed |
 | `npm run dev` (default) | WMAS | live | Accelerated (`.env.development` uses 0.25 scale) — **not** identical to production WMAS live |
 
-Use **`dev:*-preview`** or a built preview URL to match deployed preview behaviour. Use **`dev:wmas`** / **`dev:emas`** / **`dev:standard`** to match each trust’s **live** production build.
+Use **`dev:*-preview`** or a built preview URL to match deployed preview behaviour. Use **`dev:wmas`** / **`dev:standard`** to match each trust’s **live** production build.
 
 ---
 
 ## What is *not* in this matrix
 
 - **`standalone/index.html`** — legacy single-file prototype; partially maintained, not the primary deploy target for trust builds.
-- **Future EMAS medications** — config slots exist but no active extra drugs until uncommented in `src/config/trusts/emas.ts`.
 
 ---
 
@@ -142,10 +139,9 @@ Use **`dev:*-preview`** or a built preview URL to match deployed preview behavio
 
 | Question | Answer |
 |----------|--------|
-| Is preview “different protocol”? | Same rules as live for that trust; preview adds speed tools, DEMO icons, and warnings. |
-| Which build for field use? | **Live** only (`/standard/`, `/7kpm3xnq/`, `/b6fj4myc/`). |
-| Main WMAS vs others? | CODE SHOCK + prolonged-VF TOR senior-discussion gate. |
-| Main EMAS vs Standard today? | Branding and unlisted URL only; no extra clinical features enabled yet. |
-| Public vs trust builds? | **Standard live** is the public listing; WMAS/EMAS live URLs are unlisted. |
+| Is preview “different protocol”? | Same rules as live for that trust; preview adds speed tools, DEMO icons, warnings, and preview changelog. |
+| Which build for field use? | **Live** only (`/standard/`, `/7kpm3xnq/`). |
+| Main WMAS vs Standard? | CODE SHOCK, prolonged-VF TOR gate, WMAS ToR criteria document. |
+| Public vs trust builds? | **Standard live** is the public listing; WMAS live URL is unlisted. |
 
 For deploy URLs and local commands, see [LOCAL-DEV.md](./LOCAL-DEV.md).

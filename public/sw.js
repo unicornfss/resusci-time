@@ -18,7 +18,6 @@ const PRECACHE_URLS = [
   './preview-icons/apple-touch-icon.png',
   './backgrounds/resusci-time-logo.png',
   './backgrounds/wmas-crest.png',
-  './backgrounds/emas-crest.png',
   './als-alogorhythm.png',
 ]
 

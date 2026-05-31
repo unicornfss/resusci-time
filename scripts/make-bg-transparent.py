@@ -3,7 +3,7 @@ from pathlib import Path
 from PIL import Image
 
 BACKGROUNDS = Path(__file__).resolve().parent.parent / 'public' / 'backgrounds'
-FILES = ['emas-crest.png', 'wmas-crest.png']
+FILES = ['wmas-crest.png']
 
 
 def make_white_background_transparent(path: Path, tolerance: int = 28) -> None:

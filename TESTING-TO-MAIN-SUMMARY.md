@@ -10,7 +10,7 @@ For ongoing trust/build comparisons, see [VERSION-COMPARISON.md](./VERSION-COMPA
 
 ---
 
-## All live builds (Standard, WMAS, EMAS)
+## All live builds (Standard & WMAS)
 
 ### Documents (new)
 
@@ -78,15 +78,14 @@ For ongoing trust/build comparisons, see [VERSION-COMPARISON.md](./VERSION-COMPA
 ### Documents — WMAS ToR criteria (new)
 
 - WMAS builds also list **WMAS ToR criteria** in Documents (reference JPG from the ALS bag aide memoire).
-- **Not shown** on Standard or EMAS builds.
+- **Not shown** on Standard builds.
 
 ---
 
-## EMAS & Standard live
+## Standard live
 
-- No new trust-specific clinical rules beyond the **shared** changes above.
-- EMAS continues to use EMAS crest branding; Standard uses the generic logo.
-- **CODE SHOCK** and **WMAS ToR criteria** remain **WMAS-only**.
+- No trust-specific clinical rules beyond the **shared** changes above.
+- Standard uses the generic logo.
 
 ---
 
@@ -107,7 +106,7 @@ These apply to `*-preview` deployments and `npm run dev:*-preview`. **Live field
 ## Blog & project documentation
 
 - WMAS blog post updated: [CODE SHOCK reminder for WMAS crews](./blog/posts/2026-05-26-wmas-code-shock-reminder.md) — now documents **first shock** trigger and new banner image.
-- **[VERSION-COMPARISON.md](./VERSION-COMPARISON.md)** added — preview vs live and WMAS / EMAS / Standard matrix.
+- **[VERSION-COMPARISON.md](./VERSION-COMPARISON.md)** — preview vs live and WMAS / Standard matrix.
 - Script added: `scripts/compose-code-shock-image.mjs` (blog graphic maintenance; not used at runtime).
 
 ---
@@ -128,7 +127,7 @@ These apply to `*-preview` deployments and `npm run dev:*-preview`. **Live field
 |--------------|------------------|
 | **Any live crew** | Documents button; prolonged VF reminder; richer TOR flow; VOD/observation UX; first-adrenaline vascular prompt; needle decompression |
 | **WMAS live crew** | Above + CODE SHOCK after **1st** shock; prolonged VF gates TOR; WMAS ToR criteria document |
-| **EMAS / Standard live** | Shared changes only; no CODE SHOCK, no WMAS ToR doc |
+| **Standard live** | Shared changes only; no CODE SHOCK, no WMAS ToR doc |
 | **Preview / training** | Above trust rules + preview warning, DEMO icons, speed controls |
 
 ---

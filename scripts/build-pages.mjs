@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import trustManifest from '../src/config/trust-manifest.json' with { type: 'json' }
 import { buildBlog } from './build-blog.mjs'
+import { buildPreviewChangelog } from './build-preview-changelog.mjs'
 import { previewOutputFolder, liveOutputFolder } from './trustPaths.mjs'
 import { renderSitePage } from './site-shell.mjs'
 
@@ -74,6 +75,7 @@ function buildPreviewTrusts() {
   for (const { id } of trustManifest) {
     buildTrustMode(`${id}-preview`, previewOutputFolder(id))
   }
+  buildPreviewChangelog(outputRoot)
 }
 
 if (buildAll) {

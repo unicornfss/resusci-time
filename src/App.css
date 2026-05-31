@@ -1845,6 +1845,87 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
   color: var(--green-800);
 }
 
+.about-inline-link {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  color: var(--green-700);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.about-inline-link:hover {
+  color: var(--green-800);
+}
+
+.preview-changelog-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 1rem;
+  padding-top: calc(var(--timer-bar-offset, 0px) + 1rem);
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.preview-changelog-panel {
+  width: min(94vw, 48rem);
+  max-height: calc(100vh - var(--timer-bar-offset, 0px) - 2rem);
+  overflow-y: auto;
+  margin: 0;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.35);
+}
+
+.preview-changelog-body {
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.preview-changelog-body h1 {
+  font-size: 1.35rem;
+  margin: 0 0 0.75rem;
+}
+
+.preview-changelog-body h2 {
+  font-size: 1.15rem;
+  margin: 1.25rem 0 0.5rem;
+}
+
+.preview-changelog-body h3 {
+  font-size: 1.05rem;
+  margin: 1rem 0 0.35rem;
+}
+
+.preview-changelog-body p,
+.preview-changelog-body li {
+  margin: 0 0 0.65rem;
+}
+
+.preview-changelog-body ul {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.preview-changelog-body code {
+  font-size: 0.9em;
+}
+
+.preview-changelog-error {
+  color: #92400e;
+  background: var(--amber-100);
+  border: 1px solid var(--amber-600);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+
 .about-note {
   margin: 0;
   font-size: 0.85rem;

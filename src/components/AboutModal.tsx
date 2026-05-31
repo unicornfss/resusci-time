@@ -1,15 +1,18 @@
-import type { MouseEvent } from 'react'
+import { useState, type MouseEvent } from 'react'
 import { getAppVersionSummary } from '../appVersion'
 import { ABOUT_SECTIONS, SUPPORT_EMAIL } from '../aboutContent'
 import { serviceConfig } from '../config'
 import { getBlogUrl } from '../blogUrl'
+import { PreviewChangelogModal } from './PreviewChangelogModal'
 
 interface AboutModalProps {
   onClose: () => void
 }
 
 export function AboutModal({ onClose }: AboutModalProps) {
-  const blogUrl = getBlogUrl(serviceConfig.trustId)
+  const { trustId, isPreview } = serviceConfig
+  const blogUrl = getBlogUrl(trustId)
+  const [previewChangelogOpen, setPreviewChangelogOpen] = useState(false)
 
   function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
     if (event.target === event.currentTarget) onClose()
@@ -43,12 +46,25 @@ export function AboutModal({ onClose }: AboutModalProps) {
 
           <section className="about-section">
             <h3>Updates &amp; guides</h3>
+            {isPreview ? (
+              <p>
+                <button
+                  type="button"
+                  className="about-inline-link"
+                  onClick={() => setPreviewChangelogOpen(true)}
+                >
+                  What&apos;s new in this preview
+                </button>
+                {' '}
+                — unreleased changes on the preview build (not on live field URLs yet).
+              </p>
+            ) : null}
             <p>
               <a className="about-email-link" href={blogUrl}>
                 Open the blog
               </a>
               {' '}
-              for release notes and how-to guides for this build.
+              for published release notes and how-to guides.
             </p>
           </section>
 
@@ -64,6 +80,10 @@ export function AboutModal({ onClose }: AboutModalProps) {
           </p>
         </div>
       </div>
+
+      {previewChangelogOpen && (
+        <PreviewChangelogModal onClose={() => setPreviewChangelogOpen(false)} />
+      )}
     </div>
   )
 }

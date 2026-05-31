@@ -13,7 +13,7 @@ export const INSTALL_HELP: Record<
       'Scroll down and tap Add to Home Screen.',
       'Tap Add — the icon will appear on your home screen.',
     ],
-    note: 'Each trust version (WMAS / EMAS) installs separately — bookmark the correct link before adding.',
+    note: 'Each trust version (WMAS / Standard) installs separately — bookmark the correct link before adding.',
   },
   android: {
     intro: 'Install Resusci-Time on your Android device:',
@@ -23,7 +23,7 @@ export const INSTALL_HELP: Record<
       'Tap Install app or Add to Home screen.',
       'Confirm — the icon will appear on your home screen.',
     ],
-    note: 'Each trust version (WMAS / EMAS) installs separately — use the link for your service.',
+    note: 'Each trust version (WMAS / Standard) installs separately — use the link for your service.',
   },
   desktop: {
     intro: 'Install Resusci-Time as a desktop app (Windows, Mac, or Linux):',

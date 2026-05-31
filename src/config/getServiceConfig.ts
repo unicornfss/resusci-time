@@ -1,5 +1,4 @@
 import { defaultBrandBackgroundAsset, defaultFeatures } from './defaults'
-import { emasTrust } from './trusts/emas'
 import { standardTrust } from './trusts/standard'
 import { wmasTrust } from './trusts/wmas'
 import type { BuildChannel } from './trustIds'
@@ -7,7 +6,6 @@ import type { ServiceConfig, TrustId } from './types'
 
 const TRUSTS = {
   wmas: wmasTrust,
-  emas: emasTrust,
   standard: standardTrust,
 } as const
 
