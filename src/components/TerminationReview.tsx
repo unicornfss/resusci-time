@@ -1,5 +1,6 @@
 import {
   getProlongedVfTorMessage,
+  getSustainedRoscTorMessage,
   getTerminationGuidance,
   needsPeaTorCriteriaQuestion,
   PEA_TOR_CRITERIA_QUESTION,
@@ -15,6 +16,7 @@ interface TerminationReviewProps {
   initialRhythm: Rhythm
   currentRhythm: Rhythm | null
   torProlongedVfGate: boolean
+  torSustainedRoscGate: boolean
   specialCircumstancesBelieved: boolean | null
   peaTorCriteriaMet: boolean | null
   sustainedRoscEverAchieved: boolean
@@ -37,6 +39,7 @@ export function TerminationReview({
   initialRhythm,
   currentRhythm,
   torProlongedVfGate,
+  torSustainedRoscGate,
   specialCircumstancesBelieved,
   peaTorCriteriaMet,
   sustainedRoscEverAchieved,
@@ -53,6 +56,21 @@ export function TerminationReview({
       <>
         <div className="guidance guidance-seek-advice tor-prolonged-vf-gate">
           <p>{getProlongedVfTorMessage()}</p>
+        </div>
+        <div className="tor-actions">
+          <button type="button" className="btn btn-secondary btn-lg btn-touch" onClick={onSeekSeniorAdvice}>
+            Seek senior clinical advice
+          </button>
+        </div>
+      </>
+    )
+  }
+
+  if (torSustainedRoscGate) {
+    return (
+      <>
+        <div className="guidance guidance-seek-advice tor-sustained-rosc-gate">
+          <p>{getSustainedRoscTorMessage()}</p>
         </div>
         <div className="tor-actions">
           <button type="button" className="btn btn-secondary btn-lg btn-touch" onClick={onSeekSeniorAdvice}>

@@ -117,8 +117,10 @@ export function shouldShowEarlyTransferReminder(
   initialRhythm: Rhythm | null,
   rhythmChecksLogged: number,
   acknowledged: boolean,
+  roscEverAchieved = false,
 ): boolean {
   if (acknowledged) return false
+  if (roscEverAchieved) return false
   if (rhythmChecksLogged < 3) return false
   return initialRhythm === RHYTHM_VF_PVT || initialRhythm === 'PEA'
 }
@@ -258,6 +260,20 @@ export const CLINICAL_DISCUSSION_CONTINUE_LABEL = 'Clinical discussion — conti
 export const SUSTAINED_ROSC_REARREST_TOR_MESSAGE =
   'Prior sustained ROSC was achieved but the patient is now back in cardiac arrest — seek senior clinical advice.'
 
+export const SUSTAINED_ROSC_ADVISORY_NOTICE =
+  'Senior clinical discussion would be required should the patient return to cardiac arrest before any cessation of resuscitation.'
+
+export const SUSTAINED_ROSC_TOR_MESSAGE =
+  'This patient previously achieved sustained ROSC (more than 10 minutes with output). Senior clinical discussion must take place before terminating resuscitation.'
+
+export function getSustainedRoscTorMessage(): string {
+  return SUSTAINED_ROSC_TOR_MESSAGE
+}
+
+export function getSustainedRoscAdvisoryNotice(): string {
+  return SUSTAINED_ROSC_ADVISORY_NOTICE
+}
+
 export const VOD_READY_MESSAGE =
   'Verification of death can now take place if the patient has been in continuous asystole for a period of at least 5 minutes'
 
@@ -335,7 +351,7 @@ export function getTerminationGuidance(
 export function getRoscGuidance(status: 'sustained' | 'transient' | 'none'): string {
   switch (status) {
     case 'sustained':
-      return 'Following ROSC the focus should be on stabilisation and transfer. Patients achieving sustained ROSC (>10 mins) who re-arrest should be discussed with a senior clinician if they remain in cardiac arrest following 45 mins of resuscitation.'
+      return 'Following ROSC the focus should be on stabilisation and transfer. Patients achieving sustained ROSC (more than 10 minutes) who re-arrest should be discussed with a senior clinician if they remain in cardiac arrest following 45 minutes of resuscitation.'
     case 'transient':
       return 'Transient ROSC is defined as a rhythm with output that lasted less than 10 minutes. Any transient ROSC occurring during a resuscitation attempt can be disregarded and termination of resuscitation considered based on the guidance above.'
     case 'none':

@@ -661,6 +661,15 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
 }
 
+.timer-action-box-danger {
+  background: rgba(185, 28, 28, 0.9);
+  border-color: rgba(254, 202, 202, 0.85);
+}
+
+.timer-action-box-danger:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.95);
+}
+
 .timer-rosc-phase {
   font-size: 0.85rem;
   font-weight: 700;
@@ -992,6 +1001,21 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
   margin-top: 1.25rem;
 }
 
+.transfer-case-imminent-list {
+  margin: 0.75rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--text);
+}
+
+.transfer-case-imminent-list li {
+  margin: 0.35rem 0;
+  font-weight: 600;
+}
+
+.transfer-case-imminent-actions {
+  margin-top: 1.25rem;
+}
+
 .case-continuation-actions {
   display: flex;
   flex-direction: column;
@@ -1226,6 +1250,18 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
   font-size: 1.05rem;
   font-weight: 700;
   color: #0c4a6e;
+}
+
+.sustained-rosc-alert {
+  margin: 0.75rem 0;
+}
+
+.sustained-rosc-alert p {
+  margin: 0.35rem 0 0.85rem;
+}
+
+.sustained-rosc-advisory {
+  font-weight: 600;
 }
 
 .sbp-reminder-panel {
@@ -2621,6 +2657,15 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
 
 .btn-danger:hover {
   background: var(--red-700);
+}
+
+.btn-adequate {
+  background: var(--green-700);
+  color: white;
+}
+
+.btn-adequate:hover {
+  background: var(--green-800);
 }
 
 .rhythm-grid {

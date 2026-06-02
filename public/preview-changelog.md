@@ -2,7 +2,40 @@
 
 Features below are on **preview URLs only** (DEMO icons, speed controls, startup warning). They are **not** on live field builds until merged to production. Published announcements appear on the [blog](/blog/) after release.
 
-**App version:** 1.1.2 (preview) · **Last updated:** 2 June 2026
+**App version:** 1.2.1 (preview) · **Last updated:** 2 June 2026
+
+---
+
+## Version 1.2.1 · 2 June 2026
+
+### Transfer case — checks due soon
+
+- Tapping **Transfer case** when a **rhythm check** or **repeat adrenaline** is due within a minute shows a warning listing what is imminent. Choose **Stay on this case — finish checks first** or **Transfer anyway**.
+
+### Post-ROSC — return to cardiac arrest
+
+- During post-ROSC care, a red **Cardiac arrest** button in the timer bar logs the event, returns to arrest mode, and opens an immediate rhythm check. The 2-minute rhythm check timer restarts after the rhythm is logged.
+
+### Bug fixes
+
+- Post-ROSC **SBP** and **pulse** reminders: correct labels, colours, and logging (adequate vs inadequate were reversed); pulse waits until SBP is answered.
+- **Sustained ROSC** (more than 10 minutes): timer and log entry during post-ROSC care; on-screen alert with senior-discussion notice; termination requires senior clinical discussion before proceeding (same pattern as prolonged VF/pVT).
+- **Early transfer** reminder suppressed after ROSC and re-arrest.
+- UI copy uses plain words instead of `<` / `>` symbols.
+
+---
+
+## Version 1.2.0 · 2 June 2026
+
+### Transfer case to another device
+
+- **Transfer case** (header, during active resuscitation) **pauses the timer** and shows a **QR code** for the other device to scan.
+- The receiving device opens the handoff and prompts **Take over case** (with a warning if a case is already in progress).
+- Tap **Case transferred** once the other device has taken over — the sending device becomes **read-only** and the log closes.
+- Tap **Resume case** to cancel the transfer and resume the timer on this device.
+- **Case transferred** banner clears when you start a new case or return to the start screen; **Start new case on this device** on the banner clears read-only state locally.
+- Case data is encoded in the QR only — **nothing is stored on a server**.
+- Very long cases may exceed QR capacity; the modal warns you to continue on this device instead.
 
 ---
 
@@ -21,13 +54,6 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 - **Start protocol** within **10 minutes** of the last log entry: choose **New case** or **Continue previous case**.
 - After **Verification of death** is recorded, **no further log entries** can be added.
 - **Saved logs**: delete individual logs, or use checkboxes to **delete multiple** at once.
-
-### Transfer case to another device
-
-- **Transfer case** opens QR, **Copy link**, or **Share to other device** (system share — Bluetooth on some phones).
-- **Open handoff file** in the header is for the receiving device after a Bluetooth/file share.
-- Tap **Case transferred** once the other device has the case — this device becomes read-only.
-- Tap **Resume case** if transfer fails.
 
 ### Icons
 

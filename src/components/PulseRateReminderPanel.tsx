@@ -1,6 +1,8 @@
 import {
   ATROPINE_CONSIDER_PROMPT,
   ATROPINE_MAX_DOSE_MESSAGE,
+  PULSE_RATE_ADEQUATE_LABEL,
+  PULSE_RATE_INADEQUATE_LABEL,
   PULSE_RATE_PROMPT,
 } from '../roscMonitoring'
 
@@ -30,11 +32,11 @@ export function PulseRateReminderPanel({
       <p>{PULSE_RATE_PROMPT}</p>
       {!expanded ? (
         <div className="sbp-reminder-actions">
-          <button type="button" className="btn btn-primary btn-lg btn-touch" onClick={onYes}>
-            Yes
+          <button type="button" className="btn btn-danger btn-lg btn-touch" onClick={onNo}>
+            {PULSE_RATE_INADEQUATE_LABEL}
           </button>
-          <button type="button" className="btn btn-secondary btn-lg btn-touch" onClick={onNo}>
-            No
+          <button type="button" className="btn btn-adequate btn-lg btn-touch" onClick={onYes}>
+            {PULSE_RATE_ADEQUATE_LABEL}
           </button>
         </div>
       ) : showAtropineMaxMessage ? (

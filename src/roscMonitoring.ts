@@ -4,7 +4,7 @@ export {
   SBP_ADRENALINE_100_LABEL,
   SBP_FLUID_250_LABEL,
   SBP_FLUID_500_LABEL,
-  SBP_LOW_LABEL,
+  SBP_INADEQUATE_LABEL,
   SBP_NOTHING_ADMINISTERED_LABEL,
   SBP_REMINDER_PROMPT,
   getRoscSbpAdrenaline50LogLabel,
@@ -12,7 +12,11 @@ export {
   getRoscSbpFluidLogLabel,
 } from './sbpReminder'
 
-export const PULSE_RATE_PROMPT = 'Pulse rate >60 bpm?'
+export const PULSE_RATE_PROMPT = 'Pulse rate 60 bpm and above?'
+
+export const PULSE_RATE_INADEQUATE_LABEL = 'Pulse below 60 bpm'
+
+export const PULSE_RATE_ADEQUATE_LABEL = 'Pulse 60 bpm and above'
 
 export const ATROPINE_CONSIDER_PROMPT = 'Consider atropine 600mcg'
 
@@ -37,7 +41,7 @@ export function isAtropineMaxReached(totalMg: number): boolean {
 }
 
 export function getPulseRateAbove60LogLabel(): string {
-  return 'Post ROSC care: Pulse rate >60 bpm'
+  return 'Post ROSC care: Pulse rate 60 bpm and above'
 }
 
 export function getAtropineAdministeredLogLabel(): string {

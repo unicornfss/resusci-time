@@ -30,6 +30,7 @@ export const CLINICAL_ALERT_PRIORITIES: Record<ClinicalAlertId, number> = {
   'P-03': 1,
   'P-04': 1,
   'P-05': 1,
+  'P-06': 1,
 
   'I-01': 1,
   'I-02': 1,

@@ -23,6 +23,7 @@ export type ClinicalAlertId =
   | 'P-03'
   | 'P-04'
   | 'P-05'
+  | 'P-06'
   | 'I-01'
   | 'I-02'
 

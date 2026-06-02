@@ -24,6 +24,7 @@ export interface ClinicalAlertContext {
   pulseReminderVisible: boolean
   pulseReminderExpanded: boolean
   pulseShowAtropineMaxMessage: boolean
+  showSustainedRoscAlert: boolean
 }
 
 export function deriveActiveClinicalAlerts(context: ClinicalAlertContext): ClinicalAlertId[] {
@@ -83,7 +84,7 @@ export function deriveActiveClinicalAlerts(context: ClinicalAlertContext): Clini
     alerts.push(context.sbpReminderExpanded ? 'P-02' : 'P-01')
   }
 
-  if (context.pulseReminderVisible) {
+  if (context.pulseReminderVisible && !context.sbpReminderVisible) {
     if (context.pulseShowAtropineMaxMessage) {
       alerts.push('P-05')
     } else if (context.pulseReminderExpanded) {
@@ -91,6 +92,10 @@ export function deriveActiveClinicalAlerts(context: ClinicalAlertContext): Clini
     } else {
       alerts.push('P-03')
     }
+  }
+
+  if (context.showSustainedRoscAlert) {
+    alerts.push('P-06')
   }
 
   return alerts

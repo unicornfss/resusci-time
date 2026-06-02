@@ -4,7 +4,7 @@ import {
   SBP_ADRENALINE_100_LABEL,
   SBP_FLUID_250_LABEL,
   SBP_FLUID_500_LABEL,
-  SBP_LOW_LABEL,
+  SBP_INADEQUATE_LABEL,
   SBP_NOTHING_ADMINISTERED_LABEL,
   SBP_REMINDER_PROMPT,
 } from '../sbpReminder'
@@ -13,8 +13,8 @@ interface SbpReminderPanelProps {
   expanded: boolean
   showAdrenaline50: boolean
   showAdrenaline100: boolean
+  onInadequate: () => void
   onAdequate: () => void
-  onLow: () => void
   onFluid250: () => void
   onFluid500: () => void
   onAdrenaline50: () => void
@@ -27,8 +27,8 @@ export function SbpReminderPanel({
   expanded,
   showAdrenaline50,
   showAdrenaline100,
+  onInadequate,
   onAdequate,
-  onLow,
   onFluid250,
   onFluid500,
   onAdrenaline50,
@@ -41,11 +41,11 @@ export function SbpReminderPanel({
       <p>{SBP_REMINDER_PROMPT}</p>
       {!expanded ? (
         <div className="sbp-reminder-actions">
-          <button type="button" className="btn btn-primary btn-lg btn-touch" onClick={onAdequate}>
-            {SBP_ADEQUATE_LABEL}
+          <button type="button" className="btn btn-danger btn-lg btn-touch" onClick={onInadequate}>
+            {SBP_INADEQUATE_LABEL}
           </button>
-          <button type="button" className="btn btn-secondary btn-lg btn-touch" onClick={onLow}>
-            {SBP_LOW_LABEL}
+          <button type="button" className="btn btn-adequate btn-lg btn-touch" onClick={onAdequate}>
+            {SBP_ADEQUATE_LABEL}
           </button>
         </div>
       ) : (

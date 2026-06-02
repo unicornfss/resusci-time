@@ -46,6 +46,8 @@ export interface CaseSnapshot {
   hasSbpFluidLogged: boolean
   sustainedRoscEverAchieved: boolean
   sustainedRoscLogged: boolean
+  /** Present from 1.2.x; inferred from log when restoring older snapshots. */
+  roscEverAchieved?: boolean
   roscStatus: RoscStatus | null
   peaTorCriteriaMet: boolean | null
   torSpecialCircumstancesBelieved: boolean | null

@@ -12,6 +12,9 @@ import {
   type CaseHandoffPayload,
 } from './caseHandoff'
 import {
+  getCaseTransferImminentWarnings,
+} from './caseTransferWarning'
+import {
   autosaveLog,
   clearAutosaveLog,
   createSavedLogId,
@@ -88,19 +91,23 @@ import { SavedLogsModal } from './components/SavedLogsModal'
 import { SavedLogDetailModal } from './components/SavedLogDetailModal'
 import { CaseContinuationModal } from './components/CaseContinuationModal'
 import { TransferCaseModal } from './components/TransferCaseModal'
+import { TransferCaseImminentWarningModal } from './components/TransferCaseImminentWarningModal'
 import { AcceptCaseHandoffModal } from './components/AcceptCaseHandoffModal'
 import { TimerVodCompleteStamp, TimerVodSection } from './components/TimerVodSection'
 import { VodTimestampsSummary } from './components/VodTimestampsSummary'
 import { PulseRateReminderPanel } from './components/PulseRateReminderPanel'
 import { SbpReminderPanel } from './components/SbpReminderPanel'
+import { SustainedRoscAlertPanel } from './components/SustainedRoscAlertPanel'
 import { TerminationReview } from './components/TerminationReview'
 import { ThemeToggle } from './components/ThemeToggle'
 import {
   getRoscCommencedLogLabel,
+  getCardiacArrestLogLabel,
   getRoscPhaseLabel,
   getRoscRhythmCheckLogLabel,
   getSustainedRoscAchievedLogLabel,
   getRoscTaskLogLabel,
+  isSustainedRoscReached,
   type RoscTaskId,
   type TimerView,
 } from './roscTasks'
@@ -254,6 +261,7 @@ function App() {
   const [transferHandoffPayload, setTransferHandoffPayload] = useState<CaseHandoffPayload | null>(
     null,
   )
+  const [transferImminentWarnings, setTransferImminentWarnings] = useState<string[] | null>(null)
   const [caseHandedOff, setCaseHandedOff] = useState(isCaseHandedOffThisSession)
   const [sharedLog, setSharedLog] = useState<SharedLogPayload | null>(initialRouting.sharedLog)
   const preRhythmModalsRef = useRef<PreRhythmModalState | null>(null)
@@ -266,6 +274,7 @@ function App() {
   const prolongedVfAlertRef = useRef<HTMLDivElement>(null)
   const vascularAccessReminderRef = useRef<HTMLDivElement>(null)
   const roscMonitoringReminderRef = useRef<HTMLDivElement>(null)
+  const sustainedRoscAlertRef = useRef<HTMLDivElement>(null)
   const roscNextReminderAtRef = useRef(timing.roscMonitoringReminderIntervalSeconds)
   const sbpAdrenaline50AwaitingNextReminderRef = useRef(false)
   const prolongedVfLoggedRef = useRef(false)
@@ -289,6 +298,8 @@ function App() {
   const [vodCountdownRemaining, setVodCountdownRemaining] = useState(timing.vodCountdownActualSeconds)
   const [vodAtLabel, setVodAtLabel] = useState<string | null>(null)
   const [sustainedRoscEverAchieved, setSustainedRoscEverAchieved] = useState(false)
+  const [roscEverAchieved, setRoscEverAchieved] = useState(false)
+  const [showSustainedRoscAlert, setShowSustainedRoscAlert] = useState(false)
   const [clinicalDiscussionPending, setClinicalDiscussionPending] = useState(false)
   const [clinicalDiscussionOpen, setClinicalDiscussionOpen] = useState(false)
   const [clinicalDiscussionContinued, setClinicalDiscussionContinued] = useState(false)
@@ -400,12 +411,12 @@ function App() {
   }, [step, vodCountdownRemaining])
 
   useEffect(() => {
-    if (timerView !== 'rosc' || !timer.isRunning) return
+    if (timerView !== 'rosc' || step !== 'active-resuscitation') return
     const id = window.setInterval(() => {
       setRoscElapsedSeconds((prev) => prev + 1)
     }, 1000)
     return () => window.clearInterval(id)
-  }, [timerView, timer.isRunning])
+  }, [timerView, step])
 
   useEffect(() => {
     timerViewRef.current = timerView
@@ -413,12 +424,12 @@ function App() {
 
   useEffect(() => {
     if (timerView !== 'rosc' || sustainedRoscLoggedRef.current) return
-    if (roscElapsedSeconds >= timing.roscSustainedThresholdActualSeconds) {
-      sustainedRoscLoggedRef.current = true
-      pushLogEntry(getSustainedRoscAchievedLogLabel())
-      setSustainedRoscEverAchieved(true)
-    }
-  }, [roscElapsedSeconds, timerView])
+    if (!isSustainedRoscReached(roscElapsedSeconds, timing.timeScale)) return
+    sustainedRoscLoggedRef.current = true
+    pushLogEntry(getSustainedRoscAchievedLogLabel())
+    setSustainedRoscEverAchieved(true)
+    setShowSustainedRoscAlert(true)
+  }, [roscElapsedSeconds, timerView, timing.timeScale])
 
   useEffect(() => {
     if (timerView !== 'rosc') return
@@ -475,6 +486,10 @@ function App() {
     setSbpReminderExpanded(false)
   }
 
+  function acknowledgeSustainedRoscAlert() {
+    setShowSustainedRoscAlert(false)
+  }
+
   function dismissPulseReminder() {
     setPulseReminderVisible(false)
     setPulseReminderExpanded(false)
@@ -522,6 +537,7 @@ function App() {
   function exitRoscMode() {
     setTimerView('arrest')
     resetRoscMonitoringOnArrest()
+    setShowSustainedRoscAlert(false)
     sustainedRoscLoggedRef.current = false
     if (timer.elapsedSeconds >= timing.fortyFiveMinutesSeconds && !fortyFiveAcknowledged) {
       setShowFortyFiveAlert(true)
@@ -530,8 +546,10 @@ function App() {
 
   function enterRoscMode(fromRhythmCheck = false) {
     setTimerView('rosc')
+    setRoscEverAchieved(true)
     setRoscElapsedSeconds(0)
     sustainedRoscLoggedRef.current = false
+    setShowSustainedRoscAlert(false)
     setShowFortyFiveAlert(false)
     startRoscMonitoringOnRoscEntry()
     pushLogEntry(fromRhythmCheck ? getRoscRhythmCheckLogLabel() : getRoscCommencedLogLabel())
@@ -620,6 +638,8 @@ function App() {
     setVodCountdownRemaining(timing.vodCountdownActualSeconds)
     setVodAtLabel(null)
     setSustainedRoscEverAchieved(false)
+    setRoscEverAchieved(false)
+    setShowSustainedRoscAlert(false)
     setClinicalDiscussionPending(false)
     setClinicalDiscussionOpen(false)
     setClinicalDiscussionContinued(false)
@@ -690,6 +710,7 @@ function App() {
       hasSbpFluidLogged,
       sustainedRoscEverAchieved,
       sustainedRoscLogged: sustainedRoscLoggedRef.current,
+      roscEverAchieved,
       roscStatus,
       peaTorCriteriaMet,
       torSpecialCircumstancesBelieved,
@@ -737,7 +758,18 @@ function App() {
     setAtropineTotalMg(snapshot.atropineTotalMg)
     setHasSbpFluidLogged(snapshot.hasSbpFluidLogged)
     setSustainedRoscEverAchieved(snapshot.sustainedRoscEverAchieved)
+    setRoscEverAchieved(
+      snapshot.roscEverAchieved ??
+        (snapshot.sustainedRoscEverAchieved ||
+          snapshot.timerView === 'rosc' ||
+          entries.some((entry) => entry.text.includes('ROSC'))),
+    )
     sustainedRoscLoggedRef.current = snapshot.sustainedRoscLogged
+    setShowSustainedRoscAlert(
+      snapshot.timerView === 'rosc' &&
+        !snapshot.sustainedRoscLogged &&
+        isSustainedRoscReached(snapshot.roscElapsedSeconds, timing.timeScale),
+    )
     setRoscStatus(snapshot.roscStatus)
     setPeaTorCriteriaMet(snapshot.peaTorCriteriaMet)
     setTorSpecialCircumstancesBelieved(snapshot.torSpecialCircumstancesBelieved)
@@ -822,8 +854,45 @@ function App() {
     handoffTimerWasRunningRef.current = false
   }
 
-  function initiateCaseTransfer() {
-    if (!canModifyCase || logEntries.length === 0) return
+  function collectTransferImminentWarnings(): string[] {
+    const postTorActiveNow = step === 'post-tor'
+    const vodCompleteActiveNow = step === 'complete' && vodAtLabel != null
+    const resuscitationOngoingNow =
+      step === 'active-resuscitation' ||
+      step === 'tor-reassessment' ||
+      step === 'forty-five-minute-check'
+    const showResuscitationTimerControlsNow = !postTorActiveNow && !vodCompleteActiveNow
+    const showRxSectionNow =
+      timerView === 'arrest' &&
+      shouldShowRxSection(initialRhythm) &&
+      initialRhythm != null &&
+      (step === 'active-resuscitation' ||
+        step === 'tor-reassessment' ||
+        step === 'forty-five-minute-check' ||
+        step === 'rosc-assessment')
+
+    return getCaseTransferImminentWarnings(
+      {
+        rhythmCheckApplies: showResuscitationTimerControlsNow && resuscitationOngoingNow,
+        secondsToNextRhythmCheck: timer.secondsToNextCheck,
+        rxParams: showRxSectionNow
+          ? {
+              initialRhythm: initialRhythm!,
+              hasNonShockableRhythm,
+              adrenalineDoseCount,
+              amiodaroneDoseCount,
+              shockCount: totalShocks,
+              elapsedSeconds: timer.elapsedSeconds,
+              nextAdrenalineAt,
+            }
+          : null,
+        timeScale: timing.timeScale,
+      },
+      formatProtocolElapsed,
+    )
+  }
+
+  function beginCaseTransfer() {
     handoffTimerWasRunningRef.current = timer.isRunning
     if (timer.isRunning) timer.pause()
     const handoffAt = Date.now()
@@ -834,6 +903,27 @@ function App() {
       handoffAt,
     })
     setTransferHandoffPayload(payload)
+  }
+
+  function initiateCaseTransfer() {
+    if (!canModifyCase || logEntries.length === 0) return
+
+    const imminentWarnings = collectTransferImminentWarnings()
+    if (imminentWarnings.length > 0) {
+      setTransferImminentWarnings(imminentWarnings)
+      return
+    }
+
+    beginCaseTransfer()
+  }
+
+  function dismissTransferImminentWarning() {
+    setTransferImminentWarnings(null)
+  }
+
+  function confirmTransferDespiteImminentWarnings() {
+    setTransferImminentWarnings(null)
+    beginCaseTransfer()
   }
 
   const handoffReplaceActiveCase =
@@ -1276,6 +1366,15 @@ function App() {
     enterRoscMode(false)
   }
 
+  function handleTimerBarCardiacArrest() {
+    if (timerView !== 'rosc' || step !== 'active-resuscitation') return
+    pushLogEntry(getCardiacArrestLogLabel())
+    exitRoscMode()
+    closeShockForm()
+    setShowRhythmCheckAlert(true)
+    setClinicalAlertBump('R-01')
+  }
+
   function confirmCheckVfvt(joules: number) {
     appendRhythmCheck(RHYTHM_VF_PVT, joules)
   }
@@ -1283,7 +1382,12 @@ function App() {
   const showEarlyTransfer =
     step === 'active-resuscitation' &&
     timerView === 'arrest' &&
-    shouldShowEarlyTransferReminder(initialRhythm, rhythmChecks.length, earlyTransferAcknowledged)
+    shouldShowEarlyTransferReminder(
+      initialRhythm,
+      rhythmChecks.length,
+      earlyTransferAcknowledged,
+      roscEverAchieved,
+    )
 
   const showCodeShock =
     step === 'active-resuscitation' &&
@@ -1299,6 +1403,8 @@ function App() {
   const torProlongedVfGate =
     isProlongedVfTorGateEnabled() &&
     hasProlongedVfLogged(logEntries.map((entry) => entry.text))
+
+  const torSustainedRoscGate = sustainedRoscEverAchieved
 
   const canBeginTorReview =
     initialRhythm != null &&
@@ -1489,6 +1595,7 @@ function App() {
     pulseReminderVisible,
     pulseReminderExpanded,
     pulseShowAtropineMaxMessage,
+    showSustainedRoscAlert,
   })
   const currentClinicalAlert = useClinicalAlertQueue(activeClinicalAlerts, clinicalAlertBump)
   const isClinicalAlert = (id: ClinicalAlertId) => currentClinicalAlert === id
@@ -1518,6 +1625,7 @@ function App() {
       isClinicalAlert('P-05'),
     roscMonitoringReminderRef,
   )
+  useScrollWhenShown(isClinicalAlert('P-06'), sustainedRoscAlertRef)
 
   const timerBarTone =
     postTorActive || vodCompleteActive
@@ -1730,7 +1838,17 @@ function App() {
                   Interventions
                 </button>
               )}
-              {timerView !== 'rosc' && (
+              {timerView === 'rosc' ? (
+                <button
+                  type="button"
+                  className="timer-action-box timer-action-box-danger"
+                  aria-pressed={false}
+                  disabled={!canModifyCase}
+                  onClick={handleTimerBarCardiacArrest}
+                >
+                  Cardiac arrest
+                </button>
+              ) : (
                 <button
                   type="button"
                   className="timer-action-box"
@@ -1918,6 +2036,15 @@ function App() {
         </div>
       )}
 
+      {showSustainedRoscAlert &&
+        timerView === 'rosc' &&
+        step === 'active-resuscitation' &&
+        isClinicalAlert('P-06') && (
+          <div ref={sustainedRoscAlertRef}>
+            <SustainedRoscAlertPanel onAcknowledge={acknowledgeSustainedRoscAlert} />
+          </div>
+        )}
+
       {showRoscMonitoringArea &&
         (isClinicalAlert('P-01') ||
           isClinicalAlert('P-02') ||
@@ -1931,8 +2058,8 @@ function App() {
                 expanded={sbpReminderExpanded}
                 showAdrenaline50={hasSbpFluidLogged}
                 showAdrenaline100={showSbpAdrenaline100}
+                onInadequate={() => setSbpReminderExpanded(true)}
                 onAdequate={dismissSbpReminder}
-                onLow={() => setSbpReminderExpanded(true)}
                 onFluid250={() => logSbpFluid('250ml')}
                 onFluid500={() => logSbpFluid('500ml')}
                 onAdrenaline50={logSbpAdrenaline50}
@@ -1943,6 +2070,7 @@ function App() {
             </div>
           )}
           {pulseReminderVisible &&
+            !sbpReminderVisible &&
             (isClinicalAlert('P-03') || isClinicalAlert('P-04') || isClinicalAlert('P-05')) && (
             <div>
               <PulseRateReminderPanel
@@ -2065,6 +2193,7 @@ function App() {
             <p className="hint">
               Rhythm assessment every 2 minutes from last entry.
               {(initialRhythm === RHYTHM_VF_PVT || initialRhythm === 'PEA') &&
+                !roscEverAchieved &&
                 ' Early transfer reminder after third rhythm check.'}
               {timerView !== 'rosc' && ' Special review at 45 minutes.'}
             </p>
@@ -2091,6 +2220,7 @@ function App() {
                 initialRhythm={initialRhythm}
                 currentRhythm={currentRhythm}
                 torProlongedVfGate={torProlongedVfGate}
+                torSustainedRoscGate={torSustainedRoscGate}
                 specialCircumstancesBelieved={torSpecialCircumstancesBelieved}
                 peaTorCriteriaMet={peaTorCriteriaMet}
                 sustainedRoscEverAchieved={sustainedRoscEverAchieved}
@@ -2122,8 +2252,8 @@ function App() {
             <div className="rosc-options">
               {(
                 [
-                  ['sustained', 'Sustained ROSC', '>10 minutes with output'],
-                  ['transient', 'Transient ROSC', 'Output lasting <10 minutes'],
+                  ['sustained', 'Sustained ROSC', 'More than 10 minutes with output'],
+                  ['transient', 'Transient ROSC', 'Output lasting less than 10 minutes'],
                   ['none', 'No ROSC', 'No return of circulation'],
                 ] as const
               ).map(([value, label, desc]) => (
@@ -2226,6 +2356,14 @@ function App() {
           eventCount={caseContinuationOffer.entries.length}
           onContinue={() => continueCaseFromAutosave(caseContinuationOffer)}
           onNewCase={() => void startNewCaseFromPrompt()}
+        />
+      )}
+
+      {transferImminentWarnings && (
+        <TransferCaseImminentWarningModal
+          warnings={transferImminentWarnings}
+          onStayOnCase={dismissTransferImminentWarning}
+          onTransferAnyway={confirmTransferDespiteImminentWarnings}
         />
       )}
 
