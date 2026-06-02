@@ -190,7 +190,13 @@ export const HANDOFF_SHARE_UNSUPPORTED_HINT =
   'This browser does not support system Share. Use the QR code or Copy link below.'
 
 export function isWebShareAvailable(): boolean {
-  return typeof navigator !== 'undefined' && typeof navigator.share === 'function'
+  if (typeof navigator === 'undefined') return false
+  return typeof navigator.share === 'function'
+}
+
+/** Prefer at click time — some mobile browsers only expose share in secure/document context. */
+export function canInvokeWebShare(): boolean {
+  return isWebShareAvailable()
 }
 
 export function getHandoffShareBlockReason(): 'needs-https' | 'unsupported' | null {

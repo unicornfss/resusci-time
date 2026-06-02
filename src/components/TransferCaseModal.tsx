@@ -3,13 +3,13 @@ import QRCode from 'qrcode'
 import { copyTextToClipboard, isClipboardLikelyBlocked } from '../clipboard'
 import {
   buildCaseHandoffUrl,
+  canInvokeWebShare,
   CASE_HANDOFF_PRIVACY_NOTE,
   createHandoffShareFile,
   getHandoffShareBlockReason,
   HANDOFF_NEEDS_HTTPS_HINT,
   HANDOFF_SHARE_UNSUPPORTED_HINT,
   isHandoffUrlTooLargeForQr,
-  isWebShareAvailable,
   shareHandoff,
   type CaseHandoffPayload,
 } from '../caseHandoff'
@@ -32,8 +32,6 @@ export function TransferCaseModal({
   const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed' | 'select'>('idle')
   const [shareState, setShareState] = useState<'idle' | 'shared' | 'failed' | 'cancelled'>('idle')
   const linkInputRef = useRef<HTMLInputElement>(null)
-  const webShareAvailable = isWebShareAvailable()
-  const shareBlockReason = getHandoffShareBlockReason()
 
   useEffect(() => {
     const url = buildCaseHandoffUrl(payload)
@@ -54,26 +52,44 @@ export function TransferCaseModal({
     }
   }, [payload])
 
-  async function handleCopyLink() {
+  async function handleCopyLink(): Promise<boolean> {
     const copied = await copyTextToClipboard(handoffUrl)
     if (copied) {
       setCopyState('copied')
-      return
+      return true
     }
 
     setShowLink(true)
     linkInputRef.current?.focus()
     linkInputRef.current?.select()
     setCopyState(isClipboardLikelyBlocked() ? 'select' : 'failed')
+    return false
   }
 
   async function handleShare() {
     setShareState('idle')
+
+    if (!canInvokeWebShare()) {
+      const copied = await handleCopyLink()
+      const blockReason = getHandoffShareBlockReason()
+      const hint =
+        blockReason === 'needs-https' ? HANDOFF_NEEDS_HTTPS_HINT : HANDOFF_SHARE_UNSUPPORTED_HINT
+      window.alert(
+        copied
+          ? `${hint}\n\nThe handoff link has been copied — paste it into the browser on the other device.`
+          : hint,
+      )
+      return
+    }
+
     const file = createHandoffShareFile(payload)
     const result = await shareHandoff(handoffUrl, file)
     if (result === 'shared-url' || result === 'shared-file') setShareState('shared')
     else if (result === 'cancelled') setShareState('cancelled')
-    else if (result === 'failed') setShareState('failed')
+    else if (result === 'failed') {
+      setShareState('failed')
+      await handleCopyLink()
+    }
   }
 
   const copyLabel =
@@ -89,7 +105,7 @@ export function TransferCaseModal({
     shareState === 'shared'
       ? 'Shared'
       : shareState === 'failed'
-        ? 'Share failed — try Copy link'
+        ? 'Share failed — link copied'
         : 'Share to other device'
 
   function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
@@ -111,15 +127,29 @@ export function TransferCaseModal({
 
         <div className="about-body">
           <p className="share-log-intro">
-            The timer is paused while this screen is open. Scan the QR code on the other device, or
-            use the buttons below. When the other device has taken over, tap{' '}
-            <strong>Case transferred</strong>.
+            The timer is paused while this screen is open. Use <strong>Share</strong> or scan the
+            QR code on the other device. When it has taken over, tap <strong>Case transferred</strong>.
+          </p>
+
+          <div className="transfer-case-share-actions">
+            <button type="button" className="btn btn-primary btn-lg" onClick={() => void handleShare()}>
+              {shareLabel}
+            </button>
+            <button type="button" className="btn btn-secondary btn-lg" onClick={() => void handleCopyLink()}>
+              {copyLabel}
+            </button>
+          </div>
+
+          <p className="log-export-hint" role="status">
+            Share opens your device&apos;s system menu (Bluetooth may appear on phones). If Share
+            is unavailable, use Copy link or the QR code. After a file share, the other device uses{' '}
+            <strong>Open handoff file</strong> in the header.
           </p>
 
           {tooLargeForQr ? (
             <p className="share-log-warning" role="status">
               This case is too long for a reliable QR code — use <strong>Share</strong> or{' '}
-              <strong>Copy link</strong> instead.
+              <strong>Copy link</strong>.
             </p>
           ) : (
             qrDataUrl && (
@@ -131,30 +161,6 @@ export function TransferCaseModal({
                 />
               </div>
             )
-          )}
-
-          <div className="transfer-case-share-actions">
-            {webShareAvailable ? (
-              <button type="button" className="btn btn-primary btn-lg" onClick={() => void handleShare()}>
-                {shareLabel}
-              </button>
-            ) : (
-              <p className="log-export-hint" role="status">
-                {shareBlockReason === 'needs-https'
-                  ? HANDOFF_NEEDS_HTTPS_HINT
-                  : HANDOFF_SHARE_UNSUPPORTED_HINT}
-              </p>
-            )}
-            <button type="button" className="btn btn-secondary btn-lg" onClick={() => void handleCopyLink()}>
-              {copyLabel}
-            </button>
-          </div>
-
-          {webShareAvailable && (
-            <p className="log-export-hint" role="status">
-              Share opens your phone&apos;s menu — Bluetooth or Nearby Share may appear there. After
-              a file share, the other device uses <strong>Open handoff file</strong> in the header.
-            </p>
           )}
 
           {(showLink || copyState !== 'idle') && (

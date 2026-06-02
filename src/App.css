@@ -996,7 +996,11 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  margin: 1rem 0 0.75rem;
+  margin: 0.75rem 0;
+  padding: 0.85rem;
+  border: 2px solid var(--green-600);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--card-bg) 90%, var(--green-600) 10%);
 }
 
 .transfer-case-share-actions .btn-lg {
