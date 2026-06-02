@@ -766,6 +766,9 @@ function App() {
       await clearAutosaveLog()
       setAutosaveOffer(null)
     }
+    clearCaseHandedOffSession()
+    setCaseHandedOff(false)
+    setTransferHandoffPayload(null)
     activePermanentLogIdRef.current = null
     setStep('initial-assessment')
   }
@@ -1341,6 +1344,16 @@ function App() {
   }, [sharedLog])
 
   useEffect(() => {
+    if (step === 'start' && logEntries.length === 0 && transferHandoffPayload == null) {
+      clearCaseHandedOffSession()
+      setCaseHandedOff(false)
+    }
+  }, [step, logEntries.length, transferHandoffPayload])
+
+  const showCaseHandedOffBanner =
+    caseHandedOff && !(step === 'start' && logEntries.length === 0)
+
+  useEffect(() => {
     if (!isLogStorageAvailable() || logEntries.length === 0) return
 
     const saveTimer = window.setTimeout(() => {
@@ -1623,11 +1636,16 @@ function App() {
         )}
       </header>
 
-      {caseHandedOff && (
+      {showCaseHandedOffBanner && (
         <div className="case-handed-off-banner card" role="status">
           <p>
             Case transferred — this device is read-only. Continue the case on the other device only.
           </p>
+          <div className="autosave-restore-actions">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={handleNewCase}>
+              Start new case on this device
+            </button>
+          </div>
         </div>
       )}
 
