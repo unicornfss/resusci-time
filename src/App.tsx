@@ -89,7 +89,6 @@ import { SavedLogDetailModal } from './components/SavedLogDetailModal'
 import { CaseContinuationModal } from './components/CaseContinuationModal'
 import { TransferCaseModal } from './components/TransferCaseModal'
 import { AcceptCaseHandoffModal } from './components/AcceptCaseHandoffModal'
-import { OpenHandoffFileButton } from './components/OpenHandoffFileButton'
 import { TimerVodCompleteStamp, TimerVodSection } from './components/TimerVodSection'
 import { VodTimestampsSummary } from './components/VodTimestampsSummary'
 import { PulseRateReminderPanel } from './components/PulseRateReminderPanel'
@@ -1609,10 +1608,6 @@ function App() {
                 Transfer case
               </button>
             )}
-            <OpenHandoffFileButton
-              className="header-link-btn"
-              onPayload={(payload) => setPendingHandoff(payload)}
-            />
             <InstallAppButton />
           </div>
           <ThemeToggle />

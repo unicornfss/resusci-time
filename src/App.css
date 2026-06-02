@@ -992,25 +992,6 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
   margin-top: 1.25rem;
 }
 
-.transfer-case-share-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  margin: 0.75rem 0;
-  padding: 0.85rem;
-  border: 2px solid var(--green-600);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--card-bg) 90%, var(--green-600) 10%);
-}
-
-.transfer-case-share-actions .btn-lg {
-  width: 100%;
-}
-
-.transfer-case-show-link-btn {
-  margin-bottom: 0.5rem;
-}
-
 .case-continuation-actions {
   display: flex;
   flex-direction: column;
