@@ -1,19 +1,16 @@
 import type { DisplayLogEntry } from '../types'
-import type { SavedLogMeta } from '../logStorage'
 import { LogExportBar } from './LogExportBar'
 
 interface EventLogPanelProps {
   entries: readonly DisplayLogEntry[]
   documentTitle: string
   showExportActions?: boolean
-  saveMeta?: SavedLogMeta
 }
 
 export function EventLogPanel({
   entries,
   documentTitle,
   showExportActions = true,
-  saveMeta,
 }: EventLogPanelProps) {
   if (entries.length === 0) return null
 
@@ -22,7 +19,7 @@ export function EventLogPanel({
       <div className="event-log-header">
         <p className="check-log-label">Log</p>
         {showExportActions && (
-          <LogExportBar entries={entries} documentTitle={documentTitle} saveMeta={saveMeta} />
+          <LogExportBar entries={entries} documentTitle={documentTitle} />
         )}
       </div>
       <ul className="check-log">

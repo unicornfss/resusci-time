@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f4f1f" />
+    <title>Standard build release update — Documents, TOR, and VoD · Resusci-Time</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #dfe8df;
+        --panel: #f4f8f4;
+        --text: #1a2e1a;
+        --text-muted: #4a5f4a;
+        --accent: #2d6a2d;
+        --border: #b8c9b8;
+        --brand-bg-image: url('../../backgrounds/resusci-time-logo.png');
+        --brand-bg-opacity: 0.24;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 1.5rem;
+        position: relative;
+        line-height: 1.5;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background: var(--brand-bg-image) center / min(85vw, 540px) no-repeat;
+        opacity: var(--brand-bg-opacity);
+      }
+      .page {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 40rem);
+        margin: 0 auto;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.75rem;
+        box-shadow: 0 8px 24px rgba(26, 46, 26, 0.08);
+      }
+      .page.wide { width: min(100%, 48rem); }
+      .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        margin-bottom: 1.25rem;
+        font-size: 0.9rem;
+      }
+      .site-nav a {
+        color: var(--accent);
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .site-nav a:hover, .site-nav a:focus-visible { text-decoration: underline; outline: none; }
+      .site-nav .sep { color: var(--text-muted); user-select: none; }
+      h1 { margin: 0 0 0.35rem; font-size: 1.65rem; line-height: 1.25; }
+      h2 { margin: 1.75rem 0 0.75rem; font-size: 1.15rem; }
+      h2:first-child { margin-top: 0; }
+      p { margin: 0 0 1rem; }
+      ul, ol { margin: 0 0 1rem; padding-left: 1.35rem; }
+      li { margin-bottom: 0.35rem; }
+      .hint { font-size: 0.9rem; color: var(--text-muted); margin-top: 1rem; }
+      .version { font-size: 0.8rem; color: var(--text-muted); margin-top: 1.25rem; margin-bottom: 0; }
+      .link-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+      .link-list a {
+        display: block;
+        padding: 0.9rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .link-list a:hover, .link-list a:focus-visible { border-color: var(--accent); outline: none; }
+      .post-card {
+        display: block;
+        padding: 1rem 1.1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: inherit;
+        text-decoration: none;
+      }
+      .post-card:hover, .post-card:focus-visible { border-color: var(--accent); outline: none; }
+      .post-card h3 { margin: 0 0 0.35rem; font-size: 1.05rem; color: var(--accent); }
+      .post-card p { margin: 0; font-size: 0.92rem; color: var(--text-muted); font-weight: 400; }
+      .post-meta { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; }
+      .badge {
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        margin-right: 0.35rem;
+        vertical-align: middle;
+      }
+      .badge-news { background: #dbeafe; color: #1e40af; }
+      .badge-guide { background: #dcfce7; color: #166534; }
+      .post-grid { display: grid; gap: 0.75rem; margin-bottom: 1.5rem; }
+      .prose h2 { margin-top: 1.5rem; }
+      .prose h3 { margin: 1.25rem 0 0.5rem; font-size: 1rem; }
+      .prose code {
+        font-family: ui-monospace, Consolas, monospace;
+        font-size: 0.88em;
+        background: #e8f0e8;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+      .prose pre {
+        background: #1a2e1a;
+        color: #e8f0e8;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 0 0 1rem;
+      }
+      .prose pre code { background: none; padding: 0; color: inherit; }
+      .prose a { color: var(--accent); }
+      .prose img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 1rem auto;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 16px rgba(26, 46, 26, 0.1);
+      }
+      .prose figure { margin: 1.25rem 0; }
+      .prose figcaption {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-align: center;
+      }
+      .back-link { display: inline-block; margin-top: 1.5rem; font-weight: 600; color: var(--accent); }
+</style>
+  </head>
+  <body>
+    <div class="page wide">
+      <nav class="site-nav" aria-label="Site">
+        <a href="../../">Home</a><span class="sep" aria-hidden="true">·</span>
+        <a href="../../blog/">Blog</a>
+      </nav>
+      
+      <article>
+        <h1>Standard build release update — Documents, TOR, and VoD</h1>
+        <p class="post-meta"><span class="badge badge-news">Update</span>31 May 2026</p>
+        <div class="prose"><p>This update is rolling out on the <strong>Standard live</strong> build of Resusci-Time (version <strong>1.1.1</strong>). It focuses on reference documents, clearer termination and VoD flows, and small clinical prompts — without trust-specific features such as CODE SHOCK (those exist only on custom service builds such as WMAS).</p>
+<h2>Documents (new)</h2>
+<p>The ALS algorithm link under the page subtitle has been replaced by a <strong>Documents</strong> button in the header (next to About and Saved logs).</p>
+<p>Tap <strong>Documents</strong> to open the <strong>Advanced Life Support (ALS) algorithm</strong> in a wide modal viewer on your phone or tablet.</p>
+<p>If a <strong>rhythm check</strong> is due while a document is open, the rhythm alert still appears <strong>on top</strong> so you can log the rhythm without closing the document first.</p>
+<h2>Prolonged VF reminder (new)</h2>
+<p>If <strong>three consecutive shockable rhythms</strong> are logged during resuscitation, an amber panel appears to flag an episode of <strong>prolonged VF</strong>.</p>
+<p>Tap <strong>Acknowledge</strong> — <code>Prolonged VF</code> is added to the event log with a timestamp. On the Standard build this is a <strong>reminder and log entry only</strong>; it does not change the TOR questionnaire (custom trust builds may handle prolonged VF differently at termination).</p>
+<h2>Termination of resuscitation (TOR)</h2>
+<ul>
+<li><strong>Manual TOR</strong> (from the timer bar): you must have logged an <strong>initial rhythm</strong> first. The app then runs a <strong>short initial assessment re-visit</strong> before termination review. The log records <code>TOR reassessment started</code>.</li>
+<li><strong>45-minute TOR</strong>: unchanged — goes straight to termination review.</li>
+<li><strong>Special circumstances</strong>: at TOR you are asked whether <strong>hypothermia, overdose/poisoning, or pregnancy</strong> may apply, before rhythm-based questions. Yes or No is logged.</li>
+<li><strong>Senior clinical discussion</strong>: the timer-bar panel for continue vs terminate after senior advice has been refined.</li>
+</ul>
+<h2>Initial assessment and verification of death (VoD)</h2>
+<ul>
+<li><strong>5-minute asystole observation</strong> (hypostasis / rigor mortis): grey countdown with progress bar; assessment menu hidden until the timer finishes; checklist visible but not tappable until then.</li>
+<li><strong>Criteria times</strong> logged when the <strong>5-minute observation starts</strong>.</li>
+<li><strong>VoD time</strong> logged when you press <strong>VOD</strong>.</li>
+<li>VoD summary times aligned to the <strong>right</strong>, matching criteria rows.</li>
+<li>After TOR, when the post-TOR wait reaches <strong>0:00</strong>, the display shows <strong>Resuscitation not appropriate</strong>. The <strong>VOD</strong> button remains available.</li>
+</ul>
+<h2>Interventions and medications</h2>
+<ul>
+<li>Logging the <strong>first adrenaline dose</strong> prompts <strong>establish vascular access</strong> if IV/IO has not yet been recorded.</li>
+<li><strong>Needle decompression</strong> added under <strong>Interventions → Breathing</strong>.</li>
+</ul>
+<h2>Other polish</h2>
+<ul>
+<li>Reminder panels auto-<strong>scroll into view</strong> below the sticky timer bar when they appear.</li>
+<li>App icons refreshed — if you use an installed copy of the app, refresh once to pick up the update.</li>
+</ul>
+<h2>Custom trust builds</h2>
+<p>Ambulance services and NHS trusts can request tailored builds (crest, trust-specific reminders, extra documents, and protocol-aligned options). The <strong>WMAS</strong> build, for example, includes CODE SHOCK and a WMAS ToR criteria document — those are <strong>not</strong> part of the Standard release described here.</p>
+<p>Contact the project maintainer if you would like to discuss a custom version for your service.</p>
+<h2>Feedback</h2>
+<p>Spot a bug or have a suggestion? Contact your clinical lead or the project maintainer.</p>
+</div>
+        <a class="back-link" href="../">← Back to blog</a>
+      </article>
+    
+    </div>
+  </body>
+</html>

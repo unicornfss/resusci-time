@@ -14,7 +14,7 @@ export const ABOUT_SECTIONS = [
   {
     heading: 'Privacy',
     body:
-      'Resusci-Time runs entirely in your browser. It does not send patient data to a server. Event log entries during an active case are kept in memory until you close the tab. You can save logs on the device (Saved logs) or export CSV/PDF. Theme preference may persist in browser storage.',
+      'Resusci-Time runs entirely in your browser. It does not send patient data to a server. Event logs are saved automatically on this device as you work (Saved logs) and can be exported as CSV or PDF. You can transfer an active case to another device by QR code — still with no server. Theme preference may persist in browser storage.',
   },
   {
     heading: 'During a case',

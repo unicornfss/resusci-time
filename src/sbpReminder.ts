@@ -1,8 +1,8 @@
-export const SBP_REMINDER_PROMPT = 'Maintain SBP < 100 mmHg (< 80 mmHg in trauma)'
+export const SBP_REMINDER_PROMPT = 'Maintain SBP 100 mmHg and above (80 mmHg and above in trauma)'
 
-export const SBP_ADEQUATE_LABEL = 'SBP < 100 mmHg (< 80 mmHg in trauma)'
+export const SBP_INADEQUATE_LABEL = 'SBP below 100 mmHg (below 80 mmHg in trauma)'
 
-export const SBP_LOW_LABEL = 'SBP > 100 mmHg (> 80 mmHg in trauma)'
+export const SBP_ADEQUATE_LABEL = 'SBP 100 mmHg and above (80 mmHg and above in trauma)'
 
 export const SBP_FLUID_250_LABEL = '250ml sodium chloride'
 

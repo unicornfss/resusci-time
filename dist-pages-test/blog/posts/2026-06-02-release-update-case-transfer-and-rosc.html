@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1f4f1f" />
+    <title>Release update — case transfer and post-ROSC improvements (version 1.2.1) · Resusci-Time</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #dfe8df;
+        --panel: #f4f8f4;
+        --text: #1a2e1a;
+        --text-muted: #4a5f4a;
+        --accent: #2d6a2d;
+        --border: #b8c9b8;
+        --brand-bg-image: url('../../backgrounds/resusci-time-logo.png');
+        --brand-bg-opacity: 0.24;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        padding: 1.5rem;
+        position: relative;
+        line-height: 1.5;
+      }
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background: var(--brand-bg-image) center / min(85vw, 540px) no-repeat;
+        opacity: var(--brand-bg-opacity);
+      }
+      .page {
+        position: relative;
+        z-index: 1;
+        width: min(100%, 40rem);
+        margin: 0 auto;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.75rem;
+        box-shadow: 0 8px 24px rgba(26, 46, 26, 0.08);
+      }
+      .page.wide { width: min(100%, 48rem); }
+      .site-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+        margin-bottom: 1.25rem;
+        font-size: 0.9rem;
+      }
+      .site-nav a {
+        color: var(--accent);
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .site-nav a:hover, .site-nav a:focus-visible { text-decoration: underline; outline: none; }
+      .site-nav .sep { color: var(--text-muted); user-select: none; }
+      h1 { margin: 0 0 0.35rem; font-size: 1.65rem; line-height: 1.25; }
+      h2 { margin: 1.75rem 0 0.75rem; font-size: 1.15rem; }
+      h2:first-child { margin-top: 0; }
+      p { margin: 0 0 1rem; }
+      ul, ol { margin: 0 0 1rem; padding-left: 1.35rem; }
+      li { margin-bottom: 0.35rem; }
+      .hint { font-size: 0.9rem; color: var(--text-muted); margin-top: 1rem; }
+      .version { font-size: 0.8rem; color: var(--text-muted); margin-top: 1.25rem; margin-bottom: 0; }
+      .link-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; }
+      .link-list a {
+        display: block;
+        padding: 0.9rem 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .link-list a:hover, .link-list a:focus-visible { border-color: var(--accent); outline: none; }
+      .post-card {
+        display: block;
+        padding: 1rem 1.1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: inherit;
+        text-decoration: none;
+      }
+      .post-card:hover, .post-card:focus-visible { border-color: var(--accent); outline: none; }
+      .post-card h3 { margin: 0 0 0.35rem; font-size: 1.05rem; color: var(--accent); }
+      .post-card p { margin: 0; font-size: 0.92rem; color: var(--text-muted); font-weight: 400; }
+      .post-meta { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem; }
+      .badge {
+        display: inline-block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 0.15rem 0.45rem;
+        border-radius: 4px;
+        margin-right: 0.35rem;
+        vertical-align: middle;
+      }
+      .badge-news { background: #dbeafe; color: #1e40af; }
+      .badge-guide { background: #dcfce7; color: #166534; }
+      .post-grid { display: grid; gap: 0.75rem; margin-bottom: 1.5rem; }
+      .prose h2 { margin-top: 1.5rem; }
+      .prose h3 { margin: 1.25rem 0 0.5rem; font-size: 1rem; }
+      .prose code {
+        font-family: ui-monospace, Consolas, monospace;
+        font-size: 0.88em;
+        background: #e8f0e8;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+      .prose pre {
+        background: #1a2e1a;
+        color: #e8f0e8;
+        padding: 1rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        margin: 0 0 1rem;
+      }
+      .prose pre code { background: none; padding: 0; color: inherit; }
+      .prose a { color: var(--accent); }
+      .prose img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        margin: 1rem auto;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        box-shadow: 0 4px 16px rgba(26, 46, 26, 0.1);
+      }
+      .prose figure { margin: 1.25rem 0; }
+      .prose figcaption {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-align: center;
+      }
+      .back-link { display: inline-block; margin-top: 1.5rem; font-weight: 600; color: var(--accent); }
+</style>
+  </head>
+  <body>
+    <div class="page wide">
+      <nav class="site-nav" aria-label="Site">
+        <a href="../../">Home</a><span class="sep" aria-hidden="true">·</span>
+        <a href="../../blog/">Blog</a>
+      </nav>
+      
+      <article>
+        <h1>Release update — case transfer and post-ROSC improvements (version 1.2.1)</h1>
+        <p class="post-meta"><span class="badge badge-news">Update</span>2 June 2026</p>
+        <div class="prose"><p>Versions <strong>1.2.0</strong> and <strong>1.2.1</strong> are rolling out on the <strong>Standard</strong> and <strong>WMAS live</strong> builds of Resusci-Time. Together they add <strong>case transfer between devices</strong>, safer handoff when checks are due, a clearer <strong>re-arrest</strong> path during post-ROSC care, and several <strong>clinical fixes</strong> around monitoring and termination.</p>
+<p><img src="../images/release-1-2-hero.png" alt="Resusci-Time version 1.2.1 release banner"></p>
+<h2>Transfer case to another device (1.2.0)</h2>
+<p>When crew members need to hand the running case to a second phone or tablet — for example when swapping roles or moving to the ambulance — use <strong>Transfer case</strong> in the header during active resuscitation.</p>
+<p><img src="../images/case-transfer-flow.png" alt="Case transfer — pause on this device, scan QR on the other"></p>
+<ol>
+<li><strong>Transfer case</strong> <strong>pauses the timer</strong> on this device and shows a <strong>QR code</strong>.</li>
+<li>The other device scans the code and is prompted <strong>Take over case</strong> (with a warning if a case is already in progress).</li>
+<li>When the receiving device has the case, tap <strong>Case transferred</strong> here — this device becomes <strong>read-only</strong> and the log closes.</li>
+<li>Tap <strong>Resume case</strong> if the transfer does not complete — the timer resumes on this device.</li>
+</ol>
+<p>Case data is encoded in the QR <strong>only</strong> — <strong>nothing is stored on a server</strong>. Very long cases may exceed QR capacity; the app warns you to continue on this device instead.</p>
+<p>The <strong>Case transferred</strong> banner clears when you start a new case or return to the start screen. <strong>Start new case on this device</strong> on the banner clears read-only state locally.</p>
+<h2>Checks due before you transfer (1.2.1)</h2>
+<p>If you tap <strong>Transfer case</strong> when a <strong>rhythm check</strong> or <strong>repeat adrenaline</strong> is due within a minute, a warning appears first:</p>
+<p><img src="../images/transfer-imminent-warning.png" alt="Transfer case warning when rhythm check or adrenaline is due soon"></p>
+<ul>
+<li>Lists what is imminent (for example rhythm check or adrenaline due now, or in less than a minute).</li>
+<li><strong>Stay on this case — finish checks first</strong> — closes the warning so you can complete the step.</li>
+<li><strong>Transfer anyway</strong> — continues to the QR handoff if you still need to transfer.</li>
+</ul>
+<p>This reduces the chance of handing over mid-check without the crew noticing.</p>
+<h2>Post-ROSC — return to cardiac arrest (1.2.1)</h2>
+<p>During post-ROSC care the timer bar shows a red <strong>Cardiac arrest</strong> button (mirroring the green <strong>ROSC</strong> button used during arrest).</p>
+<p><img src="../images/rosc-cardiac-arrest-button.png" alt="Post-ROSC timer bar with Cardiac arrest button"></p>
+<p>When the patient returns to cardiac arrest:</p>
+<ol>
+<li>Tap <strong>Cardiac arrest</strong> — the event is <strong>logged</strong>, and the app returns to <strong>arrest mode</strong>.</li>
+<li>An <strong>immediate rhythm check</strong> opens — select the current monitored rhythm (or ROSC if output returns).</li>
+<li>After the rhythm is logged, the <strong>2-minute rhythm check timer</strong> restarts from that point.</li>
+</ol>
+<p>You no longer need to wait for a scheduled rhythm check or rely on an indirect route back to resuscitation mode.</p>
+<h2>Sustained ROSC — alert and termination (fixes in 1.2.1)</h2>
+<p>When post-ROSC care reaches <strong>more than 10 minutes with output</strong>:</p>
+<p><img src="../images/sustained-rosc-alert.png" alt="Sustained ROSC alert with senior discussion notice"></p>
+<ul>
+<li>The event is <strong>recorded in the log</strong> and an <strong>amber alert</strong> appears (acknowledge to dismiss).</li>
+<li>The alert notes that <strong>senior clinical discussion would be required</strong> should the patient return to cardiac arrest before any cessation of resuscitation.</li>
+<li>If the patient <strong>re-arrests</strong> and you open <strong>termination of resuscitation (TOR)</strong>, a <strong>senior clinical discussion</strong> step appears <strong>first</strong> — the same pattern as <strong>prolonged VF/pVT on the WMAS build</strong> (see below).</li>
+</ul>
+<p>The sustained ROSC clock and log entry now run reliably throughout post-ROSC care.</p>
+<h2>Other fixes (1.2.1)</h2>
+<p><strong>Post-ROSC SBP and pulse reminders</strong></p>
+<ul>
+<li>Button labels, colours, and logging for <strong>adequate vs inadequate</strong> SBP and pulse were corrected (they had been reversed).</li>
+<li>The <strong>pulse</strong> reminder waits until the <strong>SBP</strong> step is completed.</li>
+</ul>
+<p><strong>Early transfer reminder</strong></p>
+<ul>
+<li>The “consider early transfer” prompt no longer appears after <strong>ROSC and re-arrest</strong> (it would not be appropriate in that context).</li>
+</ul>
+<p><strong>Copy</strong></p>
+<ul>
+<li>User-facing text uses plain words (for example “60 bpm and above”) instead of <code>&lt;</code> / <code>&gt;</code> symbols.</li>
+</ul>
+<h2>WMAS build — prolonged VF at TOR (unchanged, for context)</h2>
+<p>The <strong>WMAS</strong> build still includes <strong>CODE SHOCK</strong> after the first shock and the <strong>prolonged VF</strong> TOR gate if <code>Prolonged VF</code> was logged during the case. Those features are <strong>not</strong> on the Standard build.</p>
+<p><strong>Sustained ROSC at TOR</strong> (above) applies on <strong>all</strong> builds once sustained ROSC has been achieved in the case.</p>
+<p>See also: <a href="./2026-05-31-wmas-code-shock-reminder.html">CODE SHOCK reminder for WMAS crews</a>.</p>
+<h2>Training tip</h2>
+<p>Custom trust <strong>preview</strong> URLs remain available for walk-throughs with DEMO icons and optional <strong>preview speed</strong> (1×–10×). Live field builds always run at real time and do not show the preview startup warning.</p>
+<p>Practice <strong>Transfer case</strong> and the <strong>Cardiac arrest</strong> button on a training case before relying on them on a real job.</p>
+<h2>Feedback</h2>
+<p>If any wording, timing, or placement should better match clinical practice, pass feedback to your clinical lead or the project maintainer.</p>
+</div>
+        <a class="back-link" href="../">← Back to blog</a>
+      </article>
+    
+    </div>
+  </body>
+</html>

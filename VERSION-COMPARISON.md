@@ -1,6 +1,6 @@
 # Resusci-Time — version comparison
 
-**App version:** 1.1.1 (see `package.json`)
+**App version:** 1.1.2 (see `package.json`)
 
 This document compares **preview (test) builds** vs **live (production) builds**, and **WMAS** vs **Standard** trust variants. All four combinations use the same React codebase; differences come from build-time trust config and the `live` vs `preview` channel.
 

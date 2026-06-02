@@ -159,15 +159,18 @@
       <p>Updates, release notes, and guides for using the app in practice.</p>
       <p class="hint" id="blog-audience-note">Showing posts for the <strong>Standard</strong> build.</p>
       <h2>Latest updates</h2>
-      <div class="post-grid"><a class="post-card" data-audience="standard" href="./posts/2026-05-27-standard-release-update.html">
-        <h3><span class="badge badge-news">Update</span>"Standard build release update — Documents, TOR, and VoD"</h3>
-        <p>What’s new in the Standard live build — Documents tab, prolonged VF reminder, TOR and VoD improvements, and intervention updates (version 1.1.0).</p>
-      </a><a class="post-card" data-audience="wmas" href="./posts/2026-05-27-wmas-release-update.html">
-        <h3><span class="badge badge-news">Update</span>"WMAS release update — Documents, TOR, and CODE SHOCK"</h3>
-        <p>What’s new in the WMAS live build — Documents tab, TOR improvements, CODE SHOCK after the first shock, prolonged VF rules, and VOD updates.</p>
-      </a><a class="post-card" data-audience="wmas" href="./posts/2026-05-26-wmas-code-shock-reminder.html">
+      <div class="post-grid"><a class="post-card" data-audience="all" href="./posts/2026-06-02-release-update-case-transfer-and-rosc.html">
+        <h3><span class="badge badge-news">Update</span>Release update — case transfer and post-ROSC improvements (version 1.2.1)</h3>
+        <p>Transfer a case to another device by QR, return to cardiac arrest from post-ROSC care, and fixes for SBP/pulse reminders and sustained ROSC — Standard and WMAS live builds.</p>
+      </a><a class="post-card" data-audience="standard" href="./posts/2026-05-31-standard-release-update.html">
+        <h3><span class="badge badge-news">Update</span>Standard build release update — Documents, TOR, and VoD</h3>
+        <p>What’s new in the Standard live build — Documents tab, prolonged VF reminder, TOR and VoD improvements, and intervention updates (version 1.1.1).</p>
+      </a><a class="post-card" data-audience="wmas" href="./posts/2026-05-31-wmas-code-shock-reminder.html">
         <h3><span class="badge badge-news">Update</span>CODE SHOCK reminder for WMAS crews</h3>
         <p>After the first shock, Resusci-Time prompts WMAS crews to notify EOC — supporting early specialist support where it may improve outcomes.</p>
+      </a><a class="post-card" data-audience="wmas" href="./posts/2026-05-31-wmas-release-update.html">
+        <h3><span class="badge badge-news">Update</span>WMAS release update — Documents, TOR, and CODE SHOCK</h3>
+        <p>What’s new in the WMAS live build — Documents tab, TOR improvements, CODE SHOCK after the first shock, prolonged VF rules, and VOD updates.</p>
       </a><a class="post-card" data-audience="all" href="./posts/2025-05-28-welcome-to-resusci-time copy.html">
         <h3><span class="badge badge-news">Update</span>Welcome to Resusci-Time</h3>
         <p>Adult cardiac arrest timer and checklist to help front line emergency crews stay focused in high stress situations.</p>
@@ -214,7 +217,7 @@
       <script>
         (function () {
           var trust = (new URLSearchParams(window.location.search).get('trust') || 'standard').toLowerCase();
-          var labels = { standard: 'Standard', wmas: 'WMAS', emas: 'EMAS' };
+          var labels = { standard: 'Standard', wmas: 'WMAS' };
           var label = labels[trust] || trust.toUpperCase();
           var note = document.getElementById('blog-audience-note');
           if (note) note.innerHTML = 'Showing posts for the <strong>' + label + '</strong> build.';

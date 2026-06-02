@@ -26,13 +26,15 @@ export const ROSC_TASK_ITEMS: readonly RoscTask[] = [
 
 export type TimerView = 'arrest' | 'rosc'
 
+export function isSustainedRoscReached(actualSeconds: number, timeScale: number): boolean {
+  return toDisplaySeconds(actualSeconds, timeScale) >= ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS
+}
+
 export function getRoscPhaseLabel(
   actualSeconds: number,
   timeScale: number,
 ): 'Transient ROSC' | 'Sustained ROSC' {
-  return toDisplaySeconds(actualSeconds, timeScale) < ROSC_SUSTAINED_THRESHOLD_DISPLAY_SECONDS
-    ? 'Transient ROSC'
-    : 'Sustained ROSC'
+  return isSustainedRoscReached(actualSeconds, timeScale) ? 'Sustained ROSC' : 'Transient ROSC'
 }
 
 export function isRoscTaskComplete(
@@ -54,10 +56,14 @@ export function getRoscCommencedLogLabel(): string {
   return 'ROSC — post-arrest care commenced'
 }
 
+export function getCardiacArrestLogLabel(): string {
+  return 'Cardiac arrest'
+}
+
 export function getRoscRhythmCheckLogLabel(): string {
   return 'ROSC'
 }
 
 export function getSustainedRoscAchievedLogLabel(): string {
-  return 'Sustained ROSC achieved (>10 minutes with output)'
+  return 'Sustained ROSC achieved (more than 10 minutes with output)'
 }
