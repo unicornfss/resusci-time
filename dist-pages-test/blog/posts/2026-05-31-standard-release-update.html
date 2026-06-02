@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1f4f1f" />
-    <title>Resusci-Time blog</title>
+    <title>Standard build release update — Documents, TOR, and VoD · Resusci-Time</title>
     <style>
       :root {
         color-scheme: light;
@@ -14,7 +14,7 @@
         --text-muted: #4a5f4a;
         --accent: #2d6a2d;
         --border: #b8c9b8;
-        --brand-bg-image: url('../backgrounds/resusci-time-logo.png');
+        --brand-bg-image: url('../../backgrounds/resusci-time-logo.png');
         --brand-bg-opacity: 0.24;
       }
       * { box-sizing: border-box; }
@@ -151,78 +151,54 @@
   <body>
     <div class="page wide">
       <nav class="site-nav" aria-label="Site">
-        <a href="../">Home</a><span class="sep" aria-hidden="true">·</span>
-        <a href="../blog/">Blog</a>
+        <a href="../../">Home</a><span class="sep" aria-hidden="true">·</span>
+        <a href="../../blog/">Blog</a>
       </nav>
       
-      <h1>Resusci-Time blog</h1>
-      <p>Updates, release notes, and guides for using the app in practice.</p>
-      <p class="hint" id="blog-audience-note">Showing posts for the <strong>Standard</strong> build.</p>
-      <h2>Latest updates</h2>
-      <div class="post-grid"><a class="post-card" data-audience="all" href="./posts/2026-06-02-release-update-case-transfer-and-rosc.html">
-        <h3><span class="badge badge-news">Update</span>Release update — case transfer and post-ROSC improvements (version 1.2.1)</h3>
-        <p>Transfer a case to another device by QR, return to cardiac arrest from post-ROSC care, and fixes for SBP/pulse reminders and sustained ROSC — Standard and WMAS live builds.</p>
-      </a><a class="post-card" data-audience="standard" href="./posts/2026-05-31-standard-release-update.html">
-        <h3><span class="badge badge-news">Update</span>Standard build release update — Documents, TOR, and VoD</h3>
-        <p>What’s new in the Standard live build — Documents tab, prolonged VF reminder, TOR and VoD improvements, and intervention updates (version 1.1.1).</p>
-      </a><a class="post-card" data-audience="wmas" href="./posts/2026-05-31-wmas-code-shock-reminder.html">
-        <h3><span class="badge badge-news">Update</span>CODE SHOCK reminder for WMAS crews</h3>
-        <p>After the first shock, Resusci-Time prompts WMAS crews to notify EOC — supporting early specialist support where it may improve outcomes.</p>
-      </a><a class="post-card" data-audience="wmas" href="./posts/2026-05-31-wmas-release-update.html">
-        <h3><span class="badge badge-news">Update</span>WMAS release update — Documents, TOR, and CODE SHOCK</h3>
-        <p>What’s new in the WMAS live build — Documents tab, TOR improvements, CODE SHOCK after the first shock, prolonged VF rules, and VOD updates.</p>
-      </a><a class="post-card" data-audience="all" href="./posts/2025-05-28-welcome-to-resusci-time copy.html">
-        <h3><span class="badge badge-news">Update</span>Welcome to Resusci-Time</h3>
-        <p>Adult cardiac arrest timer and checklist to help front line emergency crews stay focused in high stress situations.</p>
-      </a></div>
-      <h2>Guides</h2>
-      <div class="post-grid"><a class="post-card" data-audience="all" href="./posts/2025-05-28-getting-started.html">
-        <h3><span class="badge badge-guide">Guide</span>Getting started with Resusci-Time</h3>
-        <p>Standard build capabilities and day-to-day use on shift.</p>
-      </a></div>
-      
-<script>
-(function () {
-  var params = new URLSearchParams(window.location.search);
-  var trust = (params.get('trust') || 'standard').toLowerCase();
-
-  function isVisible(audience) {
-    var list = audience.split(',').map(function (part) { return part.trim().toLowerCase(); });
-    return list.indexOf('all') !== -1 || list.indexOf(trust) !== -1;
-  }
-
-  document.querySelectorAll('[data-audience]').forEach(function (el) {
-    if (!isVisible(el.getAttribute('data-audience') || 'all')) {
-      el.style.display = 'none';
-    }
-  });
-
-  ['Latest updates', 'Guides'].forEach(function (headingText) {
-    document.querySelectorAll('h2').forEach(function (heading) {
-      if (heading.textContent !== headingText) return;
-      var grid = heading.nextElementSibling;
-      if (!grid || !grid.classList.contains('post-grid')) return;
-      var anyVisible = false;
-      grid.querySelectorAll('[data-audience]').forEach(function (card) {
-        if (card.style.display !== 'none') anyVisible = true;
-      });
-      if (!anyVisible) {
-        heading.style.display = 'none';
-        grid.style.display = 'none';
-      }
-    });
-  });
-})();
-</script>
-      <script>
-        (function () {
-          var trust = (new URLSearchParams(window.location.search).get('trust') || 'standard').toLowerCase();
-          var labels = { standard: 'Standard', wmas: 'WMAS' };
-          var label = labels[trust] || trust.toUpperCase();
-          var note = document.getElementById('blog-audience-note');
-          if (note) note.innerHTML = 'Showing posts for the <strong>' + label + '</strong> build.';
-        })();
-      </script>
+      <article>
+        <h1>Standard build release update — Documents, TOR, and VoD</h1>
+        <p class="post-meta"><span class="badge badge-news">Update</span>31 May 2026</p>
+        <div class="prose"><p>This update is rolling out on the <strong>Standard live</strong> build of Resusci-Time (version <strong>1.1.1</strong>). It focuses on reference documents, clearer termination and VoD flows, and small clinical prompts — without trust-specific features such as CODE SHOCK (those exist only on custom service builds such as WMAS).</p>
+<h2>Documents (new)</h2>
+<p>The ALS algorithm link under the page subtitle has been replaced by a <strong>Documents</strong> button in the header (next to About and Saved logs).</p>
+<p>Tap <strong>Documents</strong> to open the <strong>Advanced Life Support (ALS) algorithm</strong> in a wide modal viewer on your phone or tablet.</p>
+<p>If a <strong>rhythm check</strong> is due while a document is open, the rhythm alert still appears <strong>on top</strong> so you can log the rhythm without closing the document first.</p>
+<h2>Prolonged VF reminder (new)</h2>
+<p>If <strong>three consecutive shockable rhythms</strong> are logged during resuscitation, an amber panel appears to flag an episode of <strong>prolonged VF</strong>.</p>
+<p>Tap <strong>Acknowledge</strong> — <code>Prolonged VF</code> is added to the event log with a timestamp. On the Standard build this is a <strong>reminder and log entry only</strong>; it does not change the TOR questionnaire (custom trust builds may handle prolonged VF differently at termination).</p>
+<h2>Termination of resuscitation (TOR)</h2>
+<ul>
+<li><strong>Manual TOR</strong> (from the timer bar): you must have logged an <strong>initial rhythm</strong> first. The app then runs a <strong>short initial assessment re-visit</strong> before termination review. The log records <code>TOR reassessment started</code>.</li>
+<li><strong>45-minute TOR</strong>: unchanged — goes straight to termination review.</li>
+<li><strong>Special circumstances</strong>: at TOR you are asked whether <strong>hypothermia, overdose/poisoning, or pregnancy</strong> may apply, before rhythm-based questions. Yes or No is logged.</li>
+<li><strong>Senior clinical discussion</strong>: the timer-bar panel for continue vs terminate after senior advice has been refined.</li>
+</ul>
+<h2>Initial assessment and verification of death (VoD)</h2>
+<ul>
+<li><strong>5-minute asystole observation</strong> (hypostasis / rigor mortis): grey countdown with progress bar; assessment menu hidden until the timer finishes; checklist visible but not tappable until then.</li>
+<li><strong>Criteria times</strong> logged when the <strong>5-minute observation starts</strong>.</li>
+<li><strong>VoD time</strong> logged when you press <strong>VOD</strong>.</li>
+<li>VoD summary times aligned to the <strong>right</strong>, matching criteria rows.</li>
+<li>After TOR, when the post-TOR wait reaches <strong>0:00</strong>, the display shows <strong>Resuscitation not appropriate</strong>. The <strong>VOD</strong> button remains available.</li>
+</ul>
+<h2>Interventions and medications</h2>
+<ul>
+<li>Logging the <strong>first adrenaline dose</strong> prompts <strong>establish vascular access</strong> if IV/IO has not yet been recorded.</li>
+<li><strong>Needle decompression</strong> added under <strong>Interventions → Breathing</strong>.</li>
+</ul>
+<h2>Other polish</h2>
+<ul>
+<li>Reminder panels auto-<strong>scroll into view</strong> below the sticky timer bar when they appear.</li>
+<li>App icons refreshed — if you use an installed copy of the app, refresh once to pick up the update.</li>
+</ul>
+<h2>Custom trust builds</h2>
+<p>Ambulance services and NHS trusts can request tailored builds (crest, trust-specific reminders, extra documents, and protocol-aligned options). The <strong>WMAS</strong> build, for example, includes CODE SHOCK and a WMAS ToR criteria document — those are <strong>not</strong> part of the Standard release described here.</p>
+<p>Contact the project maintainer if you would like to discuss a custom version for your service.</p>
+<h2>Feedback</h2>
+<p>Spot a bug or have a suggestion? Contact your clinical lead or the project maintainer.</p>
+</div>
+        <a class="back-link" href="../">← Back to blog</a>
+      </article>
     
     </div>
   </body>

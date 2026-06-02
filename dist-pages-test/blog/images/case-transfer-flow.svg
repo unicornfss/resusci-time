@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520">
+  <rect width="1200" height="520" fill="#ebf2eb" rx="16"/>
+  <text x="600" y="48" text-anchor="middle" fill="#1f4f1f" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">Transfer case — scan the QR on the other device</text>
+  <rect x="120" y="90" width="300" height="380" rx="24" fill="#1f4f1f"/>
+  <rect x="140" y="120" width="260" height="40" rx="8" fill="#2d6a2d"/>
+  <text x="270" y="147" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Sending device · timer paused</text>
+  <rect x="150" y="180" width="240" height="240" rx="8" fill="#fff"/>
+  <g fill="#1f4f1f">
+    <rect x="170" y="200" width="24" height="24"/><rect x="204" y="200" width="24" height="24"/><rect x="238" y="200" width="24" height="24"/><rect x="272" y="200" width="24" height="24"/>
+    <rect x="170" y="234" width="24" height="24"/><rect x="238" y="234" width="24" height="24"/><rect x="306" y="234" width="24" height="24"/><rect x="340" y="234" width="24" height="24"/>
+    <rect x="204" y="268" width="24" height="24"/><rect x="272" y="268" width="24" height="24"/><rect x="306" y="268" width="24" height="24"/>
+    <rect x="170" y="302" width="24" height="24"/><rect x="238" y="302" width="24" height="24"/><rect x="272" y="302" width="24" height="24"/><rect x="340" y="302" width="24" height="24"/>
+    <rect x="204" y="336" width="24" height="24"/><rect x="306" y="336" width="24" height="24"/>
+  </g>
+  <text x="270" y="450" text-anchor="middle" fill="#d0e0d0" font-family="Arial, sans-serif" font-size="13">Case transferred → read-only</text>
+  <path d="M470 280 H560" stroke="#2d6a2d" stroke-width="6" stroke-linecap="round"/>
+  <polygon points="560,280 540,268 540,292" fill="#2d6a2d"/>
+  <text x="515" y="252" text-anchor="middle" fill="#2d6a2d" font-family="Arial, sans-serif" font-size="16" font-weight="700">Scan</text>
+  <rect x="780" y="90" width="300" height="380" rx="24" fill="#1f4f1f"/>
+  <rect x="800" y="120" width="260" height="40" rx="8" fill="#2d6a2d"/>
+  <text x="930" y="147" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="14" font-weight="700">Receiving device</text>
+  <rect x="820" y="190" width="220" height="120" rx="12" fill="#d97706"/>
+  <text x="930" y="240" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="18" font-weight="700">Take over case</text>
+  <text x="930" y="268" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="14">Timer resumes here</text>
+  <text x="930" y="450" text-anchor="middle" fill="#d0e0d0" font-family="Arial, sans-serif" font-size="13">Nothing stored on a server</text>
+</svg>

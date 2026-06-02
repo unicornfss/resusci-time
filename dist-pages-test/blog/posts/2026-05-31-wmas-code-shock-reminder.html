@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1f4f1f" />
-    <title>Resusci-Time blog</title>
+    <title>CODE SHOCK reminder for WMAS crews · Resusci-Time</title>
     <style>
       :root {
         color-scheme: light;
@@ -14,7 +14,7 @@
         --text-muted: #4a5f4a;
         --accent: #2d6a2d;
         --border: #b8c9b8;
-        --brand-bg-image: url('../backgrounds/resusci-time-logo.png');
+        --brand-bg-image: url('../../backgrounds/resusci-time-logo.png');
         --brand-bg-opacity: 0.24;
       }
       * { box-sizing: border-box; }
@@ -151,78 +151,39 @@
   <body>
     <div class="page wide">
       <nav class="site-nav" aria-label="Site">
-        <a href="../">Home</a><span class="sep" aria-hidden="true">·</span>
-        <a href="../blog/">Blog</a>
+        <a href="../../">Home</a><span class="sep" aria-hidden="true">·</span>
+        <a href="../../blog/">Blog</a>
       </nav>
       
-      <h1>Resusci-Time blog</h1>
-      <p>Updates, release notes, and guides for using the app in practice.</p>
-      <p class="hint" id="blog-audience-note">Showing posts for the <strong>Standard</strong> build.</p>
-      <h2>Latest updates</h2>
-      <div class="post-grid"><a class="post-card" data-audience="all" href="./posts/2026-06-02-release-update-case-transfer-and-rosc.html">
-        <h3><span class="badge badge-news">Update</span>Release update — case transfer and post-ROSC improvements (version 1.2.1)</h3>
-        <p>Transfer a case to another device by QR, return to cardiac arrest from post-ROSC care, and fixes for SBP/pulse reminders and sustained ROSC — Standard and WMAS live builds.</p>
-      </a><a class="post-card" data-audience="standard" href="./posts/2026-05-31-standard-release-update.html">
-        <h3><span class="badge badge-news">Update</span>Standard build release update — Documents, TOR, and VoD</h3>
-        <p>What’s new in the Standard live build — Documents tab, prolonged VF reminder, TOR and VoD improvements, and intervention updates (version 1.1.1).</p>
-      </a><a class="post-card" data-audience="wmas" href="./posts/2026-05-31-wmas-code-shock-reminder.html">
-        <h3><span class="badge badge-news">Update</span>CODE SHOCK reminder for WMAS crews</h3>
-        <p>After the first shock, Resusci-Time prompts WMAS crews to notify EOC — supporting early specialist support where it may improve outcomes.</p>
-      </a><a class="post-card" data-audience="wmas" href="./posts/2026-05-31-wmas-release-update.html">
-        <h3><span class="badge badge-news">Update</span>WMAS release update — Documents, TOR, and CODE SHOCK</h3>
-        <p>What’s new in the WMAS live build — Documents tab, TOR improvements, CODE SHOCK after the first shock, prolonged VF rules, and VOD updates.</p>
-      </a><a class="post-card" data-audience="all" href="./posts/2025-05-28-welcome-to-resusci-time copy.html">
-        <h3><span class="badge badge-news">Update</span>Welcome to Resusci-Time</h3>
-        <p>Adult cardiac arrest timer and checklist to help front line emergency crews stay focused in high stress situations.</p>
-      </a></div>
-      <h2>Guides</h2>
-      <div class="post-grid"><a class="post-card" data-audience="all" href="./posts/2025-05-28-getting-started.html">
-        <h3><span class="badge badge-guide">Guide</span>Getting started with Resusci-Time</h3>
-        <p>Standard build capabilities and day-to-day use on shift.</p>
-      </a></div>
-      
-<script>
-(function () {
-  var params = new URLSearchParams(window.location.search);
-  var trust = (params.get('trust') || 'standard').toLowerCase();
-
-  function isVisible(audience) {
-    var list = audience.split(',').map(function (part) { return part.trim().toLowerCase(); });
-    return list.indexOf('all') !== -1 || list.indexOf(trust) !== -1;
-  }
-
-  document.querySelectorAll('[data-audience]').forEach(function (el) {
-    if (!isVisible(el.getAttribute('data-audience') || 'all')) {
-      el.style.display = 'none';
-    }
-  });
-
-  ['Latest updates', 'Guides'].forEach(function (headingText) {
-    document.querySelectorAll('h2').forEach(function (heading) {
-      if (heading.textContent !== headingText) return;
-      var grid = heading.nextElementSibling;
-      if (!grid || !grid.classList.contains('post-grid')) return;
-      var anyVisible = false;
-      grid.querySelectorAll('[data-audience]').forEach(function (card) {
-        if (card.style.display !== 'none') anyVisible = true;
-      });
-      if (!anyVisible) {
-        heading.style.display = 'none';
-        grid.style.display = 'none';
-      }
-    });
-  });
-})();
-</script>
-      <script>
-        (function () {
-          var trust = (new URLSearchParams(window.location.search).get('trust') || 'standard').toLowerCase();
-          var labels = { standard: 'Standard', wmas: 'WMAS' };
-          var label = labels[trust] || trust.toUpperCase();
-          var note = document.getElementById('blog-audience-note');
-          if (note) note.innerHTML = 'Showing posts for the <strong>' + label + '</strong> build.';
-        })();
-      </script>
+      <article>
+        <h1>CODE SHOCK reminder for WMAS crews</h1>
+        <p class="post-meta"><span class="badge badge-news">Update</span>31 May 2026</p>
+        <div class="prose"><p>The <strong>WMAS build</strong> of Resusci-Time includes a <strong>CODE SHOCK</strong> reminder. It appears once a patient has received their <strong>first shock</strong> during active resuscitation, prompting the crew to <strong>inform EOC</strong> that a CODE SHOCK situation exists.</p>
+<p><img src="../images/code-shock-wmas.png" alt="CODE SHOCK reminder — notify EOC after the first shock"></p>
+<h2>Why it matters</h2>
+<p>Shockable cardiac arrest may benefit from <strong>early coordination with EOC</strong> and the <strong>possible deployment of specialist clinicians</strong> to the scene or to support remote clinical decision-making. Notifying EOC at the right time helps the wider system respond sooner, which can lead to <strong>better patient outcomes</strong>.</p>
+<p>The reminder is a <strong>prompt only</strong> — it does not replace local WMAS policy, crew judgement, or direct communication with EOC. It is there so the notification step is less likely to be missed under pressure.</p>
+<h2>What you will see in the app</h2>
+<ol>
+<li><p>Run a shockable rhythm case as usual and <strong>log each shock</strong> in Resusci-Time.</p>
+</li>
+<li><p>After the <strong>first shock</strong> is recorded, an <strong>amber alert panel</strong> appears below the timer with the message:</p>
+<p><strong>CODE SHOCK notified to EOC</strong></p>
+</li>
+<li><p>Once you have <strong>notified EOC</strong>, tap <strong>Acknowledge</strong>. The app adds a timestamped line to the <strong>event log</strong> (<code>CODE SHOCK notified to EOC</code>) so the record reflects that the step was completed.</p>
+</li>
+</ol>
+<p>The panel stays visible until acknowledged. It does not block other actions on screen.</p>
+<h2>WMAS build only</h2>
+<p>This reminder is <strong>enabled only in the WMAS custom build</strong> (live and preview URLs for West Midlands crews). The Standard build and other trust builds do not show CODE SHOCK.</p>
+<p>Open the WMAS app from your service link or bookmark — see your local Resusci-Time rollout contact if you need the URL.</p>
+<h2>Training tip</h2>
+<p>Run through a <strong>preview</strong> or training case and log the <strong>first shock</strong> to see the panel and acknowledgement flow before you rely on it on a real job. The preview build also lets you change protocol speed (1×–10×) from the header if you want a quicker walkthrough.</p>
+<h2>Feedback</h2>
+<p>If the wording, timing, or placement of this reminder should change to fit WMAS practice better, pass feedback to your clinical lead or the project maintainer.</p>
+</div>
+        <a class="back-link" href="../">← Back to blog</a>
+      </article>
     
     </div>
   </body>
