@@ -4,9 +4,11 @@ import { parseShareFromLocation, type SharedLogPayload } from './logShare'
 import {
   autosaveLog,
   clearAutosaveLog,
+  createSavedLogId,
   formatSavedLogLabel,
   getAutosaveLog,
   isLogStorageAvailable,
+  upsertSavedLog,
   type SavedLogMeta,
   type SavedLogRecord,
 } from './logStorage'
@@ -73,6 +75,8 @@ import { ClinicalDiscussionTimerSection } from './components/ClinicalDiscussionT
 import { EventLogPanel } from './components/EventLogPanel'
 import { SharedLogViewer } from './components/SharedLogViewer'
 import { SavedLogsModal } from './components/SavedLogsModal'
+import { SavedLogDetailModal } from './components/SavedLogDetailModal'
+import { CaseContinuationModal } from './components/CaseContinuationModal'
 import { TimerVodCompleteStamp, TimerVodSection } from './components/TimerVodSection'
 import { VodTimestampsSummary } from './components/VodTimestampsSummary'
 import { PulseRateReminderPanel } from './components/PulseRateReminderPanel'
@@ -141,6 +145,15 @@ import {
   getRoscSbpFluidLogLabel,
   isAtropineMaxReached,
 } from './roscMonitoring'
+import { deriveActiveClinicalAlerts } from './clinicalAlerts/deriveActiveAlerts'
+import { useClinicalAlertQueue } from './clinicalAlerts/useClinicalAlertQueue'
+import type { ClinicalAlertId } from './clinicalAlerts/types'
+import { canOfferCaseContinuation, hasVodDeclared } from './caseLog'
+import {
+  isCaseSnapshot,
+  timerRestoreFromSnapshot,
+  type CaseSnapshot,
+} from './caseSnapshot'
 import './App.css'
 
 type ShockContext = 'initial' | 'check'
@@ -208,8 +221,11 @@ function App() {
   const [aboutOpen, setAboutOpen] = useState(false)
   const [documentsOpen, setDocumentsOpen] = useState(false)
   const [previewWarningOpen, setPreviewWarningOpen] = useState(IS_PREVIEW_BUILD)
+  const [clinicalAlertBump, setClinicalAlertBump] = useState<ClinicalAlertId | null>(null)
   const [savedLogsOpen, setSavedLogsOpen] = useState(false)
   const [autosaveOffer, setAutosaveOffer] = useState<SavedLogRecord | null>(null)
+  const [viewingSavedLog, setViewingSavedLog] = useState<SavedLogRecord | null>(null)
+  const [caseContinuationOffer, setCaseContinuationOffer] = useState<SavedLogRecord | null>(null)
   const [sharedLog, setSharedLog] = useState<SharedLogPayload | null>(() => parseShareFromLocation())
   const preRhythmModalsRef = useRef<PreRhythmModalState | null>(null)
   const prevRhythmCheckAlertOpenRef = useRef(false)
@@ -225,6 +241,7 @@ function App() {
   const sbpAdrenaline50AwaitingNextReminderRef = useRef(false)
   const prolongedVfLoggedRef = useRef(false)
   const sustainedRoscLoggedRef = useRef(false)
+  const activePermanentLogIdRef = useRef<string | null>(null)
   const timerViewRef = useRef<TimerView>('arrest')
   const [timerView, setTimerView] = useState<TimerView>('arrest')
   const [roscElapsedSeconds, setRoscElapsedSeconds] = useState(0)
@@ -253,6 +270,8 @@ function App() {
   const totalShocks = rhythmChecks.filter((c) => c.shockJoules != null).length
   const vfvtShockCount = totalShocks
   const hasNonShockableRhythm = hasNonShockableRhythmLogged(rhythmChecks.map((c) => c.rhythm))
+  const logIsLocked = hasVodDeclared(logEntries)
+  const canAppendLog = !logIsLocked
 
   const formatProtocolElapsed = useCallback(
     (actualSeconds: number) => displayElapsed(actualSeconds, timing.timeScale),
@@ -574,6 +593,7 @@ function App() {
     setClinicalDiscussionOpen(false)
     setClinicalDiscussionContinued(false)
     sustainedRoscLoggedRef.current = false
+    activePermanentLogIdRef.current = null
     setAutosaveOffer(null)
     void clearAutosaveLog()
     roscNextReminderAtRef.current = timing.roscMonitoringReminderIntervalSeconds
@@ -596,9 +616,136 @@ function App() {
   }
 
   function pushLogEntry(text: string, at?: Date): number {
+    if (!canAppendLog) return at?.getTime() ?? Date.now()
     const entry = createDisplayLogEntry(text, at ?? new Date())
     setLogEntries((prev) => [...prev, entry])
     return entry.atEpochMs
+  }
+
+  function buildCaseSnapshot(): CaseSnapshot {
+    if (!activePermanentLogIdRef.current) {
+      activePermanentLogIdRef.current = createSavedLogId()
+    }
+    return {
+      version: 1,
+      permanentLogId: activePermanentLogIdRef.current,
+      step,
+      initialRhythm,
+      currentRhythm,
+      rhythmChecks: rhythmChecks.map((entry) => ({ ...entry })),
+      timerElapsedSeconds: timer.elapsedSeconds,
+      timerIsRunning: timer.isRunning,
+      timerNextCheckAt: timer.elapsedSeconds + timer.secondsToNextCheck,
+      timerFortyFiveFired: timer.atFortyFiveMinutes,
+      timerCheckDueFired: showRhythmCheckAlert,
+      timerView,
+      roscElapsedSeconds,
+      adrenalineDoseCount,
+      amiodaroneDoseCount,
+      nextAdrenalineAt,
+      consecutiveShockCount,
+      fortyFiveAcknowledged,
+      earlyTransferAcknowledged,
+      codeShockAcknowledged,
+      prolongedVfAcknowledged,
+      prolongedVfLogged: prolongedVfLoggedRef.current,
+      completedQualityPromptIds: [...completedQualityPromptIds],
+      completedReversibleCauseIds: [...completedReversibleCauseIds],
+      completedRoscTaskIds: [...completedRoscTaskIds],
+      atropineTotalMg,
+      hasSbpFluidLogged,
+      sustainedRoscEverAchieved,
+      sustainedRoscLogged: sustainedRoscLoggedRef.current,
+      roscStatus,
+      peaTorCriteriaMet,
+      torSpecialCircumstancesBelieved,
+      torEndedAtLabel,
+      vodAtLabel,
+      vodCountdownRemaining,
+      clinicalDiscussionPending,
+      clinicalDiscussionContinued,
+      metronomeEnabled,
+      showRhythmCheckAlert,
+      showFortyFiveAlert,
+    }
+  }
+
+  function applyCaseSnapshot(
+    snapshot: CaseSnapshot,
+    entries: DisplayLogEntry[],
+    permanentLogIdOverride?: string,
+  ) {
+    activePermanentLogIdRef.current =
+      permanentLogIdOverride ??
+      (snapshot.permanentLogId && snapshot.permanentLogId.length > 0
+        ? snapshot.permanentLogId
+        : createSavedLogId())
+    timer.restore(timerRestoreFromSnapshot(snapshot))
+    setStep(snapshot.step)
+    setInitialRhythm(snapshot.initialRhythm)
+    setCurrentRhythm(snapshot.currentRhythm)
+    setRhythmChecks(snapshot.rhythmChecks.map((entry) => ({ ...entry })))
+    setLogEntries(entries.map((entry) => ({ ...entry })))
+    setTimerView(snapshot.timerView)
+    setRoscElapsedSeconds(snapshot.roscElapsedSeconds)
+    setAdrenalineDoseCount(snapshot.adrenalineDoseCount)
+    setAmiodaroneDoseCount(snapshot.amiodaroneDoseCount)
+    setNextAdrenalineAt(snapshot.nextAdrenalineAt)
+    setConsecutiveShockCount(snapshot.consecutiveShockCount)
+    setFortyFiveAcknowledged(snapshot.fortyFiveAcknowledged)
+    setEarlyTransferAcknowledged(snapshot.earlyTransferAcknowledged)
+    setCodeShockAcknowledged(snapshot.codeShockAcknowledged)
+    setProlongedVfAcknowledged(snapshot.prolongedVfAcknowledged)
+    prolongedVfLoggedRef.current = snapshot.prolongedVfLogged
+    setCompletedQualityPromptIds(new Set(snapshot.completedQualityPromptIds))
+    setCompletedReversibleCauseIds(new Set(snapshot.completedReversibleCauseIds))
+    setCompletedRoscTaskIds(new Set(snapshot.completedRoscTaskIds))
+    setAtropineTotalMg(snapshot.atropineTotalMg)
+    setHasSbpFluidLogged(snapshot.hasSbpFluidLogged)
+    setSustainedRoscEverAchieved(snapshot.sustainedRoscEverAchieved)
+    sustainedRoscLoggedRef.current = snapshot.sustainedRoscLogged
+    setRoscStatus(snapshot.roscStatus)
+    setPeaTorCriteriaMet(snapshot.peaTorCriteriaMet)
+    setTorSpecialCircumstancesBelieved(snapshot.torSpecialCircumstancesBelieved)
+    setTorEndedAtLabel(snapshot.torEndedAtLabel)
+    setVodAtLabel(snapshot.vodAtLabel)
+    setVodCountdownRemaining(snapshot.vodCountdownRemaining)
+    setClinicalDiscussionPending(snapshot.clinicalDiscussionPending)
+    setClinicalDiscussionContinued(snapshot.clinicalDiscussionContinued)
+    setMetronomeEnabled(snapshot.metronomeEnabled)
+    setShowRhythmCheckAlert(snapshot.showRhythmCheckAlert)
+    setShowFortyFiveAlert(snapshot.showFortyFiveAlert)
+    setShockFormContext(null)
+    setShowRhythmLog(false)
+    setAutosaveOffer(null)
+    setCaseContinuationOffer(null)
+  }
+
+  async function handleStartProtocol() {
+    const autosave = autosaveOffer ?? (await getAutosaveLog())
+    if (autosave && canOfferCaseContinuation(autosave)) {
+      setCaseContinuationOffer(autosave)
+      return
+    }
+    if (autosave) {
+      await clearAutosaveLog()
+      setAutosaveOffer(null)
+    }
+    activePermanentLogIdRef.current = null
+    setStep('initial-assessment')
+  }
+
+  function continueCaseFromAutosave(record: SavedLogRecord) {
+    if (!record.caseSnapshot || !isCaseSnapshot(record.caseSnapshot)) return
+    applyCaseSnapshot(record.caseSnapshot, record.entries, record.permanentLogId)
+  }
+
+  async function startNewCaseFromPrompt() {
+    setCaseContinuationOffer(null)
+    activePermanentLogIdRef.current = null
+    await clearAutosaveLog()
+    setAutosaveOffer(null)
+    setStep('initial-assessment')
   }
 
   function maybePromptVascularAccessIfNotEstablished(atEpochMs: number, entries: readonly DisplayLogEntry[]) {
@@ -606,6 +753,7 @@ function App() {
     pendingVascularAccessAtRef.current = atEpochMs
     setShowVascularAccessReminder(true)
     setVascularAccessReminderStep('prompt')
+    setClinicalAlertBump('C-06')
   }
 
   function logInitialRhythm(rhythm: Rhythm, joules?: number) {
@@ -1076,13 +1224,6 @@ function App() {
     step === 'active-resuscitation' &&
     (sbpReminderVisible || pulseReminderVisible)
 
-  useScrollWhenShown(showVectorChangeReminder, vectorChangeReminderRef)
-  useScrollWhenShown(showEarlyTransfer, earlyTransferReminderRef)
-  useScrollWhenShown(showCodeShock, codeShockReminderRef)
-  useScrollWhenShown(showProlongedVf, prolongedVfAlertRef)
-  useScrollWhenShown(showVascularAccessPanel, vascularAccessReminderRef)
-  useScrollWhenShown(showRoscMonitoringArea, roscMonitoringReminderRef)
-
   const hasLog = logEntries.length > 0
   const sortedLogEntries = sortDisplayLogEntries(logEntries)
   const logDocumentTitle = serviceConfig.headerTitle
@@ -1113,16 +1254,28 @@ function App() {
   useEffect(() => {
     if (!isLogStorageAvailable() || logEntries.length === 0) return
 
-    const timer = window.setTimeout(() => {
+    const saveTimer = window.setTimeout(() => {
+      const caseSnapshot = buildCaseSnapshot()
+      const permanentLogId = caseSnapshot.permanentLogId
       void autosaveLog({
         trustId: serviceConfig.trustId,
         documentTitle: logDocumentTitle,
         entries: sortedLogEntries,
         meta: logSaveMeta,
+        caseSnapshot,
+        permanentLogId,
+      })
+      void upsertSavedLog({
+        id: permanentLogId,
+        trustId: serviceConfig.trustId,
+        documentTitle: logDocumentTitle,
+        entries: sortedLogEntries,
+        meta: logSaveMeta,
+        caseSnapshot,
       })
     }, 800)
 
-    return () => window.clearTimeout(timer)
+    return () => window.clearTimeout(saveTimer)
   }, [
     logEntries,
     logDocumentTitle,
@@ -1131,6 +1284,17 @@ function App() {
     torEndedAtLabel,
     vodAtLabel,
     timer.elapsedSeconds,
+    step,
+    timerView,
+    currentRhythm,
+    rhythmChecks,
+    adrenalineDoseCount,
+    amiodaroneDoseCount,
+    nextAdrenalineAt,
+    consecutiveShockCount,
+    fortyFiveAcknowledged,
+    showRhythmCheckAlert,
+    showFortyFiveAlert,
   ])
 
   useEffect(() => {
@@ -1203,6 +1367,57 @@ function App() {
     step === 'active-resuscitation' &&
     timerView === 'arrest'
   const clinicalDiscussionStatus = clinicalDiscussionOpen ? 'open' : 'collapsed'
+
+  const activeClinicalAlerts = deriveActiveClinicalAlerts({
+    step,
+    timerView,
+    shockFormContext,
+    showRhythmCheckAlert,
+    resuscitationOngoing,
+    showFortyFiveAlert,
+    fortyFiveAcknowledged,
+    showVectorChangeReminder,
+    showEarlyTransfer,
+    showCodeShock,
+    showProlongedVf,
+    showVascularAccessPanel,
+    showClinicalDiscussionTimer,
+    clinicalDiscussionOpen,
+    sbpReminderVisible,
+    sbpReminderExpanded,
+    pulseReminderVisible,
+    pulseReminderExpanded,
+    pulseShowAtropineMaxMessage,
+  })
+  const currentClinicalAlert = useClinicalAlertQueue(activeClinicalAlerts, clinicalAlertBump)
+  const isClinicalAlert = (id: ClinicalAlertId) => currentClinicalAlert === id
+
+  useEffect(() => {
+    if (clinicalAlertBump && currentClinicalAlert === clinicalAlertBump) {
+      setClinicalAlertBump(null)
+    }
+  }, [clinicalAlertBump, currentClinicalAlert])
+
+  useEffect(() => {
+    if (!showVascularAccessReminder) {
+      setClinicalAlertBump((bump) => (bump === 'C-06' ? null : bump))
+    }
+  }, [showVascularAccessReminder])
+
+  useScrollWhenShown(isClinicalAlert('C-02'), vectorChangeReminderRef)
+  useScrollWhenShown(isClinicalAlert('C-03'), earlyTransferReminderRef)
+  useScrollWhenShown(isClinicalAlert('C-04'), codeShockReminderRef)
+  useScrollWhenShown(isClinicalAlert('C-05'), prolongedVfAlertRef)
+  useScrollWhenShown(isClinicalAlert('C-06'), vascularAccessReminderRef)
+  useScrollWhenShown(
+    isClinicalAlert('P-01') ||
+      isClinicalAlert('P-02') ||
+      isClinicalAlert('P-03') ||
+      isClinicalAlert('P-04') ||
+      isClinicalAlert('P-05'),
+    roscMonitoringReminderRef,
+  )
+
   const timerBarTone =
     postTorActive || vodCompleteActive
       ? 'post-tor'
@@ -1314,19 +1529,18 @@ function App() {
         <div className="autosave-restore-banner card" role="status">
           <p>
             Autosaved log from {formatSavedLogLabel(autosaveOffer.savedAt)} (
-            {autosaveOffer.entries.length} events). Restore log entries or discard?
+            {autosaveOffer.entries.length} events).
+            {hasVodDeclared(autosaveOffer.entries)
+              ? ' Verification of death was recorded — this log is read-only.'
+              : ' View the log read-only or discard before starting a new case.'}
           </p>
           <div className="autosave-restore-actions">
             <button
               type="button"
               className="btn btn-primary btn-sm"
-              onClick={() => {
-                setLogEntries(autosaveOffer.entries.map((entry) => ({ ...entry })))
-                setShowRhythmLog(true)
-                setAutosaveOffer(null)
-              }}
+              onClick={() => setViewingSavedLog(autosaveOffer)}
             >
-              Restore log
+              View log
             </button>
             <button
               type="button"
@@ -1481,7 +1695,7 @@ function App() {
           {timerView === 'rosc' && step === 'active-resuscitation' && (
             <TimerRoscRxSection atropineTotalMg={atropineTotalMg} />
           )}
-          {showClinicalDiscussionTimer && (
+          {showClinicalDiscussionTimer && (isClinicalAlert('S-01') || isClinicalAlert('S-02')) && (
             <ClinicalDiscussionTimerSection
               status={clinicalDiscussionStatus}
               onOpen={() => setClinicalDiscussionOpen(true)}
@@ -1493,7 +1707,7 @@ function App() {
         </>
       )}
 
-      {(step === 'select-rhythm') && (
+      {(step === 'select-rhythm') && (isClinicalAlert('I-01') || isClinicalAlert('I-02')) && (
       <div className="rhythm-prompts">
         {step === 'select-rhythm' && (
           <div className="alert alert-warning rhythm-prompt" role="region" aria-label="Initial rhythm">
@@ -1524,7 +1738,7 @@ function App() {
       </div>
       )}
 
-      {showVectorChangeReminder && (
+      {showVectorChangeReminder && isClinicalAlert('C-02') && (
         <div ref={vectorChangeReminderRef} className="vector-change-panel" role="status">
           <p>{getVectorChangePrompt()}</p>
           <div className="vector-change-actions">
@@ -1546,7 +1760,7 @@ function App() {
         </div>
       )}
 
-      {showEarlyTransfer && (
+      {showEarlyTransfer && isClinicalAlert('C-03') && (
         <div ref={earlyTransferReminderRef} className="early-transfer-panel" role="status">
           <p>{getEarlyTransferPrompt()}</p>
           <button type="button" className="btn btn-primary btn-lg" onClick={acknowledgeEarlyTransfer}>
@@ -1555,7 +1769,7 @@ function App() {
         </div>
       )}
 
-      {showCodeShock && (
+      {showCodeShock && isClinicalAlert('C-04') && (
         <div ref={codeShockReminderRef} className="code-shock-panel" role="status">
           <p>{getCodeShockPrompt()}</p>
           <button type="button" className="btn btn-primary btn-lg" onClick={acknowledgeCodeShock}>
@@ -1564,7 +1778,7 @@ function App() {
         </div>
       )}
 
-      {showProlongedVf && (
+      {showProlongedVf && isClinicalAlert('C-05') && (
         <div ref={prolongedVfAlertRef} className="prolonged-vf-panel" role="status">
           <p>{getProlongedVfPrompt()}</p>
           <button type="button" className="btn btn-primary btn-lg" onClick={acknowledgeProlongedVf}>
@@ -1573,7 +1787,7 @@ function App() {
         </div>
       )}
 
-      {showVascularAccessPanel && (
+      {showVascularAccessPanel && isClinicalAlert('C-06') && (
         <div ref={vascularAccessReminderRef} className="vascular-access-panel" role="status">
           <VascularAccessFlow
             step={vascularAccessReminderStep}
@@ -1583,9 +1797,14 @@ function App() {
         </div>
       )}
 
-      {showRoscMonitoringArea && (
+      {showRoscMonitoringArea &&
+        (isClinicalAlert('P-01') ||
+          isClinicalAlert('P-02') ||
+          isClinicalAlert('P-03') ||
+          isClinicalAlert('P-04') ||
+          isClinicalAlert('P-05')) && (
         <div ref={roscMonitoringReminderRef} className="rosc-monitoring-reminders">
-          {sbpReminderVisible && (
+          {sbpReminderVisible && (isClinicalAlert('P-01') || isClinicalAlert('P-02')) && (
             <div>
               <SbpReminderPanel
                 expanded={sbpReminderExpanded}
@@ -1602,7 +1821,8 @@ function App() {
               />
             </div>
           )}
-          {pulseReminderVisible && (
+          {pulseReminderVisible &&
+            (isClinicalAlert('P-03') || isClinicalAlert('P-04') || isClinicalAlert('P-05')) && (
             <div>
               <PulseRateReminderPanel
                 expanded={pulseReminderExpanded}
@@ -1622,7 +1842,7 @@ function App() {
         </div>
       )}
 
-      {showFortyFiveAlert && !fortyFiveAcknowledged && timerView !== 'rosc' && (
+      {showFortyFiveAlert && !fortyFiveAcknowledged && timerView !== 'rosc' && isClinicalAlert('C-01') && (
         <div className="alert alert-critical" role="alert">
           <strong>45 minutes — Termination review</strong>
           <p>Consider termination of resuscitation according to current rhythm.</p>
@@ -1642,7 +1862,7 @@ function App() {
             <div className="card-badge">0 min</div>
             <h2>Adult cardiac arrest confirmed by ambulance resource</h2>
             <p className="lead">Begin protocol assessment.</p>
-            <button type="button" className="btn btn-primary btn-lg" onClick={() => setStep('initial-assessment')}>
+            <button type="button" className="btn btn-primary btn-lg" onClick={() => void handleStartProtocol()}>
               Start protocol
             </button>
           </section>
@@ -1712,7 +1932,6 @@ function App() {
                   <EventLogPanel
                     entries={sortedLogEntries}
                     documentTitle={logDocumentTitle}
-                    saveMeta={logSaveMeta}
                   />
                 )}
               </>
@@ -1822,7 +2041,6 @@ function App() {
             <EventLogPanel
               entries={sortedLogEntries}
               documentTitle={logDocumentTitle}
-              saveMeta={logSaveMeta}
             />
           </section>
         )}
@@ -1842,7 +2060,6 @@ function App() {
               <EventLogPanel
                 entries={sortedLogEntries}
                 documentTitle={logDocumentTitle}
-                saveMeta={logSaveMeta}
               />
             )}
             <button type="button" className="btn btn-primary btn-lg" onClick={handleNewCase}>
@@ -1878,6 +2095,19 @@ function App() {
 
       {savedLogsOpen && <SavedLogsModal onClose={() => setSavedLogsOpen(false)} />}
 
+      {viewingSavedLog && (
+        <SavedLogDetailModal record={viewingSavedLog} onClose={() => setViewingSavedLog(null)} />
+      )}
+
+      {caseContinuationOffer && (
+        <CaseContinuationModal
+          savedAt={caseContinuationOffer.savedAt}
+          eventCount={caseContinuationOffer.entries.length}
+          onContinue={() => continueCaseFromAutosave(caseContinuationOffer)}
+          onNewCase={() => void startNewCaseFromPrompt()}
+        />
+      )}
+
       {sharedLog && (
         <SharedLogViewer payload={sharedLog} onClose={() => setSharedLog(null)} />
       )}
@@ -1901,7 +2131,7 @@ function App() {
         />
       )}
 
-      {showRhythmCheckAlert && resuscitationOngoing && (
+      {(isClinicalAlert('R-01') || isClinicalAlert('R-02')) && showRhythmCheckAlert && resuscitationOngoing && (
         <div
           className="rhythm-check-modal"
           role="dialog"

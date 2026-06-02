@@ -34,8 +34,14 @@ export function getServiceConfig(trustId: TrustId, channel: BuildChannel = 'live
   }
 }
 
+export function getIconAssetPrefix(config: ServiceConfig): string {
+  if (config.isPreview) return 'preview-icons/'
+  if (config.trustId === 'wmas') return 'wmas-icons/'
+  return ''
+}
+
 export function buildWebManifest(config: ServiceConfig) {
-  const iconPrefix = config.isPreview ? 'preview-icons/' : ''
+  const iconPrefix = getIconAssetPrefix(config)
 
   return {
     name: config.pageTitle,

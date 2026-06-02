@@ -1,6 +1,8 @@
-import { useEffect, useState, type MouseEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent, type MouseEvent } from 'react'
+import { hasVodDeclared } from '../caseLog'
 import {
   deleteSavedLog,
+  deleteSavedLogs,
   formatSavedLogLabel,
   getAutosaveLog,
   isLogStorageAvailable,
@@ -13,26 +15,47 @@ interface SavedLogsModalProps {
   onClose: () => void
 }
 
+function formatLogListTitle(record: SavedLogRecord): string {
+  return formatSavedLogLabel(record.caseStartedAt ?? record.savedAt)
+}
+
 function SavedLogListItem({
   record,
   onView,
   onDelete,
-  autosave = false,
+  inProgress = false,
+  selected = false,
+  selectable = false,
+  onToggleSelect,
 }: {
   record: SavedLogRecord
   onView: () => void
   onDelete?: () => void
-  autosave?: boolean
+  inProgress?: boolean
+  selected?: boolean
+  selectable?: boolean
+  onToggleSelect?: () => void
 }) {
+  const closed = hasVodDeclared(record.entries)
+
   return (
-    <li className={`saved-logs-item${autosave ? ' saved-logs-item-autosave' : ''}`}>
+    <li
+      className={`saved-logs-item${inProgress ? ' saved-logs-item-autosave' : ''}${selected ? ' saved-logs-item-selected' : ''}`}
+    >
+      {selectable && onToggleSelect && (
+        <label className="saved-logs-item-select">
+          <input type="checkbox" checked={selected} onChange={onToggleSelect} />
+          <span className="visually-hidden">Select log from {formatLogListTitle(record)}</span>
+        </label>
+      )}
       <div className="saved-logs-item-body">
         <strong>
-          {autosave ? 'Current case (autosaved)' : formatSavedLogLabel(record.savedAt)}
+          {formatLogListTitle(record)}
+          {inProgress ? ' (in progress)' : closed ? ' (closed)' : ''}
         </strong>
         <span className="saved-logs-item-meta">
           {record.entries.length} events · {record.documentTitle}
-          {autosave ? ` · updated ${formatSavedLogLabel(record.savedAt)}` : ''}
+          {inProgress ? ` · updated ${formatSavedLogLabel(record.savedAt)}` : ''}
         </span>
       </div>
       <div className="saved-logs-item-actions">
@@ -54,6 +77,7 @@ export function SavedLogsModal({ onClose }: SavedLogsModalProps) {
   const [autosave, setAutosave] = useState<SavedLogRecord | null>(null)
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<SavedLogRecord | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set())
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -64,6 +88,7 @@ export function SavedLogsModal({ onClose }: SavedLogsModalProps) {
         if (!cancelled) {
           setRecords(items)
           setAutosave(autosaved && autosaved.entries.length > 0 ? autosaved : null)
+          setSelectedIds(new Set())
         }
       } catch {
         if (!cancelled) setError('Could not load saved logs from this device.')
@@ -77,21 +102,69 @@ export function SavedLogsModal({ onClose }: SavedLogsModalProps) {
     }
   }, [])
 
+  const inProgressLogId = autosave?.permanentLogId ?? null
+
+  const orphanAutosave = useMemo(() => {
+    if (!autosave) return null
+    if (!inProgressLogId) return autosave
+    return records.some((record) => record.id === inProgressLogId) ? null : autosave
+  }, [autosave, inProgressLogId, records])
+
+  const selectableRecords = useMemo(
+    () => records.filter((record) => record.id !== inProgressLogId),
+    [records, inProgressLogId],
+  )
+
+  const allSelectableSelected =
+    selectableRecords.length > 0 && selectableRecords.every((record) => selectedIds.has(record.id))
+
   function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
     if (event.target === event.currentTarget) onClose()
+  }
+
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function handleSelectAllChange(event: ChangeEvent<HTMLInputElement>) {
+    if (event.target.checked) {
+      setSelectedIds(new Set(selectableRecords.map((record) => record.id)))
+    } else {
+      setSelectedIds(new Set())
+    }
   }
 
   async function handleDelete(id: string) {
     await deleteSavedLog(id)
     setRecords((prev) => prev.filter((record) => record.id !== id))
+    setSelectedIds((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
     if (selected?.id === id) setSelected(null)
+  }
+
+  async function handleDeleteSelected() {
+    const ids = [...selectedIds]
+    if (ids.length === 0) return
+    await deleteSavedLogs(ids)
+    setRecords((prev) => prev.filter((record) => !selectedIds.has(record.id)))
+    if (selected && selectedIds.has(selected.id)) setSelected(null)
+    setSelectedIds(new Set())
   }
 
   if (selected) {
     return <SavedLogDetailModal record={selected} onClose={() => setSelected(null)} />
   }
 
-  const hasAnyLogs = autosave != null || records.length > 0
+  const hasAnyLogs = orphanAutosave != null || records.length > 0
 
   return (
     <div
@@ -117,8 +190,8 @@ export function SavedLogsModal({ onClose }: SavedLogsModalProps) {
           )}
 
           <p className="share-log-intro">
-            Logs are stored on this device only — nothing is uploaded. The current case is autosaved
-            as you go. Use Save to keep a permanent copy you can delete separately.
+            Logs are stored on this device only — nothing is uploaded. Each case is saved
+            automatically as you work. Use the checkboxes to delete multiple logs at once.
           </p>
 
           {loading && <p className="saved-log-meta-line">Loading…</p>}
@@ -129,19 +202,54 @@ export function SavedLogsModal({ onClose }: SavedLogsModalProps) {
           )}
 
           {!loading && hasAnyLogs && (
-            <ul className="saved-logs-list">
-              {autosave && (
-                <SavedLogListItem record={autosave} autosave onView={() => setSelected(autosave)} />
+            <>
+              {selectableRecords.length > 0 && (
+                <div className="saved-logs-bulk-actions">
+                  <label className="saved-logs-select-all">
+                    <input
+                      type="checkbox"
+                      checked={allSelectableSelected}
+                      onChange={handleSelectAllChange}
+                    />
+                    Select all
+                  </label>
+                  {selectedIds.size > 0 && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => void handleDeleteSelected()}
+                    >
+                      Delete selected ({selectedIds.size})
+                    </button>
+                  )}
+                </div>
               )}
-              {records.map((record) => (
-                <SavedLogListItem
-                  key={record.id}
-                  record={record}
-                  onView={() => setSelected(record)}
-                  onDelete={() => void handleDelete(record.id)}
-                />
-              ))}
-            </ul>
+
+              <ul className="saved-logs-list">
+                {orphanAutosave && (
+                  <SavedLogListItem
+                    record={orphanAutosave}
+                    inProgress
+                    onView={() => setSelected(orphanAutosave)}
+                  />
+                )}
+                {records.map((record) => {
+                  const inProgress = record.id === inProgressLogId
+                  return (
+                    <SavedLogListItem
+                      key={record.id}
+                      record={record}
+                      inProgress={inProgress}
+                      selectable={!inProgress}
+                      selected={selectedIds.has(record.id)}
+                      onToggleSelect={() => toggleSelected(record.id)}
+                      onView={() => setSelected(record)}
+                      onDelete={inProgress ? undefined : () => void handleDelete(record.id)}
+                    />
+                  )
+                })}
+              </ul>
+            </>
           )}
         </div>
       </div>

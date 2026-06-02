@@ -1,3 +1,4 @@
+import type { CaseSnapshot } from './caseSnapshot'
 import type { TrustId } from './config/types'
 import type { DisplayLogEntry } from './types'
 
@@ -13,9 +14,14 @@ export interface SavedLogRecord {
   trustId: TrustId
   documentTitle: string
   savedAt: number
+  /** Set on first write; preserved when the in-progress log is updated. */
+  caseStartedAt?: number
   entries: DisplayLogEntry[]
   meta: SavedLogMeta
   isAutosave?: boolean
+  /** Links autosave slot to the rolling permanent log for the same case. */
+  permanentLogId?: string
+  caseSnapshot?: CaseSnapshot
 }
 
 export const AUTOSAVE_LOG_ID = '__autosave__'
@@ -34,6 +40,10 @@ function generateLogId(): string {
     return crypto.randomUUID()
   }
   return `log-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
+export function createSavedLogId(): string {
+  return generateLogId()
 }
 
 function openDb(): Promise<IDBDatabase> {
@@ -181,22 +191,61 @@ export async function saveLogToDevice(input: {
   documentTitle: string
   entries: readonly DisplayLogEntry[]
   meta?: SavedLogMeta
+  caseSnapshot?: CaseSnapshot
 }): Promise<SavedLogRecord> {
   if (!isLogStorageAvailable()) {
     throw new Error('This browser does not support on-device log storage.')
   }
 
+  const now = Date.now()
   const record: SavedLogRecord = {
     id: generateLogId(),
     trustId: input.trustId,
     documentTitle: input.documentTitle,
-    savedAt: Date.now(),
+    savedAt: now,
+    caseStartedAt: now,
     entries: input.entries.map((entry) => ({ ...entry })),
     meta: input.meta ?? {},
+    caseSnapshot: input.caseSnapshot,
   }
 
   await writeRecord(record)
   return record
+}
+
+export async function upsertSavedLog(input: {
+  id: string
+  trustId: TrustId
+  documentTitle: string
+  entries: readonly DisplayLogEntry[]
+  meta?: SavedLogMeta
+  caseSnapshot?: CaseSnapshot
+}): Promise<SavedLogRecord> {
+  if (!isLogStorageAvailable()) {
+    throw new Error('This browser does not support on-device log storage.')
+  }
+
+  const existing = await getSavedLog(input.id)
+  const now = Date.now()
+  const record: SavedLogRecord = {
+    id: input.id,
+    trustId: input.trustId,
+    documentTitle: input.documentTitle,
+    savedAt: now,
+    caseStartedAt: existing?.caseStartedAt ?? now,
+    entries: input.entries.map((entry) => ({ ...entry })),
+    meta: input.meta ?? {},
+    caseSnapshot: input.caseSnapshot,
+  }
+
+  await writeRecord(record)
+  return record
+}
+
+export async function deleteSavedLogs(ids: readonly string[]): Promise<void> {
+  if (!isLogStorageAvailable()) return
+  const uniqueIds = [...new Set(ids)].filter((id) => id !== AUTOSAVE_LOG_ID)
+  await Promise.all(uniqueIds.map((id) => removeRecord(id)))
 }
 
 export async function deleteSavedLog(id: string): Promise<void> {
@@ -219,6 +268,8 @@ export async function autosaveLog(input: {
   documentTitle: string
   entries: readonly DisplayLogEntry[]
   meta?: SavedLogMeta
+  caseSnapshot?: CaseSnapshot
+  permanentLogId?: string
 }): Promise<void> {
   if (!isLogStorageAvailable() || input.entries.length === 0) return
 
@@ -230,6 +281,8 @@ export async function autosaveLog(input: {
     entries: input.entries.map((entry) => ({ ...entry })),
     meta: input.meta ?? {},
     isAutosave: true,
+    permanentLogId: input.permanentLogId,
+    caseSnapshot: input.caseSnapshot,
   }
 
   await writeRecord(record)

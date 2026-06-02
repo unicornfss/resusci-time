@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { buildWebManifest, getServiceConfig } from './src/config/getServiceConfig'
+import { buildWebManifest, getIconAssetPrefix, getServiceConfig } from './src/config/getServiceConfig'
 import { isTrustId, liveOutputFolder, parseViteMode, previewOutputFolder, TRUST_IDS } from './src/config/trustIds'
 import type { TrustId } from './src/config/types'
 
@@ -46,7 +46,7 @@ function trustBuildPlugin(trustId: TrustId, channel: 'live' | 'preview'): Plugin
       })
     },
     transformIndexHtml() {
-      const iconPrefix = config.isPreview ? 'preview-icons/' : ''
+      const iconPrefix = getIconAssetPrefix(config)
       return [
         { tag: 'title', children: config.pageTitle, injectTo: 'head' },
         {

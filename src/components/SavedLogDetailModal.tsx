@@ -1,4 +1,5 @@
 import type { MouseEvent } from 'react'
+import { hasVodDeclared } from '../caseLog'
 import type { SavedLogRecord } from '../logStorage'
 import { EventLogPanel } from './EventLogPanel'
 
@@ -49,6 +50,12 @@ export function SavedLogDetailModal({ record, onClose }: SavedLogDetailModalProp
           )}
           {record.meta.vodAt && (
             <p className="saved-log-meta-line">VOD: {record.meta.vodAt}</p>
+          )}
+          {hasVodDeclared(record.entries) && (
+            <p className="share-log-warning" role="status">
+              This log is closed — verification of death was recorded and no further entries can be
+              added.
+            </p>
           )}
           <EventLogPanel entries={record.entries} documentTitle={record.documentTitle} />
         </div>

@@ -57,6 +57,23 @@ export function useTimer({ timing, onRhythmCheckDue, onFortyFiveMinutes }: UseTi
     [onFortyFiveMinutes],
   )
 
+  const restore = useCallback(
+    (state: {
+      elapsedSeconds: number
+      isRunning: boolean
+      nextCheckAt: number
+      fortyFiveFired: boolean
+      checkDueFired: boolean
+    }) => {
+      setElapsedSeconds(state.elapsedSeconds)
+      setIsRunning(state.isRunning)
+      nextCheckAt.current = state.nextCheckAt
+      fortyFiveFired.current = state.fortyFiveFired
+      checkDueFired.current = state.checkDueFired
+    },
+    [],
+  )
+
   useEffect(() => {
     if (!isRunning) return
 
@@ -96,5 +113,6 @@ export function useTimer({ timing, onRhythmCheckDue, onFortyFiveMinutes }: UseTi
     reset,
     recordRhythmEntry,
     jumpToElapsed,
+    restore,
   }
 }
