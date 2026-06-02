@@ -2,6 +2,16 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties } from 're
 import { serviceConfig } from './config'
 import { parseShareFromLocation, type SharedLogPayload } from './logShare'
 import {
+  adjustSnapshotForHandoffReceive,
+  buildCaseHandoffPayload,
+  clearCaseHandedOffSession,
+  clearCaseHandoffHash,
+  isCaseHandedOffThisSession,
+  markCaseHandedOffThisSession,
+  parseCaseHandoffFromLocation,
+  type CaseHandoffPayload,
+} from './caseHandoff'
+import {
   autosaveLog,
   clearAutosaveLog,
   createSavedLogId,
@@ -77,6 +87,9 @@ import { SharedLogViewer } from './components/SharedLogViewer'
 import { SavedLogsModal } from './components/SavedLogsModal'
 import { SavedLogDetailModal } from './components/SavedLogDetailModal'
 import { CaseContinuationModal } from './components/CaseContinuationModal'
+import { TransferCaseModal } from './components/TransferCaseModal'
+import { AcceptCaseHandoffModal } from './components/AcceptCaseHandoffModal'
+import { OpenHandoffFileButton } from './components/OpenHandoffFileButton'
 import { TimerVodCompleteStamp, TimerVodSection } from './components/TimerVodSection'
 import { VodTimestampsSummary } from './components/VodTimestampsSummary'
 import { PulseRateReminderPanel } from './components/PulseRateReminderPanel'
@@ -159,6 +172,15 @@ import './App.css'
 type ShockContext = 'initial' | 'check'
 type RhythmCheckEntry = { minute: number; label: string; rhythm: Rhythm; shockJoules?: number }
 
+function getInitialAppRouting(): {
+  pendingHandoff: CaseHandoffPayload | null
+  sharedLog: SharedLogPayload | null
+} {
+  const pendingHandoff = parseCaseHandoffFromLocation()
+  if (pendingHandoff) return { pendingHandoff, sharedLog: null }
+  return { pendingHandoff: null, sharedLog: parseShareFromLocation() }
+}
+
 function displayElapsed(actualSeconds: number, timeScale: number) {
   return formatElapsed(toDisplaySeconds(actualSeconds, timeScale))
 }
@@ -226,7 +248,15 @@ function App() {
   const [autosaveOffer, setAutosaveOffer] = useState<SavedLogRecord | null>(null)
   const [viewingSavedLog, setViewingSavedLog] = useState<SavedLogRecord | null>(null)
   const [caseContinuationOffer, setCaseContinuationOffer] = useState<SavedLogRecord | null>(null)
-  const [sharedLog, setSharedLog] = useState<SharedLogPayload | null>(() => parseShareFromLocation())
+  const initialRouting = getInitialAppRouting()
+  const [pendingHandoff, setPendingHandoff] = useState<CaseHandoffPayload | null>(
+    initialRouting.pendingHandoff,
+  )
+  const [transferHandoffPayload, setTransferHandoffPayload] = useState<CaseHandoffPayload | null>(
+    null,
+  )
+  const [caseHandedOff, setCaseHandedOff] = useState(isCaseHandedOffThisSession)
+  const [sharedLog, setSharedLog] = useState<SharedLogPayload | null>(initialRouting.sharedLog)
   const preRhythmModalsRef = useRef<PreRhythmModalState | null>(null)
   const prevRhythmCheckAlertOpenRef = useRef(false)
   const pendingContinuousCompressionsFromChecklistRef = useRef(false)
@@ -241,6 +271,7 @@ function App() {
   const sbpAdrenaline50AwaitingNextReminderRef = useRef(false)
   const prolongedVfLoggedRef = useRef(false)
   const sustainedRoscLoggedRef = useRef(false)
+  const handoffTimerWasRunningRef = useRef(false)
   const activePermanentLogIdRef = useRef<string | null>(null)
   const timerViewRef = useRef<TimerView>('arrest')
   const [timerView, setTimerView] = useState<TimerView>('arrest')
@@ -271,7 +302,8 @@ function App() {
   const vfvtShockCount = totalShocks
   const hasNonShockableRhythm = hasNonShockableRhythmLogged(rhythmChecks.map((c) => c.rhythm))
   const logIsLocked = hasVodDeclared(logEntries)
-  const canAppendLog = !logIsLocked
+  const canModifyCase = !logIsLocked && !caseHandedOff && transferHandoffPayload == null
+  const canAppendLog = canModifyCase
 
   const formatProtocolElapsed = useCallback(
     (actualSeconds: number) => displayElapsed(actualSeconds, timing.timeScale),
@@ -595,6 +627,9 @@ function App() {
     sustainedRoscLoggedRef.current = false
     activePermanentLogIdRef.current = null
     setAutosaveOffer(null)
+    clearCaseHandedOffSession()
+    setCaseHandedOff(false)
+    setTransferHandoffPayload(null)
     void clearAutosaveLog()
     roscNextReminderAtRef.current = timing.roscMonitoringReminderIntervalSeconds
     timer.reset()
@@ -743,10 +778,64 @@ function App() {
   async function startNewCaseFromPrompt() {
     setCaseContinuationOffer(null)
     activePermanentLogIdRef.current = null
+    clearCaseHandedOffSession()
+    setCaseHandedOff(false)
     await clearAutosaveLog()
     setAutosaveOffer(null)
     setStep('initial-assessment')
   }
+
+  function acceptCaseHandoff(payload: CaseHandoffPayload) {
+    if (payload.trust !== serviceConfig.trustId) {
+      window.alert(
+        `This handoff is for the ${payload.trust === 'wmas' ? 'WMAS' : 'Standard'} build. Open the matching trust URL on this device to take over.`,
+      )
+      return
+    }
+    clearCaseHandedOffSession()
+    setCaseHandedOff(false)
+    const snapshot = adjustSnapshotForHandoffReceive(payload.snapshot, payload.handoffAt)
+    applyCaseSnapshot(snapshot, payload.entries, payload.permanentLogId)
+    clearCaseHandoffHash()
+    setPendingHandoff(null)
+    setTransferHandoffPayload(null)
+  }
+
+  function declineCaseHandoff() {
+    clearCaseHandoffHash()
+    setPendingHandoff(null)
+  }
+
+  function resumeCaseAfterTransfer() {
+    if (handoffTimerWasRunningRef.current) timer.resume()
+    handoffTimerWasRunningRef.current = false
+    setTransferHandoffPayload(null)
+  }
+
+  function confirmCaseTransferred() {
+    markCaseHandedOffThisSession()
+    setCaseHandedOff(true)
+    setTransferHandoffPayload(null)
+    setShowRhythmLog(false)
+    handoffTimerWasRunningRef.current = false
+  }
+
+  function initiateCaseTransfer() {
+    if (!canModifyCase || logEntries.length === 0) return
+    handoffTimerWasRunningRef.current = timer.isRunning
+    if (timer.isRunning) timer.pause()
+    const handoffAt = Date.now()
+    const payload = buildCaseHandoffPayload({
+      trustId: serviceConfig.trustId,
+      snapshot: buildCaseSnapshot(),
+      entries: sortedLogEntries,
+      handoffAt,
+    })
+    setTransferHandoffPayload(payload)
+  }
+
+  const handoffReplaceActiveCase =
+    logEntries.length > 0 || (step !== 'start' && step !== 'initial-assessment')
 
   function maybePromptVascularAccessIfNotEstablished(atEpochMs: number, entries: readonly DisplayLogEntry[]) {
     if (hasVascularAccessLogged(entries)) return
@@ -1502,6 +1591,15 @@ function App() {
             <button type="button" className="header-link-btn" onClick={() => setSavedLogsOpen(true)}>
               Saved logs
             </button>
+            {canModifyCase && hasLog && timerActive && (
+              <button type="button" className="header-link-btn" onClick={initiateCaseTransfer}>
+                Transfer case
+              </button>
+            )}
+            <OpenHandoffFileButton
+              className="header-link-btn"
+              onPayload={(payload) => setPendingHandoff(payload)}
+            />
             <InstallAppButton />
           </div>
           <ThemeToggle />
@@ -1524,6 +1622,14 @@ function App() {
           </div>
         )}
       </header>
+
+      {caseHandedOff && (
+        <div className="case-handed-off-banner card" role="status">
+          <p>
+            Case transferred — this device is read-only. Continue the case on the other device only.
+          </p>
+        </div>
+      )}
 
       {autosaveOffer && step === 'start' && logEntries.length === 0 && !sharedLog && (
         <div className="autosave-restore-banner card" role="status">
@@ -1605,6 +1711,7 @@ function App() {
                   type="button"
                   className={`btn btn-sm timer-interventions-btn${showInterventions ? ' active' : ''}`}
                   aria-pressed={showInterventions}
+                  disabled={!canModifyCase}
                   onClick={toggleInterventions}
                 >
                   Interventions
@@ -1615,6 +1722,7 @@ function App() {
                   type="button"
                   className="timer-action-box"
                   aria-pressed={false}
+                  disabled={!canModifyCase}
                   onClick={handleTimerBarRosc}
                 >
                   ROSC
@@ -1628,7 +1736,7 @@ function App() {
                 className={`timer-action-box${timer.atFortyFiveMinutes ? ' on' : ''}`}
                 aria-label="Termination of resuscitation review"
                 title={canBeginTorReview ? undefined : 'Log the initial rhythm before opening TOR review'}
-                disabled={!canBeginTorReview}
+                disabled={!canBeginTorReview || !canModifyCase}
                 onClick={() => beginTorReview('manual')}
               >
                 TOR
@@ -2105,6 +2213,23 @@ function App() {
           eventCount={caseContinuationOffer.entries.length}
           onContinue={() => continueCaseFromAutosave(caseContinuationOffer)}
           onNewCase={() => void startNewCaseFromPrompt()}
+        />
+      )}
+
+      {transferHandoffPayload && (
+        <TransferCaseModal
+          payload={transferHandoffPayload}
+          onResumeCase={resumeCaseAfterTransfer}
+          onConfirmTransferred={confirmCaseTransferred}
+        />
+      )}
+
+      {pendingHandoff && (
+        <AcceptCaseHandoffModal
+          payload={pendingHandoff}
+          replaceActiveCase={handoffReplaceActiveCase}
+          onAccept={() => acceptCaseHandoff(pendingHandoff)}
+          onDecline={declineCaseHandoff}
         />
       )}
 

@@ -22,6 +22,13 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 - After **Verification of death** is recorded, **no further log entries** can be added.
 - **Saved logs**: delete individual logs, or use checkboxes to **delete multiple** at once.
 
+### Transfer case to another device
+
+- **Transfer case** opens QR, **Copy link**, or **Share to other device** (system share — Bluetooth on some phones).
+- **Open handoff file** in the header is for the receiving device after a Bluetooth/file share.
+- Tap **Case transferred** once the other device has the case — this device becomes read-only.
+- Tap **Resume case** if transfer fails.
+
 ### Icons
 
 - Preview builds use **DEMO** favicon and PWA icons (distinct from live field builds).
