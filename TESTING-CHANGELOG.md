@@ -2,7 +2,19 @@
 
 Features below are on **preview URLs only** (DEMO icons, speed controls, startup warning). They are **not** on live field builds until merged to production. Published announcements appear on the [blog](/blog/) after release.
 
-**App version:** 1.2.1 (preview) · **Last updated:** 2 June 2026
+**App version:** 1.2.2 (preview) · **Last updated:** 4 June 2026
+
+---
+
+## Version 1.2.2 · 4 June 2026
+
+### WMAS — CODE SHOCK (WMAS guidance)
+
+- Reminder rules updated to match **WMAS** guidance: after the **first shock**, only when **initial rhythm was VF / pVT** (the reminder will now **not** appear when a shock is delivered where the initial rhythm **was not** VF / pVT).
+
+### Bug fixes
+
+- **WMAS:** CODE SHOCK blog banner — subtitle lines centred with the “CODE SHOCK” headline.
 
 ---
 
@@ -93,9 +105,9 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 
 ### WMAS preview only
 
-#### CODE SHOCK — after first shock
+#### CODE SHOCK — after first shock (VF / pVT initial rhythm)
 
-- Reminder appears after the **first logged shock** (was third on older live builds).
+- Reminder appears after the **first logged shock** when **initial rhythm was VF / pVT** (was third shock on older live builds; see **1.2.2** for the initial-rhythm rule).
 - Message: **CODE SHOCK notified to EOC** — acknowledge to log.
 
 #### Prolonged VF at TOR

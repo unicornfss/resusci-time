@@ -135,10 +135,15 @@ export function getEarlyTransferLogLabel(): string {
 
 import { serviceConfig } from './config'
 
-export function shouldShowCodeShockReminder(shockCount: number, acknowledged: boolean): boolean {
+export function shouldShowCodeShockReminder(
+  initialRhythm: Rhythm | null,
+  shockCount: number,
+  acknowledged: boolean,
+): boolean {
   const { codeShock } = serviceConfig.features
   if (!codeShock) return false
   if (acknowledged) return false
+  if (initialRhythm !== RHYTHM_VF_PVT) return false
   return shockCount >= codeShock.minShocks
 }
 

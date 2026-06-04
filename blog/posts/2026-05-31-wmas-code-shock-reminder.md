@@ -3,12 +3,12 @@ title: CODE SHOCK reminder for WMAS crews
 date: 2026-05-31
 category: news
 audience: wmas
-summary: After the first shock, Resusci-Time prompts WMAS crews to notify EOC — supporting early specialist support where it may improve outcomes.
+summary: After the first shock when the initial rhythm was VF / pVT, Resusci-Time prompts WMAS crews to notify EOC.
 ---
 
-The **WMAS build** of Resusci-Time includes a **CODE SHOCK** reminder. It appears once a patient has received their **first shock** during active resuscitation, prompting the crew to **inform EOC** that a CODE SHOCK situation exists.
+The **WMAS build** of Resusci-Time includes a **CODE SHOCK** reminder. It appears after the **first logged shock** when the **initial rhythm was VF / pVT**, prompting the crew to **inform EOC** that a CODE SHOCK situation exists.
 
-![CODE SHOCK reminder — notify EOC after the first shock](../images/code-shock-wmas.png)
+![CODE SHOCK reminder — VF / pVT initial rhythm, priority call EOC](../images/code-shock-wmas.png)
 
 ## Why it matters
 
@@ -18,8 +18,8 @@ The reminder is a **prompt only** — it does not replace local WMAS policy, cre
 
 ## What you will see in the app
 
-1. Run a shockable rhythm case as usual and **log each shock** in Resusci-Time.
-2. After the **first shock** is recorded, an **amber alert panel** appears below the timer with the message:
+1. Commence resuscitation with **VF / pVT** as the initial rhythm and **log the first shock** in Resusci-Time.
+2. After that shock is recorded, an **amber alert panel** appears below the timer with the message:
 
    **CODE SHOCK notified to EOC**
 
@@ -35,7 +35,7 @@ Open the WMAS app from your service link or bookmark — see your local Resusci-
 
 ## Training tip
 
-Run through a **preview** or training case and log the **first shock** to see the panel and acknowledgement flow before you rely on it on a real job. The preview build also lets you change protocol speed (1×–10×) from the header if you want a quicker walkthrough.
+Run through a **preview** or training case with **VF / pVT** as the initial rhythm and log the **first shock** to see the panel and acknowledgement flow before you rely on it on a real job. It does **not** appear if the first monitored rhythm was PEA or asystole, even if the patient is shocked later. The preview build also lets you change protocol speed (1×–10×) from the header if you want a quicker walkthrough.
 
 ## Feedback
 

@@ -1392,7 +1392,7 @@ function App() {
   const showCodeShock =
     step === 'active-resuscitation' &&
     timerView === 'arrest' &&
-    shouldShowCodeShockReminder(totalShocks, codeShockAcknowledged)
+    shouldShowCodeShockReminder(initialRhythm, totalShocks, codeShockAcknowledged)
 
   const showProlongedVf =
     step === 'active-resuscitation' &&

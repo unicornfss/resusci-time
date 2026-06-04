@@ -919,9 +919,10 @@
     const CODE_SHOCK_ENABLED = TRUST_ID === 'wmas';
     const CODE_SHOCK_MIN_SHOCKS = 1;
 
-    function shouldShowCodeShockReminder(shockCount, acknowledged) {
+    function shouldShowCodeShockReminder(initialRhythm, shockCount, acknowledged) {
       if (!CODE_SHOCK_ENABLED) return false;
       if (acknowledged) return false;
+      if (initialRhythm !== RHYTHM_VF_PVT) return false;
       return shockCount >= CODE_SHOCK_MIN_SHOCKS;
     }
 
@@ -2695,7 +2696,7 @@
       const panel = document.getElementById('code-shock-panel');
       const show = state.step === 'active-resuscitation' &&
         state.timerView === 'arrest' &&
-        shouldShowCodeShockReminder(countShocksDelivered(), state.codeShockAck);
+        shouldShowCodeShockReminder(state.initialRhythm, countShocksDelivered(), state.codeShockAck);
       setReminderPanelVisible(panel, show);
     }
 
