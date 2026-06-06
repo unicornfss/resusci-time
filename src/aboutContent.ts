@@ -12,6 +12,16 @@ export const ABOUT_SECTIONS = [
       'This tool supports clinical decision-making during an arrest. It does not replace your trust protocol, JRCALC guidance, senior clinical judgement, or local policy. Always follow the authoritative sources for your service.',
   },
   {
+    heading: 'Clinical basis',
+    body:
+      'Timing, prompts, and checklists follow common UK ambulance practice and the Spring 2026 JRCALC / AACE clinical guidelines. Reference algorithms and aide-memoires are available under Documents where your build includes them.',
+  },
+  {
+    heading: 'Development',
+    body:
+      'Resusci-Time is developed and maintained by Jon Ostrowski (Paramedic / Clinical Team Mentor, WMAS). Custom builds can include service branding, protocol variations, offline installation for tablets and phones, and other features agreed with your organisation.',
+  },
+  {
     heading: 'Privacy',
     body:
       'Resusci-Time runs entirely in your browser. It does not send patient data to a server. Event logs are saved automatically on this device as you work (Saved logs) and can be exported as CSV or PDF. You can transfer an active case to another device by QR code — still with no server. Theme preference may persist in browser storage.',
@@ -27,8 +37,8 @@ export const ABOUT_SECTIONS = [
       'Add Resusci-Time to your home screen for quick access and offline use. On iPhone or iPad (Safari): tap Share, then Add to Home Screen — your Resusci-Time icon will appear on the home screen. On Android (Chrome): open the menu and choose Install app or Add to Home screen.',
   },
   {
-    heading: 'Contact & custom versions',
+    heading: 'Contact',
     body:
-      'For support, to report errors, suggest improvements, or discuss custom versions tailored to an individual ambulance or NHS service, please get in touch.',
+      'For support, to report errors, suggest improvements, or to discuss a custom version for your ambulance or NHS service, please get in touch.',
   },
 ] as const

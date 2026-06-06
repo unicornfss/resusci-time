@@ -285,6 +285,7 @@ export const VOD_READY_MESSAGE =
 export const VOD_RESUSCITATION_NOT_APPROPRIATE_MESSAGE = 'Resuscitation not appropriate'
 
 export const VOD_LOG_LABEL = 'Verification of death'
+export const PATIENT_HANDED_OVER_LOG_LABEL = 'Patient handed over'
 
 export function getTorStampLabel(occurredAt: Date): string {
   return `TOR occurred at ${formatActualTime(occurredAt)}`

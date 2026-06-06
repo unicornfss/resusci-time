@@ -7,9 +7,10 @@ import { PreviewChangelogModal } from './PreviewChangelogModal'
 
 interface AboutModalProps {
   onClose: () => void
+  onOpenAcknowledgements?: () => void
 }
 
-export function AboutModal({ onClose }: AboutModalProps) {
+export function AboutModal({ onClose, onOpenAcknowledgements }: AboutModalProps) {
   const { trustId, isPreview } = serviceConfig
   const blogUrl = getBlogUrl(trustId)
   const [previewChangelogOpen, setPreviewChangelogOpen] = useState(false)
@@ -74,10 +75,21 @@ export function AboutModal({ onClose }: AboutModalProps) {
             </a>
           </p>
 
-          <p className="about-note">
-            Custom builds can include service branding, protocol variations, offline installation for
-            tablets and phones, and other features agreed with your organisation.
-          </p>
+          {onOpenAcknowledgements && (
+            <p className="about-note">
+              <button
+                type="button"
+                className="about-inline-link"
+                onClick={() => {
+                  onClose()
+                  onOpenAcknowledgements()
+                }}
+              >
+                Acknowledgements
+              </button>
+            </p>
+          )}
+
         </div>
       </div>
 

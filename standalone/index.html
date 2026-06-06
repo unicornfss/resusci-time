@@ -165,15 +165,6 @@
       flex-shrink: 0;
     }
     .timer-controls { margin-left: auto; display: flex; gap: 0.5rem; align-items: center; }
-    .timer-interventions-btn {
-      width: auto; min-width: auto; padding: 0.75rem 1rem;
-      background: rgba(255, 255, 255, 0.95); color: var(--green-800);
-      border: 2px solid rgba(255, 255, 255, 0.45); font-weight: 600;
-    }
-    .timer-interventions-btn.active {
-      background: var(--green-100); border-color: #fff;
-      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.45);
-    }
     .milestones { display: flex; gap: 0.5rem; }
     .timer-action-box {
       font-size: 0.75rem; padding: 0.35rem 0.65rem; min-height: var(--touch-min); border-radius: 6px;
@@ -625,7 +616,7 @@
           <span class="timer-stat-value" id="timer-shocks">0</span>
         </div>
         <div class="timer-controls">
-          <button type="button" class="btn btn-sm timer-interventions-btn hidden" id="timer-interventions" aria-pressed="false">Interventions</button>
+          <button type="button" class="timer-action-box hidden" id="timer-interventions" aria-pressed="false">Interventions</button>
           <button type="button" class="timer-action-box" id="timer-rosc" aria-pressed="false">ROSC</button>
         </div>
         <div class="milestones">

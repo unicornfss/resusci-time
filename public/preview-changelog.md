@@ -2,7 +2,36 @@
 
 Features below are on **preview URLs only** (DEMO icons, speed controls, startup warning). They are **not** on live field builds until merged to production. Published announcements appear on the [blog](/blog/) after release.
 
-**App version:** 1.2.2 (preview) · **Last updated:** 4 June 2026
+**App version:** 1.2.3 (preview) · **Last updated:** 6 June 2026
+
+---
+
+## Version 1.2.3 · 6 June 2026
+
+### Patient handed over
+
+- **Patient handed over** button on the cardiac arrest and post-ROSC timer bars.
+- Confirmation modal: for handover to hospital or another provider **not** using Resusci-Time; confirms that all timers stop and logging ends on this device.
+- Reminds crews to use **Transfer case** instead when handing to another Resusci-Time crew; **Transfer case** button in the modal when a case is active.
+- After confirmation, opens the **event log** directly; case becomes read-only with a banner to start a new case.
+
+### Timer bar
+
+- Top row: **ROSC** / **Cardiac arrest**, **TOR**, **Patient handed over**; second row: rhythm check, **Interventions**, **Metronome**.
+- Distinct colour per timer-bar action; metronome label **Turn on metronome** / **Turn off metronome**.
+- Post-ROSC: **Transient ROSC** / **Sustained ROSC** shown in the timer label (not a separate line that shifts layout).
+- Post-ROSC **Atropine Rx** section only after the first atropine dose is logged.
+- Removed redundant **minutes** count beside elapsed time on cardiac arrest (fixed overlap with **Total shocks**).
+
+### Header
+
+- **Menu** (hamburger) holds About, Documents, Saved logs, Acknowledgements, and Install app.
+- During an active case, only **Transfer case** and **Night mode** stay visible in the header; preview test controls move into the menu.
+
+### About & acknowledgements
+
+- **About** — developer credit, clinical basis, and contact details refined.
+- **Acknowledgements** (menu and footer) — thanks to clinical reviewers and to RCUK, JRCALC, and AACE as published guidance sources (independent app; not endorsed by those bodies).
 
 ---
 

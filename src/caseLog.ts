@@ -1,4 +1,4 @@
-import { VOD_LOG_LABEL } from './protocol'
+import { PATIENT_HANDED_OVER_LOG_LABEL, VOD_LOG_LABEL } from './protocol'
 import type { SavedLogRecord } from './logStorage'
 import type { DisplayLogEntry } from './types'
 
@@ -6,6 +6,10 @@ export const CASE_CONTINUATION_WINDOW_MS = 10 * 60 * 1000
 
 export function hasVodDeclared(entries: readonly DisplayLogEntry[]): boolean {
   return entries.some((entry) => entry.text === VOD_LOG_LABEL)
+}
+
+export function hasPatientHandedOverLogged(entries: readonly DisplayLogEntry[]): boolean {
+  return entries.some((entry) => entry.text === PATIENT_HANDED_OVER_LOG_LABEL)
 }
 
 export function getLastLogEntryAt(entries: readonly DisplayLogEntry[]): number | null {

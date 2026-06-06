@@ -27,6 +27,7 @@ import {
 } from './logStorage'
 import { useTimer } from './hooks/useTimer'
 import { MetronomeToggle } from './components/MetronomeToggle'
+import { TimerActionButton } from './components/TimerActionButton'
 import { useMetronome } from './hooks/useMetronome'
 import { useWakeLock } from './hooks/useWakeLock'
 import { useScrollWhenShown } from './hooks/useScrollWhenShown'
@@ -66,6 +67,7 @@ import {
   TOR_SPECIAL_CIRCUMSTANCES_NO_LOG,
   TOR_SPECIAL_CIRCUMSTANCES_YES_LOG,
   CLINICAL_DISCUSSION_CONTINUE_LABEL,
+  PATIENT_HANDED_OVER_LOG_LABEL,
   VOD_LOG_LABEL,
   type ResuscitationQualityPromptId,
 } from './protocol'
@@ -76,11 +78,12 @@ import { ResuscitationQualityChecklist } from './components/ResuscitationQuality
 import { InitialAssessmentPanel } from './components/InitialAssessmentPanel'
 import { ReversibleCausesModal } from './components/ReversibleCausesModal'
 import { AboutModal } from './components/AboutModal'
+import { AcknowledgementsModal } from './components/AcknowledgementsModal'
 import { DocumentsModal } from './components/DocumentsModal'
 import { PreviewDevelopmentWarningModal } from './components/PreviewDevelopmentWarningModal'
 import { AppVersionInfo } from './components/AppVersionInfo'
 import { getBlogUrl } from './blogUrl'
-import { InstallAppButton } from './components/InstallAppButton'
+import { HeaderAppMenu } from './components/HeaderAppMenu'
 import { RoscChecklist } from './components/RoscChecklist'
 import { TimerRxSection } from './components/TimerRxSection'
 import { TimerRoscRxSection } from './components/TimerRoscRxSection'
@@ -92,6 +95,7 @@ import { SavedLogDetailModal } from './components/SavedLogDetailModal'
 import { CaseContinuationModal } from './components/CaseContinuationModal'
 import { TransferCaseModal } from './components/TransferCaseModal'
 import { TransferCaseImminentWarningModal } from './components/TransferCaseImminentWarningModal'
+import { PatientHandoverConfirmModal } from './components/PatientHandoverConfirmModal'
 import { AcceptCaseHandoffModal } from './components/AcceptCaseHandoffModal'
 import { TimerVodCompleteStamp, TimerVodSection } from './components/TimerVodSection'
 import { VodTimestampsSummary } from './components/VodTimestampsSummary'
@@ -167,7 +171,11 @@ import {
 import { deriveActiveClinicalAlerts } from './clinicalAlerts/deriveActiveAlerts'
 import { useClinicalAlertQueue } from './clinicalAlerts/useClinicalAlertQueue'
 import type { ClinicalAlertId } from './clinicalAlerts/types'
-import { canOfferCaseContinuation, hasVodDeclared } from './caseLog'
+import {
+  canOfferCaseContinuation,
+  hasPatientHandedOverLogged,
+  hasVodDeclared,
+} from './caseLog'
 import {
   isCaseSnapshot,
   timerRestoreFromSnapshot,
@@ -247,6 +255,7 @@ function App() {
   >(() => new Set())
   const [showReversibleCausesModal, setShowReversibleCausesModal] = useState(false)
   const [aboutOpen, setAboutOpen] = useState(false)
+  const [acknowledgementsOpen, setAcknowledgementsOpen] = useState(false)
   const [documentsOpen, setDocumentsOpen] = useState(false)
   const [previewWarningOpen, setPreviewWarningOpen] = useState(IS_PREVIEW_BUILD)
   const [clinicalAlertBump, setClinicalAlertBump] = useState<ClinicalAlertId | null>(null)
@@ -262,6 +271,7 @@ function App() {
     null,
   )
   const [transferImminentWarnings, setTransferImminentWarnings] = useState<string[] | null>(null)
+  const [patientHandoverModalOpen, setPatientHandoverModalOpen] = useState(false)
   const [caseHandedOff, setCaseHandedOff] = useState(isCaseHandedOffThisSession)
   const [sharedLog, setSharedLog] = useState<SharedLogPayload | null>(initialRouting.sharedLog)
   const preRhythmModalsRef = useRef<PreRhythmModalState | null>(null)
@@ -312,7 +322,9 @@ function App() {
   const vfvtShockCount = totalShocks
   const hasNonShockableRhythm = hasNonShockableRhythmLogged(rhythmChecks.map((c) => c.rhythm))
   const logIsLocked = hasVodDeclared(logEntries)
-  const canModifyCase = !logIsLocked && !caseHandedOff && transferHandoffPayload == null
+  const patientHandedOver = hasPatientHandedOverLogged(logEntries)
+  const canModifyCase =
+    !logIsLocked && !caseHandedOff && transferHandoffPayload == null && !patientHandedOver
   const canAppendLog = canModifyCase
 
   const formatProtocolElapsed = useCallback(
@@ -403,6 +415,15 @@ function App() {
   }, [aboutOpen])
 
   useEffect(() => {
+    if (!acknowledgementsOpen) return
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setAcknowledgementsOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [acknowledgementsOpen])
+
+  useEffect(() => {
     if (step !== 'post-tor' || vodCountdownRemaining <= 0) return
     const id = window.setInterval(() => {
       setVodCountdownRemaining((prev) => Math.max(0, prev - 1))
@@ -411,12 +432,12 @@ function App() {
   }, [step, vodCountdownRemaining])
 
   useEffect(() => {
-    if (timerView !== 'rosc' || step !== 'active-resuscitation') return
+    if (timerView !== 'rosc' || step !== 'active-resuscitation' || patientHandedOver) return
     const id = window.setInterval(() => {
       setRoscElapsedSeconds((prev) => prev + 1)
     }, 1000)
     return () => window.clearInterval(id)
-  }, [timerView, step])
+  }, [timerView, step, patientHandedOver])
 
   useEffect(() => {
     timerViewRef.current = timerView
@@ -432,12 +453,12 @@ function App() {
   }, [roscElapsedSeconds, timerView, timing.timeScale])
 
   useEffect(() => {
-    if (timerView !== 'rosc') return
+    if (timerView !== 'rosc' || patientHandedOver) return
     if (roscElapsedSeconds > 0 && roscElapsedSeconds >= roscNextReminderAtRef.current) {
       showRoscMonitoringReminders()
       roscNextReminderAtRef.current = roscElapsedSeconds + timing.roscMonitoringReminderIntervalSeconds
     }
-  }, [roscElapsedSeconds, timerView])
+  }, [roscElapsedSeconds, timerView, patientHandedOver])
 
   function resetRoscMonitoringProgress() {
     setHasSbpFluidLogged(false)
@@ -1375,6 +1396,35 @@ function App() {
     setClinicalAlertBump('R-01')
   }
 
+  function openPatientHandoverModal() {
+    if (step !== 'active-resuscitation' || !canModifyCase) return
+    setPatientHandoverModalOpen(true)
+  }
+
+  function dismissPatientHandoverModal() {
+    setPatientHandoverModalOpen(false)
+  }
+
+  function transferCaseFromPatientHandoverModal() {
+    setPatientHandoverModalOpen(false)
+    initiateCaseTransfer()
+  }
+
+  function confirmPatientHandedOver() {
+    if (step !== 'active-resuscitation' || !canModifyCase) return
+    pushLogEntry(PATIENT_HANDED_OVER_LOG_LABEL)
+    timer.pause()
+    setMetronomeEnabled(false)
+    dismissSbpReminder()
+    dismissPulseReminder()
+    setShowSustainedRoscAlert(false)
+    closeInterventions()
+    setPatientHandoverModalOpen(false)
+    requestAnimationFrame(() => {
+      document.querySelector('.main')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }
+
   function confirmCheckVfvt(joules: number) {
     appendRhythmCheck(RHYTHM_VF_PVT, joules)
   }
@@ -1457,6 +1507,9 @@ function App() {
 
   const showCaseHandedOffBanner =
     caseHandedOff && !(step === 'start' && logEntries.length === 0)
+
+  const showPatientHandedOverBanner =
+    patientHandedOver && !caseHandedOff && !(step === 'start' && logEntries.length === 0)
 
   useEffect(() => {
     if (!isLogStorageAvailable() || logEntries.length === 0) return
@@ -1648,6 +1701,7 @@ function App() {
 
   function getTimerBarClassName(): string {
     const classes = ['timer-bar']
+    if (timerView === 'rosc') classes.push('timer-bar--rosc')
     if (timerBarTone === 'post-tor') classes.push('timer-bar-post-tor')
     if (timerBarTone === 'critical') classes.push('timer-critical')
     if (timerBarTone === 'amber') classes.push('timer-clinical-discussion-active')
@@ -1701,39 +1755,51 @@ function App() {
     <div className="app">
       <header className="header">
         <div className="header-toolbar">
-          <div className="header-toolbar-start">
-            <button type="button" className="header-link-btn" onClick={() => setAboutOpen(true)}>
-              About
-            </button>
-            <button type="button" className="header-link-btn" onClick={() => setDocumentsOpen(true)}>
-              Documents
-            </button>
-            <button type="button" className="header-link-btn" onClick={() => setSavedLogsOpen(true)}>
-              Saved logs
-            </button>
+          <HeaderAppMenu
+            onAbout={() => setAboutOpen(true)}
+            onDocuments={() => setDocumentsOpen(true)}
+            onSavedLogs={() => setSavedLogsOpen(true)}
+            onAcknowledgements={() => setAcknowledgementsOpen(true)}
+            testControls={
+              timerActive && (IS_PREVIEW_BUILD || timing.isTestTiming) ? (
+                <>
+                  {showPreviewSpeedControl && previewSpeedMultiplier != null && (
+                    <PreviewSpeedControl
+                      value={previewSpeedMultiplier}
+                      onChange={handlePreviewSpeedChange}
+                    />
+                  )}
+                  {showResuscitationTimerControls && timerView === 'arrest' && (
+                    <button
+                      type="button"
+                      className="btn btn-sm test-timer-jump-btn"
+                      onClick={handleJumpToTestFortyFour}
+                    >
+                      Jump to 44:00
+                    </button>
+                  )}
+                </>
+              ) : undefined
+            }
+          />
+          <div className="header-toolbar-end">
             {canModifyCase && hasLog && timerActive && (
               <button type="button" className="header-link-btn" onClick={initiateCaseTransfer}>
                 Transfer case
               </button>
             )}
-            <InstallAppButton />
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
         </div>
         <h1>{serviceConfig.headerTitle}</h1>
         <p className="subtitle">Adult Cardiac Arrest · Ambulance Resource Protocol</p>
-        {(IS_PREVIEW_BUILD || timing.isTestTiming) && (
+        {(IS_PREVIEW_BUILD || timing.isTestTiming) && !timerActive && (
           <div className="test-mode-controls">
             {timing.isTestTiming && !IS_PREVIEW_BUILD && (
               <p className="test-banner">{getTestModeBannerText(timing)}</p>
             )}
             {showPreviewSpeedControl && previewSpeedMultiplier != null && (
               <PreviewSpeedControl value={previewSpeedMultiplier} onChange={handlePreviewSpeedChange} />
-            )}
-            {timerActive && showResuscitationTimerControls && timerView === 'arrest' && (
-              <button type="button" className="btn btn-sm test-timer-jump-btn" onClick={handleJumpToTestFortyFour}>
-                Jump to 44:00
-              </button>
             )}
           </div>
         )}
@@ -1743,6 +1809,20 @@ function App() {
         <div className="case-handed-off-banner card" role="status">
           <p>
             Case transferred — this device is read-only. Continue the case on the other device only.
+          </p>
+          <div className="autosave-restore-actions">
+            <button type="button" className="btn btn-secondary btn-sm" onClick={handleNewCase}>
+              Start new case on this device
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showPatientHandedOverBanner && (
+        <div className="patient-handed-over-banner card" role="status">
+          <p>
+            Patient handed over — all timers have stopped and this case is read-only. The event log
+            remains available to view or export.
           </p>
           <div className="autosave-restore-actions">
             <button type="button" className="btn btn-secondary btn-sm" onClick={handleNewCase}>
@@ -1790,13 +1870,6 @@ function App() {
         </div>
       )}
 
-      {timerActive && !postTorActive && !vodCompleteActive && (
-        <MetronomeToggle
-          enabled={metronomeEnabled}
-          onToggle={() => setMetronomeEnabled((prev) => !prev)}
-        />
-      )}
-
       {timerActive && (
         <>
         <div
@@ -1805,78 +1878,136 @@ function App() {
           style={getTimerBarStyle()}
         >
           <div className="timer-bar-top">
-            <div className="timer-display">
-              <span className="timer-label">
-                {postTorActive || vodCompleteActive ? 'Resuscitation ended' : timerView === 'rosc' ? 'ROSC' : 'Elapsed'}
-              </span>
-              <span className="timer-value">{formatProtocolElapsed(displayTimerSeconds)}</span>
-              {!postTorActive && !vodCompleteActive && (
-              <span className="timer-mins">
-                {timerView === 'rosc' && roscPhaseLabel ? (
-                  <span className="timer-rosc-phase">{roscPhaseLabel}</span>
-                ) : (
-                  `${Math.floor(toDisplaySeconds(timer.elapsedSeconds, timing.timeScale) / 60)} min`
+            <div className="timer-bar-top-leading">
+              <div className="timer-bar-leading-primary">
+                <div className="timer-display">
+                  <span className="timer-label">
+                    {postTorActive || vodCompleteActive
+                      ? 'Resuscitation ended'
+                      : timerView === 'rosc'
+                        ? (roscPhaseLabel ?? 'ROSC')
+                        : 'Elapsed'}
+                  </span>
+                  <span className="timer-value">{formatProtocolElapsed(displayTimerSeconds)}</span>
+                </div>
+                {showResuscitationTimerControls && (
+                  <div className="timer-stat">
+                    <span className="timer-label">Total shocks:</span>
+                    <span className="timer-stat-value">{totalShocks}</span>
+                  </div>
                 )}
-              </span>
-              )}
+              </div>
             </div>
             {showResuscitationTimerControls && (
-            <>
-            <div className="timer-stat">
-              <span className="timer-label">Total shocks:</span>
-              <span className="timer-stat-value">{totalShocks}</span>
-            </div>
-            <div className="timer-controls">
-              {showInterventionsButton && (
-                <button
-                  type="button"
-                  className={`btn btn-sm timer-interventions-btn${showInterventions ? ' active' : ''}`}
-                  aria-pressed={showInterventions}
-                  disabled={!canModifyCase}
-                  onClick={toggleInterventions}
-                >
-                  Interventions
-                </button>
-              )}
-              {timerView === 'rosc' ? (
-                <button
-                  type="button"
-                  className="timer-action-box timer-action-box-danger"
-                  aria-pressed={false}
-                  disabled={!canModifyCase}
-                  onClick={handleTimerBarCardiacArrest}
-                >
-                  Cardiac arrest
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="timer-action-box"
-                  aria-pressed={false}
-                  disabled={!canModifyCase}
-                  onClick={handleTimerBarRosc}
-                >
-                  ROSC
-                </button>
-              )}
-            </div>
-            {timerView !== 'rosc' && (
-            <div className="timer-milestones">
-              <button
-                type="button"
-                className={`timer-action-box${timer.atFortyFiveMinutes ? ' on' : ''}`}
-                aria-label="Termination of resuscitation review"
-                title={canBeginTorReview ? undefined : 'Log the initial rhythm before opening TOR review'}
-                disabled={!canBeginTorReview || !canModifyCase}
-                onClick={() => beginTorReview('manual')}
+              <div
+                className={`timer-bar-action-group${
+                  timerView === 'rosc' || step !== 'active-resuscitation'
+                    ? ' timer-bar-action-group--two'
+                    : ''
+                }`}
               >
-                TOR
-              </button>
-            </div>
-            )}
-            </>
+                {timerView === 'rosc' ? (
+                  <TimerActionButton
+                    variant="cardiac-arrest"
+                    disabled={!canModifyCase}
+                    onClick={handleTimerBarCardiacArrest}
+                  >
+                    Cardiac arrest
+                  </TimerActionButton>
+                ) : (
+                  <TimerActionButton
+                    variant="rosc"
+                    disabled={!canModifyCase}
+                    onClick={handleTimerBarRosc}
+                  >
+                    ROSC
+                  </TimerActionButton>
+                )}
+                {timerView !== 'rosc' && (
+                  <TimerActionButton
+                    variant="tor"
+                    isOn={timer.atFortyFiveMinutes}
+                    aria-label="Termination of resuscitation review"
+                    title={canBeginTorReview ? undefined : 'Log the initial rhythm before opening TOR review'}
+                    disabled={!canBeginTorReview || !canModifyCase}
+                    onClick={() => beginTorReview('manual')}
+                  >
+                    TOR
+                  </TimerActionButton>
+                )}
+                {step === 'active-resuscitation' && (
+                  <TimerActionButton
+                    variant="handover"
+                    disabled={!canModifyCase}
+                    onClick={openPatientHandoverModal}
+                  >
+                    Patient handed over
+                  </TimerActionButton>
+                )}
+              </div>
             )}
           </div>
+          {showResuscitationTimerControls &&
+            (resuscitationOngoing ||
+              showInterventionsButton ||
+              (!postTorActive && !vodCompleteActive)) && (
+            <div className="timer-bar-tools-row">
+              {resuscitationOngoing && (
+                <div className="timer-next-check">
+                  {!showRhythmCheckAlert ? (
+                    <>
+                      <span className="timer-next-check-label">
+                        Next rhythm check: {formatProtocolElapsed(timer.secondsToNextCheck)}
+                      </span>
+                      <div
+                        className="rhythm-check-progress-track"
+                        role="progressbar"
+                        aria-label="Time until next rhythm check"
+                        aria-valuemin={0}
+                        aria-valuemax={timing.rhythmCheckInterval}
+                        aria-valuenow={timer.secondsToNextCheck}
+                      >
+                        <div
+                          className="rhythm-check-progress-fill"
+                          style={{
+                            width: `${getRhythmCheckRemainingFraction(timer.secondsToNextCheck, timing.rhythmCheckInterval) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    '\u00a0'
+                  )}
+                </div>
+              )}
+              {(showInterventionsButton || (!postTorActive && !vodCompleteActive)) && (
+                <div
+                  className={`timer-bar-secondary-group${
+                    !showInterventionsButton ? ' timer-bar-secondary-group--metronome-only' : ''
+                  }`}
+                >
+                  {showInterventionsButton && (
+                    <TimerActionButton
+                      variant="interventions"
+                      isActive={showInterventions}
+                      aria-pressed={showInterventions}
+                      disabled={!canModifyCase}
+                      onClick={toggleInterventions}
+                    >
+                      Interventions
+                    </TimerActionButton>
+                  )}
+                  {!postTorActive && !vodCompleteActive && (
+                    <MetronomeToggle
+                      variant="timer-bar"
+                      enabled={metronomeEnabled}
+                      onToggle={() => setMetronomeEnabled((prev) => !prev)}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           {postTorActive && torEndedAtLabel && (
             <TimerVodSection
               torEndedAtLabel={torEndedAtLabel}
@@ -1888,34 +2019,6 @@ function App() {
           )}
           {vodCompleteActive && vodAtLabel && (
             <TimerVodCompleteStamp vodAtLabel={vodAtLabel} logEntries={sortedLogEntries} />
-          )}
-          {showResuscitationTimerControls && resuscitationOngoing && (
-            <div className="timer-next-check">
-              {!showRhythmCheckAlert ? (
-                <>
-                  <span className="timer-next-check-label">
-                    Next rhythm check: {formatProtocolElapsed(timer.secondsToNextCheck)}
-                  </span>
-                  <div
-                    className="rhythm-check-progress-track"
-                    role="progressbar"
-                    aria-label="Time until next rhythm check"
-                    aria-valuemin={0}
-                    aria-valuemax={timing.rhythmCheckInterval}
-                    aria-valuenow={timer.secondsToNextCheck}
-                  >
-                    <div
-                      className="rhythm-check-progress-fill"
-                      style={{
-                        width: `${getRhythmCheckRemainingFraction(timer.secondsToNextCheck, timing.rhythmCheckInterval) * 100}%`,
-                      }}
-                    />
-                  </div>
-                </>
-              ) : (
-                '\u00a0'
-              )}
-            </div>
           )}
           {showRxSection && initialRhythm && (
             <TimerRxSection
@@ -1931,7 +2034,7 @@ function App() {
               formatRemaining={formatProtocolElapsed}
             />
           )}
-          {timerView === 'rosc' && step === 'active-resuscitation' && (
+          {timerView === 'rosc' && step === 'active-resuscitation' && atropineTotalMg > 0 && (
             <TimerRoscRxSection atropineTotalMg={atropineTotalMg} />
           )}
           {showClinicalDiscussionTimer && (isClinicalAlert('S-01') || isClinicalAlert('S-02')) && (
@@ -2142,61 +2245,72 @@ function App() {
 
         {step === 'active-resuscitation' && initialRhythm && (
           <section className="card">
-            <div className="card-badge">Path: {initialRhythm}</div>
-            <h2>{timerView === 'rosc' ? 'Post-ROSC care' : 'Continue resuscitation'}</h2>
-            {timerView === 'rosc' ? (
-              <RoscChecklist
-                completedTaskIds={completedRoscTaskIds}
-                completedReversibleCauseIds={completedReversibleCauseIds}
-                onLogTask={completeRoscTask}
-                onOpenReversibleCauses={openReversibleCausesModal}
-              />
+            {patientHandedOver ? (
+              hasLog && (
+                <EventLogPanel
+                  entries={sortedLogEntries}
+                  documentTitle={logDocumentTitle}
+                />
+              )
             ) : (
               <>
-                <ResuscitationQualityChecklist
-                  completedIds={completedQualityPromptIds}
-                  completedReversibleCauseIds={completedReversibleCauseIds}
-                  onLogPrompt={completeQualityPrompt}
-                  onOpenVascularAccess={openQualityVascularAccess}
-                  onOpenAirwayInterventions={openQualityAirwayInterventions}
-                  onOpenReversibleCauses={openReversibleCausesModal}
-                />
-                <ul className="action-list">
-                  {getPathSpecificActions(initialRhythm).map((action) => (
-                    <li key={action}>{action}</li>
-                  ))}
-                </ul>
-              </>
-            )}
-            {hasLog && (
-              <>
-                <button
-                  type="button"
-                  className="btn btn-secondary log-toggle-btn"
-                  onClick={() => setShowRhythmLog((open) => !open)}
-                >
-                  {showRhythmLog ? 'Hide log' : 'View log'}
-                </button>
-                {showRhythmLog && (
-                  <EventLogPanel
-                    entries={sortedLogEntries}
-                    documentTitle={logDocumentTitle}
+                <div className="card-badge">Path: {initialRhythm}</div>
+                <h2>{timerView === 'rosc' ? 'Post-ROSC care' : 'Continue resuscitation'}</h2>
+                {timerView === 'rosc' ? (
+                  <RoscChecklist
+                    completedTaskIds={completedRoscTaskIds}
+                    completedReversibleCauseIds={completedReversibleCauseIds}
+                    onLogTask={completeRoscTask}
+                    onOpenReversibleCauses={openReversibleCausesModal}
                   />
+                ) : (
+                  <>
+                    <ResuscitationQualityChecklist
+                      completedIds={completedQualityPromptIds}
+                      completedReversibleCauseIds={completedReversibleCauseIds}
+                      onLogPrompt={completeQualityPrompt}
+                      onOpenVascularAccess={openQualityVascularAccess}
+                      onOpenAirwayInterventions={openQualityAirwayInterventions}
+                      onOpenReversibleCauses={openReversibleCausesModal}
+                    />
+                    <ul className="action-list">
+                      {getPathSpecificActions(initialRhythm).map((action) => (
+                        <li key={action}>{action}</li>
+                      ))}
+                    </ul>
+                  </>
                 )}
+                {hasLog && (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-secondary log-toggle-btn"
+                      onClick={() => setShowRhythmLog((open) => !open)}
+                    >
+                      {showRhythmLog ? 'Hide log' : 'View log'}
+                    </button>
+                    {showRhythmLog && (
+                      <EventLogPanel
+                        entries={sortedLogEntries}
+                        documentTitle={logDocumentTitle}
+                      />
+                    )}
+                  </>
+                )}
+                {timer.atFortyFiveMinutes && fortyFiveAcknowledged && timerView !== 'rosc' && (
+                  <button type="button" className="btn btn-primary" onClick={() => beginTorReview()}>
+                    View 45-minute termination guidance
+                  </button>
+                )}
+                <p className="hint">
+                  Rhythm assessment every 2 minutes from last entry.
+                  {(initialRhythm === RHYTHM_VF_PVT || initialRhythm === 'PEA') &&
+                    !roscEverAchieved &&
+                    ' Early transfer reminder after third rhythm check.'}
+                  {timerView !== 'rosc' && ' Special review at 45 minutes.'}
+                </p>
               </>
             )}
-            {timer.atFortyFiveMinutes && fortyFiveAcknowledged && timerView !== 'rosc' && (
-              <button type="button" className="btn btn-primary" onClick={() => beginTorReview()}>
-                View 45-minute termination guidance
-              </button>
-            )}
-            <p className="hint">
-              Rhythm assessment every 2 minutes from last entry.
-              {(initialRhythm === RHYTHM_VF_PVT || initialRhythm === 'PEA') &&
-                !roscEverAchieved &&
-                ' Early transfer reminder after third rhythm check.'}
-              {timerView !== 'rosc' && ' Special review at 45 minutes.'}
-            </p>
           </section>
         )}
 
@@ -2332,6 +2446,16 @@ function App() {
           <button type="button" className="footer-link-btn" onClick={() => setAboutOpen(true)}>
             About &amp; contact
           </button>
+          <span className="footer-sep" aria-hidden="true">
+            ·
+          </span>
+          <button
+            type="button"
+            className="footer-link-btn"
+            onClick={() => setAcknowledgementsOpen(true)}
+          >
+            Acknowledgements
+          </button>
         </p>
         <AppVersionInfo />
       </footer>
@@ -2340,7 +2464,19 @@ function App() {
         <PreviewDevelopmentWarningModal onAcknowledge={() => setPreviewWarningOpen(false)} />
       )}
 
-      {aboutOpen && <AboutModal onClose={() => setAboutOpen(false)} />}
+      {aboutOpen && (
+        <AboutModal
+          onClose={() => setAboutOpen(false)}
+          onOpenAcknowledgements={() => setAcknowledgementsOpen(true)}
+        />
+      )}
+
+      {acknowledgementsOpen && (
+        <AcknowledgementsModal
+          onClose={() => setAcknowledgementsOpen(false)}
+          onOpenAbout={() => setAboutOpen(true)}
+        />
+      )}
 
       {documentsOpen && <DocumentsModal onClose={() => setDocumentsOpen(false)} />}
 
@@ -2356,6 +2492,15 @@ function App() {
           eventCount={caseContinuationOffer.entries.length}
           onContinue={() => continueCaseFromAutosave(caseContinuationOffer)}
           onNewCase={() => void startNewCaseFromPrompt()}
+        />
+      )}
+
+      {patientHandoverModalOpen && (
+        <PatientHandoverConfirmModal
+          showTransferCase={hasLog && timerActive}
+          onCancel={dismissPatientHandoverModal}
+          onConfirmHandover={confirmPatientHandedOver}
+          onTransferCase={transferCaseFromPatientHandoverModal}
         />
       )}
 
