@@ -13,8 +13,9 @@ const REVIEW_AND_TESTING_SECTION: AcknowledgementSection = {
   ],
   items: [
     'Steve Jeffries — Consultant Paramedic (WMAS)',
+    'Rich Price - Paramedic / Clinical Team Mentor (WMAS)',
     'Kerri Richards — Paramedic (WMAS)',
-    'Sam Simpson — Paramedic / Clinical Team Mentor (WMAS)',
+    'Sam Simpson — Paramedic / Clinical Team Mentor (WMMAS)',
     'Chris Stevens — Paramedic / Clinical Team Mentor (WMAS)',
   ],
 }
