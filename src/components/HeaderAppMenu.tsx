@@ -7,6 +7,7 @@ interface HeaderAppMenuProps {
   onDocuments: () => void
   onSavedLogs: () => void
   onAcknowledgements: () => void
+  onExportDebugReport?: () => void
   testControls?: ReactNode
 }
 
@@ -15,6 +16,7 @@ export function HeaderAppMenu({
   onDocuments,
   onSavedLogs,
   onAcknowledgements,
+  onExportDebugReport,
   testControls,
 }: HeaderAppMenuProps) {
   const [open, setOpen] = useState(false)
@@ -115,6 +117,16 @@ export function HeaderAppMenu({
               onClick={() => void handleInstallClick()}
             >
               Install app
+            </button>
+          )}
+          {onExportDebugReport && (
+            <button
+              type="button"
+              className="header-menu-item header-menu-item--debug"
+              role="menuitem"
+              onClick={() => runAction(onExportDebugReport)}
+            >
+              Export debug report
             </button>
           )}
           {testControls && <div className="header-menu-test-controls">{testControls}</div>}

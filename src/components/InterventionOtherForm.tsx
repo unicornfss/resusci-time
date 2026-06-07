@@ -1,8 +1,11 @@
+import type { FormEvent } from 'react'
+
 interface InterventionOtherFormProps {
   value: string
   onChange: (value: string) => void
-  onSubmit: () => void
+  onSubmit: (value: string) => void
   onCancel: () => void
+  placeholder?: string
 }
 
 export function InterventionOtherForm({
@@ -10,9 +13,17 @@ export function InterventionOtherForm({
   onChange,
   onSubmit,
   onCancel,
+  placeholder = 'Enter details',
 }: InterventionOtherFormProps) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const trimmed = value.trim()
+    if (!trimmed) return
+    onSubmit(trimmed)
+  }
+
   return (
-    <div className="intervention-other-form">
+    <form className="intervention-other-form" onSubmit={handleSubmit}>
       <label className="intervention-other-label" htmlFor="intervention-other-input">
         Describe intervention
       </label>
@@ -22,22 +33,17 @@ export function InterventionOtherForm({
         className="intervention-other-input"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Enter details"
+        placeholder={placeholder}
         autoComplete="off"
       />
       <div className="intervention-other-actions">
-        <button
-          type="button"
-          className="btn btn-primary btn-touch"
-          onClick={onSubmit}
-          disabled={!value.trim()}
-        >
+        <button type="submit" className="btn btn-primary btn-touch" disabled={!value.trim()}>
           Log
         </button>
         <button type="button" className="btn btn-secondary btn-touch" onClick={onCancel}>
           Cancel
         </button>
       </div>
-    </div>
+    </form>
   )
 }

@@ -151,7 +151,7 @@ export function InterventionsPanel({
         <InterventionOtherForm
           value={otherDraft}
           onChange={onOtherDraftChange}
-          onSubmit={() => onLogOther(otherCategory, otherDraft.trim())}
+          onSubmit={(label) => onLogOther(otherCategory, label)}
           onCancel={() => onSubStepChange('options')}
         />
         <button type="button" className="btn btn-touch intervention-back-btn" onClick={onBack}>

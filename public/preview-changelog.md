@@ -2,7 +2,17 @@
 
 Features below are on **preview URLs only** (DEMO icons, speed controls, startup warning). They are **not** on live field builds until merged to production. Published announcements appear on the [blog](/blog/) after release.
 
-**App version:** 1.2.3 (preview) · **Last updated:** 6 June 2026
+**App version:** 1.2.4 (preview) · **Last updated:** 7 June 2026
+
+---
+
+## Version 1.2.4 · 7 June 2026
+
+### Preview debug logging
+
+- **Menu → Export debug report** (preview builds and local dev) downloads a JSON file with app version, session timeline, active alerts, case snapshot, and event log entries.
+- Automatic capture of step changes, log entries, major actions, and JavaScript errors during the session.
+- Hidden test trigger for reviewers: **Interventions → Medications → Other** → enter `crashme` and tap **Log** (records a test error in the debug report; does not add to the event log).
 
 ---
 

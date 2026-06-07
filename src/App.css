@@ -208,6 +208,10 @@ body::before {
   color: var(--green-800);
 }
 
+.header-menu-item--debug {
+  color: var(--amber-600);
+}
+
 .header-menu-test-controls {
   display: flex;
   flex-direction: column;

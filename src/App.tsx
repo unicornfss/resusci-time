@@ -155,6 +155,13 @@ import {
 import type { DisplayLogEntry, ProtocolStep, Rhythm, RoscStatus } from './types'
 import { PreviewSpeedControl } from './components/PreviewSpeedControl'
 import { useTimingConfig } from './context/TimingConfigContext'
+import { usePreviewDebugInstrumentation } from './hooks/usePreviewDebugInstrumentation'
+import {
+  downloadPreviewDebugReport,
+  isPreviewDebugLogEnabled,
+  maybeTriggerPreviewTestCrash,
+  recordPreviewDebugEvent,
+} from './previewDebugLog'
 import { IS_PREVIEW_BUILD, getRhythmCheckRemainingFraction, getTestModeBannerText, toDisplaySeconds } from './timing'
 import type { PreviewSpeedMultiplier } from './previewSpeed'
 import {
@@ -604,12 +611,15 @@ function App() {
 
   function handleNewCase() {
     if (logEntries.length > 0 && !window.confirm('Start a new case? The current log will be cleared.')) {
+      recordPreviewDebugEvent('action', 'new_case_cancelled')
       return
     }
+    recordPreviewDebugEvent('action', 'new_case_confirmed')
     resetAll()
   }
 
   function resetAll() {
+    recordPreviewDebugEvent('action', 'case_reset')
     setStep('start')
     setInitialRhythm(null)
     setCurrentRhythm(null)
@@ -677,6 +687,7 @@ function App() {
 
   function handlePreviewSpeedChange(speed: PreviewSpeedMultiplier) {
     if (speed === previewSpeedMultiplier) return
+    recordPreviewDebugEvent('action', 'preview_speed_change_requested', { speed })
     const caseInProgress =
       step !== 'start' &&
       step !== 'initial-assessment' &&
@@ -691,9 +702,17 @@ function App() {
   }
 
   function pushLogEntry(text: string, at?: Date): number {
-    if (!canAppendLog) return at?.getTime() ?? Date.now()
+    if (!canAppendLog) {
+      recordPreviewDebugEvent('log', 'log_entry_blocked', { text })
+      return at?.getTime() ?? Date.now()
+    }
     const entry = createDisplayLogEntry(text, at ?? new Date())
     setLogEntries((prev) => [...prev, entry])
+    recordPreviewDebugEvent('log', 'log_entry_added', {
+      text,
+      label: entry.label,
+      atEpochMs: entry.atEpochMs,
+    })
     return entry.atEpochMs
   }
 
@@ -862,12 +881,14 @@ function App() {
   }
 
   function resumeCaseAfterTransfer() {
+    recordPreviewDebugEvent('transfer', 'transfer_resumed_on_sender')
     if (handoffTimerWasRunningRef.current) timer.resume()
     handoffTimerWasRunningRef.current = false
     setTransferHandoffPayload(null)
   }
 
   function confirmCaseTransferred() {
+    recordPreviewDebugEvent('transfer', 'transfer_confirmed_on_sender')
     markCaseHandedOffThisSession()
     setCaseHandedOff(true)
     setTransferHandoffPayload(null)
@@ -914,6 +935,7 @@ function App() {
   }
 
   function beginCaseTransfer() {
+    recordPreviewDebugEvent('transfer', 'transfer_started')
     handoffTimerWasRunningRef.current = timer.isRunning
     if (timer.isRunning) timer.pause()
     const handoffAt = Date.now()
@@ -973,6 +995,7 @@ function App() {
   }
 
   function commenceResuscitation() {
+    recordPreviewDebugEvent('action', 'commence_resuscitation')
     timer.start()
     setStep('select-rhythm')
   }
@@ -1152,6 +1175,7 @@ function App() {
   }
 
   function logOtherIntervention(category: OtherInterventionCategory, label: string) {
+    if (maybeTriggerPreviewTestCrash(category, label)) return
     rememberOtherIntervention(category, label)
     pushLogEntry(getOtherInterventionLogLabel(category, label))
     if (category === 'airway') finishAirwayIntervention(label)
@@ -1242,6 +1266,7 @@ function App() {
   }
 
   function appendRhythmCheck(rhythm: Rhythm, joules?: number) {
+    recordPreviewDebugEvent('action', 'rhythm_check_logged', { rhythm, joules: joules ?? null })
     const label = formatProtocolElapsed(timer.elapsedSeconds)
     setRhythmChecks((prev) => {
       const entry: RhythmCheckEntry = {
@@ -1270,6 +1295,7 @@ function App() {
 
   function beginTorReview(source: 'manual' | 'scheduled' = 'scheduled') {
     if (timerView === 'rosc' || initialRhythm == null) return
+    recordPreviewDebugEvent('action', 'tor_review_started', { source })
     setFortyFiveAcknowledged(true)
     setShowFortyFiveAlert(false)
     setCurrentRhythm(null)
@@ -1384,11 +1410,13 @@ function App() {
 
   function handleTimerBarRosc() {
     if (timerView === 'rosc') return
+    recordPreviewDebugEvent('action', 'timer_bar_rosc')
     enterRoscMode(false)
   }
 
   function handleTimerBarCardiacArrest() {
     if (timerView !== 'rosc' || step !== 'active-resuscitation') return
+    recordPreviewDebugEvent('action', 'timer_bar_cardiac_arrest')
     pushLogEntry(getCardiacArrestLogLabel())
     exitRoscMode()
     closeShockForm()
@@ -1398,6 +1426,7 @@ function App() {
 
   function openPatientHandoverModal() {
     if (step !== 'active-resuscitation' || !canModifyCase) return
+    recordPreviewDebugEvent('modal', 'patient_handover_modal_opened')
     setPatientHandoverModalOpen(true)
   }
 
@@ -1412,6 +1441,7 @@ function App() {
 
   function confirmPatientHandedOver() {
     if (step !== 'active-resuscitation' || !canModifyCase) return
+    recordPreviewDebugEvent('action', 'patient_handed_over_confirmed')
     pushLogEntry(PATIENT_HANDED_OVER_LOG_LABEL)
     timer.pause()
     setMetronomeEnabled(false)
@@ -1653,6 +1683,44 @@ function App() {
   const currentClinicalAlert = useClinicalAlertQueue(activeClinicalAlerts, clinicalAlertBump)
   const isClinicalAlert = (id: ClinicalAlertId) => currentClinicalAlert === id
 
+  usePreviewDebugInstrumentation({
+    step,
+    timerView,
+    canModifyCase,
+    patientHandedOver,
+    caseHandedOff,
+    transferHandoffPayloadPresent: transferHandoffPayload != null,
+    timerElapsedSeconds: timer.elapsedSeconds,
+    timerIsRunning: timer.isRunning,
+    showRhythmCheckAlert,
+    metronomeEnabled,
+    activeClinicalAlerts,
+    currentClinicalAlert,
+    previewSpeedMultiplier,
+  })
+
+  function exportPreviewDebugReportFromApp() {
+    downloadPreviewDebugReport({
+      step,
+      timerView,
+      canModifyCase,
+      patientHandedOver,
+      caseHandedOff,
+      transferActive: transferHandoffPayload != null,
+      timerElapsedSeconds: timer.elapsedSeconds,
+      timerIsRunning: timer.isRunning,
+      logEntryCount: logEntries.length,
+      activeClinicalAlerts,
+      currentClinicalAlert,
+      snapshot: buildCaseSnapshot() as unknown as Record<string, unknown>,
+      logEntries: sortedLogEntries.map((entry) => ({
+        label: entry.label,
+        text: entry.text,
+        atEpochMs: entry.atEpochMs,
+      })),
+    })
+  }
+
   useEffect(() => {
     if (clinicalAlertBump && currentClinicalAlert === clinicalAlertBump) {
       setClinicalAlertBump(null)
@@ -1760,6 +1828,9 @@ function App() {
             onDocuments={() => setDocumentsOpen(true)}
             onSavedLogs={() => setSavedLogsOpen(true)}
             onAcknowledgements={() => setAcknowledgementsOpen(true)}
+            onExportDebugReport={
+              isPreviewDebugLogEnabled() ? exportPreviewDebugReportFromApp : undefined
+            }
             testControls={
               timerActive && (IS_PREVIEW_BUILD || timing.isTestTiming) ? (
                 <>
