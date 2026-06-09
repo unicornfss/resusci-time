@@ -14,6 +14,11 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 - **Toggle state is remembered** — if metronome was on at ROSC, it **starts again automatically** when the patient returns to cardiac arrest.
 - Turning metronome off during post-ROSC care keeps it off after re-arrest.
 
+### Build / deploy
+
+- **What’s new** changelog is synced before preview builds (fixes stale 1.2.4 text when the app footer already shows a newer version).
+- Public home page version label uses the **live (`main`) version** when deploying from `testing` — preview can be ahead without changing the landing-page number.
+
 ---
 
 ## Version 1.2.4 · 7 June 2026

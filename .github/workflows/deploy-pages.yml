@@ -68,7 +68,9 @@ jobs:
 
       - name: Update landing page from testing branch
         if: github.ref_name == 'testing'
-        run: INCLUDE_BLOG=0 BUILD_LANDING_ONLY=1 OUTPUT_DIR="${{ github.workspace }}/dist-pages" node scripts/build-pages.mjs
+        run: |
+          LIVE_PACKAGE_VERSION=$(node -p "require('../live-src/package.json').version")
+          INCLUDE_BLOG=0 BUILD_LANDING_ONLY=1 LIVE_PACKAGE_VERSION="$LIVE_PACKAGE_VERSION" OUTPUT_DIR="${{ github.workspace }}/dist-pages" node scripts/build-pages.mjs
         working-directory: preview-src
 
       - uses: actions/upload-pages-artifact@v3

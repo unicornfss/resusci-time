@@ -19,16 +19,24 @@ const outputRoot = process.env.OUTPUT_DIR
   : join(root, 'dist-pages')
 
 const packageJson = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
-const buildLabel = `Version ${packageJson.version} - Last updated ${new Date().toLocaleString('en-GB', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})}`
 
-const landingHtml = renderSitePage({
-  title: 'Resusci-Time',
-  assetPrefix: './',
-  includeBlog,
-  body: `
+/** Live landing page label — use LIVE_PACKAGE_VERSION in CI when building landing from testing. */
+function getLiveDisplayVersion() {
+  const override = process.env.LIVE_PACKAGE_VERSION?.trim()
+  return override || packageJson.version
+}
+
+function createLandingHtml() {
+  const buildLabel = `Version ${getLiveDisplayVersion()} - Last updated ${new Date().toLocaleString('en-GB', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })}`
+
+  return renderSitePage({
+    title: 'Resusci-Time',
+    assetPrefix: './',
+    includeBlog,
+    body: `
       <h1>Resusci-Time</h1>
       <p>Adult cardiac arrest protocol timer and checklist.</p>
       <ul class="link-list">
@@ -37,7 +45,8 @@ const landingHtml = renderSitePage({
       <p class="hint">Custom versions for individual ambulance services and NHS trusts are provided by separate arrangement.</p>
       <p class="version">${buildLabel}</p>
     `,
-})
+  })
+}
 
 function buildTrustMode(mode, outputFolder) {
   execSync('npm run build:trust -- --mode ' + mode, { cwd: root, stdio: 'inherit' })
@@ -45,7 +54,7 @@ function buildTrustMode(mode, outputFolder) {
 }
 
 function copyStaticSiteAssets() {
-  writeFileSync(join(outputRoot, 'index.html'), landingHtml)
+  writeFileSync(join(outputRoot, 'index.html'), createLandingHtml())
 
   const backgroundsSrc = join(root, 'public', 'backgrounds')
   if (existsSync(backgroundsSrc)) {
@@ -71,9 +80,23 @@ function buildLiveTrusts() {
 }
 
 async function buildPreviewTrusts() {
+  const { syncPreviewChangelogToPublic } = await import('./sync-preview-changelog.mjs')
+  syncPreviewChangelogToPublic()
+
   for (const { id } of trustManifest) {
     buildTrustMode(`${id}-preview`, previewOutputFolder(id))
   }
+
+  const changelogSrc = join(root, 'public', 'preview-changelog.md')
+  if (existsSync(changelogSrc)) {
+    for (const { id } of trustManifest) {
+      const folder = join(outputRoot, previewOutputFolder(id))
+      if (existsSync(folder)) {
+        cpSync(changelogSrc, join(folder, 'preview-changelog.md'))
+      }
+    }
+  }
+
   const { buildPreviewChangelog } = await import('./build-preview-changelog.mjs')
   buildPreviewChangelog(outputRoot)
 }

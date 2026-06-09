@@ -1,5 +1,6 @@
 import { useEffect, useState, type MouseEvent } from 'react'
 import { marked } from 'marked'
+import { APP_VERSION } from '../appVersion'
 import { publicAssetUrl } from '../publicAssetUrl'
 
 interface PreviewChangelogModalProps {
@@ -15,7 +16,8 @@ export function PreviewChangelogModal({ onClose }: PreviewChangelogModalProps) {
   useEffect(() => {
     let cancelled = false
 
-    fetch(publicAssetUrl('preview-changelog.md'))
+    const changelogUrl = `${publicAssetUrl('preview-changelog.md')}?v=${encodeURIComponent(APP_VERSION)}`
+    fetch(changelogUrl)
       .then((response) => {
         if (!response.ok) throw new Error('not found')
         return response.text()

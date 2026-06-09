@@ -1,4 +1,4 @@
-const CACHE_NAME = 'resusci-time-v5'
+const CACHE_NAME = 'resusci-time-v6'
 
 const PRECACHE_URLS = [
   './',
@@ -49,6 +49,12 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url)
   if (url.origin !== self.location.origin) return
+
+  // Changelog updates each preview release — always fetch fresh (cache-bust query is not stored long-term).
+  if (url.pathname.endsWith('preview-changelog.md')) {
+    event.respondWith(fetch(event.request))
+    return
+  }
 
   event.respondWith(
     (async () => {
