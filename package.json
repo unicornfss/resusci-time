@@ -23,7 +23,8 @@
     "preview:wmas": "npm run build:wmas && vite preview",
     "preview:standard": "npm run build:standard && vite preview",
     "preview:wmas-preview": "npm run build:wmas-preview && vite preview",
-    "icons:generate": "node scripts/generate-icons.mjs"
+    "icons:generate": "node scripts/generate-icons.mjs",
+    "sample-logs": "node scripts/generate-sample-log-pdfs.mjs"
   },
   "dependencies": {
     "jspdf": "^4.2.0",

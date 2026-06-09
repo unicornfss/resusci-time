@@ -17,6 +17,7 @@ const REVIEW_AND_TESTING_SECTION: AcknowledgementSection = {
     'Kerri Richards — Paramedic (WMAS)',
     'Sam Simpson — Paramedic / Clinical Team Mentor (WMMAS)',
     'Chris Stevens — Paramedic / Clinical Team Mentor (WMAS)',
+    'Chris Andrews - Tech to Para (WMAS)',
   ],
 }
 

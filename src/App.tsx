@@ -606,7 +606,9 @@ function App() {
     step !== 'do-not-resuscitate' &&
     (step !== 'complete' || vodAtLabel != null)
 
-  useMetronome(metronomeEnabled && timerActive)
+  // metronomeEnabled = user preference (saved in snapshot); audio only during cardiac arrest
+  const metronomeAudible = metronomeEnabled && timerActive && timerView === 'arrest'
+  useMetronome(metronomeAudible)
   useWakeLock(timerActive)
 
   function handleNewCase() {
