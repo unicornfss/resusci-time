@@ -22,8 +22,8 @@ TEXT = RGBColor(0x1A, 0x2E, 0x1A)
 MUTED = RGBColor(0x4A, 0x5F, 0x4A)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 
-APP_VERSION = "1.2.4"
-PREVIEW_DATE = "7 June 2026"
+APP_VERSION = "1.2.5"
+PREVIEW_DATE = "9 June 2026"
 
 # Preserved from user-edited deck — do not change without checking the .pptx first.
 REPLACE_SOMETHING_TABLE = {

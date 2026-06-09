@@ -2,7 +2,17 @@
 
 Features below are on **preview URLs only** (DEMO icons, speed controls, startup warning). They are **not** on live field builds until merged to production. Published announcements appear on the [blog](/blog/) after release.
 
-**App version:** 1.2.4 (preview) · **Last updated:** 7 June 2026
+**App version:** 1.2.5 (preview) · **Last updated:** 9 June 2026
+
+---
+
+## Version 1.2.5 · 9 June 2026
+
+### Metronome — ROSC and re-arrest
+
+- Metronome **stops immediately** when the patient ROSCs (timer bar or rhythm check).
+- **Toggle state is remembered** — if metronome was on at ROSC, it **starts again automatically** when the patient returns to cardiac arrest.
+- Turning metronome off during post-ROSC care keeps it off after re-arrest.
 
 ---
 
