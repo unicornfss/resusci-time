@@ -35,8 +35,17 @@ export function PatientHandoverConfirmModal({
 
         <div className="about-body">
           <p>
-            Confirm the patient has been handed over to hospital staff or another healthcare
-            provider who is <strong>not</strong> using Resusci-Time.
+            {showTransferCase ? (
+              <>
+                Confirm the patient has been handed over to hospital staff or another healthcare
+                provider who is <strong>not</strong> using Resusci-Time.
+              </>
+            ) : (
+              <>
+                Confirm the patient has been handed over to hospital staff or another healthcare
+                provider.
+              </>
+            )}
           </p>
           <p>
             This will <strong>stop all timers</strong> and <strong>end logging</strong> for this case

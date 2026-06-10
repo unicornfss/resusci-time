@@ -2,7 +2,36 @@
 
 Features below are on **preview URLs only** (DEMO icons, speed controls, startup warning). They are **not** on live field builds until merged to production. Published announcements appear on the [blog](/blog/) after release.
 
-**App version:** 1.2.5 (preview) · **Last updated:** 9 June 2026
+**App version:** 1.2.7 (preview) · **Last updated:** 10 June 2026
+
+---
+
+## Version 1.2.7 · 10 June 2026
+
+### Mobile and small screens
+
+- **Timer bar** reflows on phones: elapsed time, rhythm-check countdown, then action buttons — no overlap on narrow screens.
+- **Scroll for checklist** hint at the bottom of the screen when the quality checklist is below the fold (phones only; iPad-sized layouts unchanged).
+
+### Case continuation
+
+- Continue-case prompt only if the **last log entry** was within **10 protocol minutes** (preview speed is taken into account).
+- No continuation offer after **patient handed over**; start-screen and modal text refer to last log entry time, not autosave time.
+
+### Trust builds
+
+- **Standard** patient handover modal no longer mentions Resusci-Time transfer (that note remains on custom builds with case transfer).
+- WMAS trust config simplified (`codeShock: true`, `prolongedVfTorGate: true`); case transfer enabled for non-Standard builds by default.
+
+---
+
+## Version 1.2.6 · 9 June 2026
+
+### Trust builds — case transfer
+
+- **Transfer case** (header button, QR handoff to another Resusci-Time device, receive-via-scan) is **enabled on WMAS** and other custom trust builds only.
+- **Standard** build keeps **Patient handed over** on the timer bar; it no longer offers QR case transfer between devices.
+- Custom trust builds get case transfer by default; set `caseTransfer: false` in trust config to disable.
 
 ---
 

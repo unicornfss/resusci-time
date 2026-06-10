@@ -1,5 +1,7 @@
 """Generate Resusci-Time QI briefing PowerPoint (compact, on-brand)."""
 
+import json
+import re
 from pathlib import Path
 
 from pptx import Presentation
@@ -22,8 +24,90 @@ TEXT = RGBColor(0x1A, 0x2E, 0x1A)
 MUTED = RGBColor(0x4A, 0x5F, 0x4A)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 
-APP_VERSION = "1.2.5"
-PREVIEW_DATE = "9 June 2026"
+def load_app_version() -> str:
+    package_json = json.loads((ROOT / "package.json").read_text(encoding="utf-8"))
+    return package_json["version"]
+
+
+def load_preview_date() -> str:
+    changelog = (ROOT / "TESTING-CHANGELOG.md").read_text(encoding="utf-8")
+    match = re.search(r"\*\*Last updated:\*\*\s*([^\n]+)", changelog)
+    if match:
+        return match.group(1).strip()
+    return "See TESTING-CHANGELOG.md"
+
+
+APP_VERSION = load_app_version()
+PREVIEW_DATE = load_preview_date()
+
+# Version | Released | Summary (condensed from TESTING-CHANGELOG.md and release history)
+VERSION_CHANGELOG = [
+    [
+        "1.0.0",
+        "27 May 2026",
+        "Initial release — adult arrest timer and checklist; VF/pVT, PEA, Asystole; rhythm checks, adrenaline, amiodarone; ROSC, TOR, VoD; interventions; 4 Hs / 4 Ts; offline installable PWA",
+    ],
+    [
+        "1.0.1",
+        "28 May 2026",
+        "Multi-trust builds (Standard / WMAS); event log CSV/PDF export, share link and QR; saved logs; public blog; trust branding and separate deploy URLs",
+    ],
+    [
+        "1.1.0",
+        "28 May 2026",
+        "Screen wake lock during active case; confirm before starting new case; blog audience filter by trust",
+    ],
+    [
+        "1.1.1",
+        "28–31 May 2026",
+        "Documents modal (ALS algorithm); prolonged VF reminder; TOR special circumstances and reassessment; VoD observation flow; CODE SHOCK and WMAS ToR document (WMAS); preview speed controls; needle decompression",
+    ],
+    [
+        "1.1.2",
+        "2 Jun 2026",
+        "Clinical alerts one at a time; autosave logs and multi-delete; continue case within 10 minutes; DEMO preview icons; preview startup warning",
+    ],
+    [
+        "1.2.0",
+        "2 Jun 2026",
+        "Case transfer — pause timer, QR handoff to another device, sender read-only when complete",
+    ],
+    [
+        "1.2.1",
+        "2 Jun 2026",
+        "Transfer warning if check or adrenaline due soon; Cardiac arrest button from ROSC (re-arrest); sustained ROSC alert; SBP/pulse reminder fixes",
+    ],
+    [
+        "1.2.2",
+        "4 Jun 2026",
+        "WMAS CODE SHOCK only when initial rhythm was VF / pVT (not after non-shockable initial rhythm)",
+    ],
+    [
+        "1.2.3",
+        "6 Jun 2026",
+        "Patient handed over flow; timer bar layout and colours; hamburger menu; acknowledgements page; About updates",
+    ],
+    [
+        "1.2.4",
+        "7 Jun 2026",
+        "Preview debug report export (menu); session timeline and error capture for testers",
+    ],
+    [
+        "1.2.5",
+        "9 Jun 2026",
+        "Metronome stops on ROSC but resumes on re-arrest if still on; preview changelog and landing-page version deploy fixes",
+    ],
+    [
+        "1.2.6",
+        "9 Jun 2026",
+        "Case transfer (QR) custom/WMAS only — removed from Standard build; Patient handed over remains on all builds",
+    ],
+    [
+        "1.2.7",
+        "10 Jun 2026",
+        "Phone timer-bar layout; scroll-for-checklist hint; case continuation uses protocol minutes and last log entry; Standard handover copy",
+    ],
+]
 
 # Preserved from user-edited deck — do not change without checking the .pptx first.
 REPLACE_SOMETHING_TABLE = {
@@ -169,6 +253,35 @@ def add_compact_table_slide(prs, title, headers, rows, note=None, header_size=12
         set_run_font(nr, size=12, color=MUTED)
 
 
+def add_changelog_table_slide(prs, title, rows, note=None):
+    add_compact_table_slide(
+        prs,
+        title,
+        ["Version", "Released", "Summary"],
+        rows,
+        note=note,
+        header_size=11,
+        body_size=9,
+    )
+
+
+def add_version_history_slides(prs):
+    add_section_slide(prs, "Version history")
+
+    chunk_size = 4
+    chunks = [
+        VERSION_CHANGELOG[i : i + chunk_size]
+        for i in range(0, len(VERSION_CHANGELOG), chunk_size)
+    ]
+    total = len(chunks)
+    for index, chunk in enumerate(chunks, start=1):
+        title = f"Changelog from v1.0.0 ({index} of {total})"
+        note = None
+        if index == total:
+            note = f"Current preview build: v{APP_VERSION} · {PREVIEW_DATE}. Live field builds on main may trail preview until merged."
+        add_changelog_table_slide(prs, title, chunk, note=note)
+
+
 def build():
     prs = Presentation()
     prs.slide_width = Inches(13.333)
@@ -191,7 +304,7 @@ def build():
             "Switch to ROSC mode or return to cardiac arrest (re-arrest) from timer bar",
             "TOR button, 45-minute termination review alert, and full TOR questionnaire",
             "Post-TOR verification-of-death wait and initial-assessment VoD (asystole observation)",
-            "Patient handed over — stops timers, locks case, opens log",
+            "Patient handed over — stops timers, locks case, opens log (all builds)",
             "Metronome on timer bar; night mode; screen stays awake during a case",
         ],
         body_size=13,
@@ -221,16 +334,18 @@ def build():
         [
             "Timestamped event log; view during case; export CSV or PDF",
             "Autosave on device; saved logs list; continue case within 10 minutes of last entry",
-            "Case transfer — pause timer, QR to another device, sender read-only when complete",
-            "Transfer warning if rhythm check or adrenaline due within one minute",
+            ("WMAS / custom: Case transfer — pause timer, QR to another device, sender read-only when complete", 1),
+            ("WMAS / custom: Transfer warning if rhythm check or adrenaline due within one minute", 1),
             "Documents: ALS algorithm; WMAS ToR criteria aide-memoire (WMAS build)",
             "Menu: About, Documents, Saved logs, Acknowledgements, Install app",
-            "During a case: header shows Transfer case and Night mode only",
+            "During a case: header shows Night mode; WMAS / custom builds also show Transfer case",
             ("Preview only: debug report export, speed control (1×–10×), DEMO icons, startup warning", 1),
         ],
         note=f"Preview build v{APP_VERSION} — features on preview URLs until merged to main.",
         body_size=13,
     )
+
+    add_version_history_slides(prs)
 
     add_section_slide(prs, "Questions from the QI lead")
 
@@ -307,56 +422,108 @@ def build():
     add_compact_table_slide(
         prs,
         "How it is built",
-        ["Part", "What it does (simple language)"],
+        ["Part", "Role in the app", "Real-life analogy"],
         [
-            ["TypeScript + React", "The code that draws the screens and responds when you tap buttons"],
-            ["Vite", "Packages the app into files a phone or tablet browser can load"],
-            ["PWA (installable web app)", "Add to home screen — opens full-screen like a normal app"],
-            ["Service worker", "Saves a copy on the device so it works offline after first visit"],
-            ["IndexedDB", "Stores saved logs on this device only — not in the cloud"],
-            ["No backend server", "During a case nothing is uploaded; privacy by design"],
-            ["jsPDF", "Turns the event log into a PDF you can save or share"],
-            ["QR code (transfer)", "Encodes the live case for another device to scan — still no server"],
-            ["GitHub Pages + Cloudflare", "Hosts the website at a fixed web address"],
-            ["testing → preview / main → live", "Preview branch for testers; main for approved field builds"],
+            [
+                "TypeScript + React",
+                "Draws screens and responds when you tap buttons",
+                "Like the controls and display on a defib — what the crew sees and presses",
+            ],
+            [
+                "Vite",
+                "Packages the app into files a browser can load",
+                "Like assembling the protocol pack into something crews can open on shift",
+            ],
+            [
+                "PWA (installable web app)",
+                "Add to home screen — opens full-screen like a normal app",
+                "Like pinning the ALS algorithm to your tablet home screen",
+            ],
+            [
+                "Service worker",
+                "Keeps a copy on the device for offline use after first visit",
+                "Like keeping a laminated protocol in the ambulance — still there with no signal",
+            ],
+            [
+                "IndexedDB",
+                "Stores saved logs on this device only",
+                "Like a notebook that stays in the vehicle — not sent to a server",
+            ],
+            [
+                "No backend server",
+                "During a case nothing is uploaded",
+                "Like a paper PRF that never leaves the crew’s hands until they choose to export",
+            ],
+            [
+                "jsPDF",
+                "Turns the event log into a PDF",
+                "Like printing the handwritten event log for handover or QA",
+            ],
+            [
+                "QR code (transfer)",
+                "Encodes the live case for another device to scan (custom builds)",
+                "Like photocopying the running log for the second crew — but live and digital",
+            ],
+            [
+                "GitHub Pages + Cloudflare",
+                "Hosts the app at a fixed web address",
+                "Like the trust link on the intranet where crews install the right version",
+            ],
+            [
+                "testing → preview / main → live",
+                "Preview for testers; main for approved field builds",
+                "Like draft SOP on SharePoint → signed-off version on the official site",
+            ],
         ],
         note=f"Preview version {APP_VERSION} · jon@ostroforge.co.uk",
-        header_size=11,
-        body_size=10,
+        header_size=10,
+        body_size=9,
     )
 
     add_compact_table_slide(
         prs,
         "How individual trust versions are made",
-        ["Layer", "In simple terms"],
+        ["Layer", "Role", "Real-life analogy"],
         [
             [
                 "One shared app",
-                "Same core timer, checklist, log, and flows for all trusts — maintained in one codebase",
+                "Same core timer, checklist, log, and flows for all trusts",
+                "Like one national JRCALC arrest chapter — one source of truth",
             ],
             [
                 "Trust config file",
-                "Per-trust settings: name, crest/logo, trust-only prompts (e.g. WMAS CODE SHOCK), extra documents",
+                "Per-trust name, crest, prompts (e.g. CODE SHOCK), extra documents",
+                "Like the WMAS crest and local drug chart stapled into the front of the pack",
+            ],
+            [
+                "Custom-only features",
+                "Case transfer, CODE SHOCK, timing overrides — Standard excludes QR transfer",
+                "Like optional trust inserts (e.g. EOC call-out) not every ambulance service uses",
             ],
             [
                 "If not specified → defaults",
-                "No timing line in config = rhythm check every 2 minutes, adrenaline every 4 minutes (UK default)",
+                "Rhythm check 2 min, adrenaline 4 min unless overridden",
+                "Like JRCALC default intervals unless local SOP says otherwise",
             ],
             [
                 "Optional overrides",
-                "A trust can request different intervals or rules in config — core code reads them at build time",
+                "Trust-specific intervals or rules read at build time",
+                "Like agreeing a 90-second rhythm check in config instead of changing the whole app",
             ],
             [
                 "Separate build & URL",
-                "Each trust version is compiled separately (e.g. WMAS vs Standard) — crews install the right link",
+                "WMAS vs Standard compiled separately — crews get the right install link",
+                "Like different QR codes on WMAS vs neighbouring trust tablets",
             ],
             [
                 "Preview → live",
-                "Changes tested on a preview URL first; approved updates merged to the live field build",
+                "Test on preview URL first; approved changes go to the field build",
+                "Like pilot on training iPads before rolling out to front-line devices",
             ],
         ],
         note="Clinical changes need trust sign-off; most trust differences are configuration, not a rewrite of the app.",
-        body_size=10,
+        header_size=10,
+        body_size=9,
     )
 
     add_compact_table_slide(

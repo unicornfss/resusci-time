@@ -1,6 +1,6 @@
 import { useState, type MouseEvent } from 'react'
 import { getAppVersionSummary } from '../appVersion'
-import { ABOUT_SECTIONS, SUPPORT_EMAIL } from '../aboutContent'
+import { getAboutSections, SUPPORT_EMAIL } from '../aboutContent'
 import { serviceConfig } from '../config'
 import { getBlogUrl } from '../blogUrl'
 import { PreviewChangelogModal } from './PreviewChangelogModal'
@@ -11,8 +11,9 @@ interface AboutModalProps {
 }
 
 export function AboutModal({ onClose, onOpenAcknowledgements }: AboutModalProps) {
-  const { trustId, isPreview } = serviceConfig
+  const { trustId, isPreview, features } = serviceConfig
   const blogUrl = getBlogUrl(trustId)
+  const aboutSections = getAboutSections(features)
   const [previewChangelogOpen, setPreviewChangelogOpen] = useState(false)
 
   function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
@@ -38,7 +39,7 @@ export function AboutModal({ onClose, onOpenAcknowledgements }: AboutModalProps)
         <div className="about-body">
           <p className="about-version">{getAppVersionSummary()}</p>
 
-          {ABOUT_SECTIONS.map((section) => (
+          {aboutSections.map((section) => (
             <section key={section.heading} className="about-section">
               <h3>{section.heading}</h3>
               <p>{section.body}</p>

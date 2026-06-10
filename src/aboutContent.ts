@@ -1,4 +1,15 @@
+import type { ServiceFeatures } from './config/types'
+
 export const SUPPORT_EMAIL = 'jon@ostroforge.co.uk'
+
+const PRIVACY_BODY_BASE =
+  'Resusci-Time runs entirely in your browser. It does not send patient data to a server. Event logs are saved automatically on this device as you work (Saved logs) and can be exported as CSV or PDF.'
+
+const PRIVACY_BODY_WITH_TRANSFER =
+  `${PRIVACY_BODY_BASE} You can transfer an active case to another device by QR code — still with no server. Theme preference may persist in browser storage.`
+
+const PRIVACY_BODY_WITHOUT_TRANSFER =
+  `${PRIVACY_BODY_BASE} Theme preference may persist in browser storage.`
 
 export const ABOUT_SECTIONS = [
   {
@@ -23,8 +34,7 @@ export const ABOUT_SECTIONS = [
   },
   {
     heading: 'Privacy',
-    body:
-      'Resusci-Time runs entirely in your browser. It does not send patient data to a server. Event logs are saved automatically on this device as you work (Saved logs) and can be exported as CSV or PDF. You can transfer an active case to another device by QR code — still with no server. Theme preference may persist in browser storage.',
+    body: PRIVACY_BODY_WITH_TRANSFER,
   },
   {
     heading: 'During a case',
@@ -41,4 +51,11 @@ export const ABOUT_SECTIONS = [
     body:
       'For support, to report errors, suggest improvements, or to discuss a custom version for your ambulance or NHS service, please get in touch.',
   },
-] as const
+]
+
+export function getAboutSections(features: Pick<ServiceFeatures, 'caseTransfer'>) {
+  const privacyBody = features.caseTransfer ? PRIVACY_BODY_WITH_TRANSFER : PRIVACY_BODY_WITHOUT_TRANSFER
+  return ABOUT_SECTIONS.map((section) =>
+    section.heading === 'Privacy' ? { ...section, body: privacyBody } : section,
+  )
+}

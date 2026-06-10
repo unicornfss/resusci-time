@@ -1,8 +1,35 @@
-import { defaultBrandBackgroundAsset, defaultFeatures } from './defaults'
+import {
+  defaultBrandBackgroundAsset,
+  defaultCodeShock,
+  defaultFeatures,
+  defaultProlongedVfTorGate,
+} from './defaults'
 import { standardTrust } from './trusts/standard'
 import { wmasTrust } from './trusts/wmas'
 import type { BuildChannel } from './trustIds'
-import type { ServiceConfig, TrustId } from './types'
+import type { CodeShockFeature, ProlongedVfTorFeature, ServiceConfig, TrustId, TrustOverrides } from './types'
+
+function resolveCodeShock(
+  feature: true | CodeShockFeature | undefined,
+): CodeShockFeature | undefined {
+  if (feature === true) return defaultCodeShock
+  if (feature) return feature
+  return undefined
+}
+
+function resolveCaseTransfer(trust: TrustOverrides): boolean {
+  if (trust.features?.caseTransfer === true) return true
+  if (trust.features?.caseTransfer === false) return false
+  return trust.trustId !== 'standard'
+}
+
+function resolveProlongedVfTorGate(
+  feature: true | ProlongedVfTorFeature | undefined,
+): ProlongedVfTorFeature | undefined {
+  if (feature === true) return defaultProlongedVfTorGate
+  if (feature) return feature
+  return undefined
+}
 
 const TRUSTS = {
   wmas: wmasTrust,
@@ -15,6 +42,8 @@ export function getServiceConfig(trustId: TrustId, channel: BuildChannel = 'live
   const trust = TRUSTS[trustId]
   const isPreview = channel === 'preview'
   const versionSuffix = isPreview ? ' version (Preview)' : ' version'
+  const codeShock = resolveCodeShock(trust.features?.codeShock)
+  const prolongedVfTorGate = resolveProlongedVfTorGate(trust.features?.prolongedVfTorGate)
 
   return {
     trustId: trust.trustId,
@@ -25,10 +54,9 @@ export function getServiceConfig(trustId: TrustId, channel: BuildChannel = 'live
     headerTitle: `Resusci-Time - ${trust.trustLabel}${versionSuffix}`,
     brandBackgroundAsset: trust.brandBackgroundAsset ?? defaultBrandBackgroundAsset,
     features: {
-      ...(trust.features?.codeShock ? { codeShock: trust.features.codeShock } : {}),
-      ...(trust.features?.prolongedVfTorGate
-        ? { prolongedVfTorGate: trust.features.prolongedVfTorGate }
-        : {}),
+      ...(codeShock ? { codeShock } : {}),
+      ...(prolongedVfTorGate ? { prolongedVfTorGate } : {}),
+      caseTransfer: resolveCaseTransfer(trust),
       extraMedications: trust.features?.extraMedications ?? defaultFeatures.extraMedications,
     },
   }

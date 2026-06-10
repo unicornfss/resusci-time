@@ -2,14 +2,14 @@ import type { MouseEvent } from 'react'
 import { formatSavedLogLabel } from '../logStorage'
 
 interface CaseContinuationModalProps {
-  savedAt: number
+  lastEntryAt: number
   eventCount: number
   onContinue: () => void
   onNewCase: () => void
 }
 
 export function CaseContinuationModal({
-  savedAt,
+  lastEntryAt,
   eventCount,
   onContinue,
   onNewCase,
@@ -32,8 +32,9 @@ export function CaseContinuationModal({
         </div>
         <div className="about-body">
           <p>
-            An autosaved case from {formatSavedLogLabel(savedAt)} ({eventCount} events) was active
-            less than 10 minutes ago. Is this a new case or a continuation of that case?
+            An autosaved case ({eventCount} events) has a last log entry at{' '}
+            {formatSavedLogLabel(lastEntryAt)} — less than 10 minutes ago. Is this a new case or a
+            continuation of that case?
           </p>
           <div className="case-continuation-actions">
             <button type="button" className="btn btn-primary btn-lg" onClick={onContinue}>

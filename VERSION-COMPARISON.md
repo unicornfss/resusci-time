@@ -73,8 +73,10 @@ Preview and live builds for the **same trust** share the same clinical rules and
 | **Prolonged VF — in-case reminder** | Yes (3 consecutive shockable rhythms) | Yes |
 | **Prolonged VF — TOR impact** | No — normal TOR questionnaire | **Yes** — if prolonged VF logged, TOR shows **senior clinical discussion only** (skips special circumstances, rhythm, PEA questions) |
 | **WMAS ToR criteria document** | No | **Yes** — in Documents |
+| **Case transfer** (QR to another Resusci-Time device) | No | **Yes** — pause timer, scan on receiving device, sender read-only when complete |
+| **Patient handed over** (timer bar, end-of-case lock) | **Yes** | **Yes** — for handover to hospital or non–Resusci-Time provider |
 
-Config source: `src/config/trusts/wmas.ts`, `standard.ts`.
+Config source: `src/config/trusts/wmas.ts` (`codeShock`, `prolongedVfTorGate`); `getServiceConfig` enables case transfer for non-Standard trusts by default.
 
 ---
 

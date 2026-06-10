@@ -445,6 +445,37 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
   border-color: var(--green-800);
 }
 
+.timer-bar-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'elapsed primary'
+    'rhythm secondary';
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.timer-bar-elapsed {
+  grid-area: elapsed;
+  min-width: 0;
+}
+
+.timer-bar-controls .timer-next-check {
+  grid-area: rhythm;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.timer-bar-controls .timer-bar-action-group {
+  grid-area: primary;
+}
+
+.timer-bar-controls .timer-bar-secondary-group {
+  grid-area: secondary;
+}
+
 .timer-bar-top {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -757,6 +788,7 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
   --timer-action-group-width: 17.5rem;
 }
 
+.timer-bar--rosc .timer-bar-controls,
 .timer-bar--rosc .timer-bar-top,
 .timer-bar--rosc .timer-bar-tools-row {
   grid-template-columns: minmax(0, 1fr) var(--timer-action-group-width);
@@ -797,6 +829,77 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
 .timer-bar-secondary-group .timer-action-box {
   width: 100%;
   min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .app {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .timer-bar {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .timer-bar-controls {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'elapsed'
+      'rhythm'
+      'primary'
+      'secondary';
+    gap: 0.65rem;
+  }
+
+  .timer-bar-leading-primary {
+    flex-wrap: wrap;
+  }
+
+  .timer-bar-controls .timer-next-check {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+    min-height: auto;
+  }
+
+  .timer-next-check-label {
+    white-space: normal;
+  }
+
+  .timer-bar-rhythm-progress {
+    flex: none;
+    width: 100%;
+    max-width: none;
+    height: 0.55rem;
+    min-height: 0.55rem;
+    background: rgba(255, 255, 255, 0.38);
+  }
+
+  .timer-bar-action-group,
+  .timer-bar-secondary-group,
+  .timer-bar--rosc .timer-bar-action-group,
+  .timer-bar--rosc .timer-bar-secondary-group {
+    width: 100%;
+    max-width: 100%;
+    justify-self: stretch;
+  }
+
+  .timer-bar .timer-value {
+    font-size: 1.6rem;
+  }
+
+  .timer-stat-value {
+    font-size: 1.35rem;
+  }
+
+  .timer-bar-action-group .timer-action-box,
+  .timer-bar-secondary-group .timer-action-box {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.35rem;
+    line-height: 1.15;
+    white-space: normal;
+    hyphens: auto;
+  }
 }
 
 .timer-action-box {
@@ -950,10 +1053,85 @@ html[data-theme='night'] .theme-toggle[aria-pressed='true'] {
 }
 
 .rhythm-check-progress-fill {
+  display: block;
   height: 100%;
+  min-width: 0;
   border-radius: inherit;
   background: rgba(255, 255, 255, 0.95);
   transition: width 1s linear;
+}
+
+.timer-bar-rhythm-progress {
+  flex: 1;
+  min-width: 0;
+  max-width: 9rem;
+}
+
+.scroll-below-fold-hint {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0.75rem calc(0.65rem + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    rgba(223, 232, 223, 0.96) 55%,
+    rgba(223, 232, 223, 0)
+  );
+}
+
+html[data-theme='night'] .scroll-below-fold-hint {
+  background: linear-gradient(to top, rgba(17, 22, 18, 0.96) 55%, rgba(17, 22, 18, 0));
+}
+
+.scroll-below-fold-hint-btn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 2px solid var(--green-700);
+  background: var(--card-bg);
+  color: var(--green-800);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.scroll-below-fold-hint-btn:hover {
+  background: var(--green-50);
+}
+
+.scroll-below-fold-hint-chevron {
+  font-size: 1.1rem;
+  line-height: 1;
+  animation: scroll-below-fold-bounce 1.6s ease-in-out infinite;
+}
+
+@keyframes scroll-below-fold-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-below-fold-hint-chevron {
+    animation: none;
+  }
+}
+
+@media (min-width: 641px) {
+  .scroll-below-fold-hint {
+    display: none;
+  }
 }
 
 .timer-bar-post-tor {

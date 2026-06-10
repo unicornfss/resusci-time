@@ -30,6 +30,7 @@ import { MetronomeToggle } from './components/MetronomeToggle'
 import { TimerActionButton } from './components/TimerActionButton'
 import { useMetronome } from './hooks/useMetronome'
 import { useWakeLock } from './hooks/useWakeLock'
+import { useBelowFoldHint } from './hooks/useBelowFoldHint'
 import { useScrollWhenShown } from './hooks/useScrollWhenShown'
 import {
   createDisplayLogEntry,
@@ -90,6 +91,7 @@ import { TimerRoscRxSection } from './components/TimerRoscRxSection'
 import { ClinicalDiscussionTimerSection } from './components/ClinicalDiscussionTimerSection'
 import { EventLogPanel } from './components/EventLogPanel'
 import { SharedLogViewer } from './components/SharedLogViewer'
+import { ScrollBelowFoldHint } from './components/ScrollBelowFoldHint'
 import { SavedLogsModal } from './components/SavedLogsModal'
 import { SavedLogDetailModal } from './components/SavedLogDetailModal'
 import { CaseContinuationModal } from './components/CaseContinuationModal'
@@ -162,7 +164,12 @@ import {
   maybeTriggerPreviewTestCrash,
   recordPreviewDebugEvent,
 } from './previewDebugLog'
-import { IS_PREVIEW_BUILD, getRhythmCheckRemainingFraction, getTestModeBannerText, toDisplaySeconds } from './timing'
+import {
+  IS_PREVIEW_BUILD,
+  getRhythmCheckRemainingFraction,
+  getTestModeBannerText,
+  toDisplaySeconds,
+} from './timing'
 import type { PreviewSpeedMultiplier } from './previewSpeed'
 import {
   ATROPINE_DOSE_MG,
@@ -180,6 +187,7 @@ import { useClinicalAlertQueue } from './clinicalAlerts/useClinicalAlertQueue'
 import type { ClinicalAlertId } from './clinicalAlerts/types'
 import {
   canOfferCaseContinuation,
+  getLastLogEntryAt,
   hasPatientHandedOverLogged,
   hasVodDeclared,
 } from './caseLog'
@@ -271,8 +279,9 @@ function App() {
   const [viewingSavedLog, setViewingSavedLog] = useState<SavedLogRecord | null>(null)
   const [caseContinuationOffer, setCaseContinuationOffer] = useState<SavedLogRecord | null>(null)
   const initialRouting = getInitialAppRouting()
+  const showCaseTransfer = serviceConfig.features.caseTransfer
   const [pendingHandoff, setPendingHandoff] = useState<CaseHandoffPayload | null>(
-    initialRouting.pendingHandoff,
+    showCaseTransfer ? initialRouting.pendingHandoff : null,
   )
   const [transferHandoffPayload, setTransferHandoffPayload] = useState<CaseHandoffPayload | null>(
     null,
@@ -285,6 +294,7 @@ function App() {
   const prevRhythmCheckAlertOpenRef = useRef(false)
   const pendingContinuousCompressionsFromChecklistRef = useRef(false)
   const timerBarRef = useRef<HTMLDivElement>(null)
+  const belowFoldContentRef = useRef<HTMLDivElement>(null)
   const vectorChangeReminderRef = useRef<HTMLDivElement>(null)
   const earlyTransferReminderRef = useRef<HTMLDivElement>(null)
   const codeShockReminderRef = useRef<HTMLDivElement>(null)
@@ -373,6 +383,12 @@ function App() {
   function clearPreRhythmModals() {
     preRhythmModalsRef.current = null
   }
+
+  useEffect(() => {
+    if (!showCaseTransfer && initialRouting.pendingHandoff) {
+      clearCaseHandoffHash()
+    }
+  }, [showCaseTransfer, initialRouting.pendingHandoff])
 
   useEffect(() => {
     const justOpened = showRhythmCheckAlert && !prevRhythmCheckAlertOpenRef.current
@@ -831,7 +847,7 @@ function App() {
 
   async function handleStartProtocol() {
     const autosave = autosaveOffer ?? (await getAutosaveLog())
-    if (autosave && canOfferCaseContinuation(autosave)) {
+    if (autosave && canOfferCaseContinuation(autosave, timing.timeScale)) {
       setCaseContinuationOffer(autosave)
       return
     }
@@ -951,7 +967,7 @@ function App() {
   }
 
   function initiateCaseTransfer() {
-    if (!canModifyCase || logEntries.length === 0) return
+    if (!showCaseTransfer || !canModifyCase || logEntries.length === 0) return
 
     const imminentWarnings = collectTransferImminentWarnings()
     if (imminentWarnings.length > 0) {
@@ -1649,6 +1665,19 @@ function App() {
   const vodCompleteActive = step === 'complete' && vodAtLabel != null
   const vodReady = vodCountdownRemaining <= 0
   const showResuscitationTimerControls = !postTorActive && !vodCompleteActive
+  const belowFoldHintEnabled =
+    step === 'initial-assessment' ||
+    step === 'select-rhythm' ||
+    (step === 'active-resuscitation' && initialRhythm != null && !patientHandedOver)
+  const showBelowFoldHint = useBelowFoldHint(belowFoldContentRef, belowFoldHintEnabled)
+  const belowFoldHintLabel =
+    step === 'initial-assessment'
+      ? 'Scroll for assessment'
+      : step === 'select-rhythm'
+        ? 'Scroll for quality checklist'
+        : timerView === 'rosc'
+          ? 'Scroll for post-ROSC checklist'
+          : 'Scroll for checklist'
   const resuscitationOngoing =
     step === 'active-resuscitation' ||
     step === 'tor-reassessment' ||
@@ -1856,7 +1885,7 @@ function App() {
             }
           />
           <div className="header-toolbar-end">
-            {canModifyCase && hasLog && timerActive && (
+            {showCaseTransfer && canModifyCase && hasLog && timerActive && (
               <button type="button" className="header-link-btn" onClick={initiateCaseTransfer}>
                 Transfer case
               </button>
@@ -1912,7 +1941,11 @@ function App() {
             {autosaveOffer.entries.length} events).
             {hasVodDeclared(autosaveOffer.entries)
               ? ' Verification of death was recorded — this log is read-only.'
-              : ' View the log read-only or discard before starting a new case.'}
+              : hasPatientHandedOverLogged(autosaveOffer.entries)
+                ? ' Patient was handed over — view or discard before starting a new case.'
+                : canOfferCaseContinuation(autosaveOffer, timing.timeScale)
+                  ? ' Last log entry was less than 10 minutes ago — you can continue this case when you start protocol.'
+                  : ' Last log entry was more than 10 minutes ago — view or discard before starting a new case.'}
           </p>
           <div className="autosave-restore-actions">
             <button
@@ -1950,28 +1983,50 @@ function App() {
           className={getTimerBarClassName()}
           style={getTimerBarStyle()}
         >
-          <div className="timer-bar-top">
-            <div className="timer-bar-top-leading">
-              <div className="timer-bar-leading-primary">
-                <div className="timer-display">
-                  <span className="timer-label">
-                    {postTorActive || vodCompleteActive
-                      ? 'Resuscitation ended'
-                      : timerView === 'rosc'
-                        ? (roscPhaseLabel ?? 'ROSC')
-                        : 'Elapsed'}
-                  </span>
-                  <span className="timer-value">{formatProtocolElapsed(displayTimerSeconds)}</span>
-                </div>
-                {showResuscitationTimerControls && (
+          {showResuscitationTimerControls ? (
+            <div className="timer-bar-controls">
+              <div className="timer-bar-elapsed">
+                <div className="timer-bar-leading-primary">
+                  <div className="timer-display">
+                    <span className="timer-label">
+                      {timerView === 'rosc' ? (roscPhaseLabel ?? 'ROSC') : 'Elapsed'}
+                    </span>
+                    <span className="timer-value">{formatProtocolElapsed(displayTimerSeconds)}</span>
+                  </div>
                   <div className="timer-stat">
                     <span className="timer-label">Total shocks:</span>
                     <span className="timer-stat-value">{totalShocks}</span>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
-            {showResuscitationTimerControls && (
+              {resuscitationOngoing && (
+                <div className="timer-next-check">
+                  {!showRhythmCheckAlert ? (
+                    <>
+                      <span className="timer-next-check-label">
+                        Next rhythm check: {formatProtocolElapsed(timer.secondsToNextCheck)}
+                      </span>
+                      <div
+                        className="rhythm-check-progress-track timer-bar-rhythm-progress"
+                        role="progressbar"
+                        aria-label="Time until next rhythm check"
+                        aria-valuemin={0}
+                        aria-valuemax={timing.rhythmCheckInterval}
+                        aria-valuenow={timer.secondsToNextCheck}
+                      >
+                        <div
+                          className="rhythm-check-progress-fill"
+                          style={{
+                            width: `${getRhythmCheckRemainingFraction(timer.secondsToNextCheck, timing.rhythmCheckInterval) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    '\u00a0'
+                  )}
+                </div>
+              )}
               <div
                 className={`timer-bar-action-group${
                   timerView === 'rosc' || step !== 'active-resuscitation'
@@ -2018,41 +2073,6 @@ function App() {
                   </TimerActionButton>
                 )}
               </div>
-            )}
-          </div>
-          {showResuscitationTimerControls &&
-            (resuscitationOngoing ||
-              showInterventionsButton ||
-              (!postTorActive && !vodCompleteActive)) && (
-            <div className="timer-bar-tools-row">
-              {resuscitationOngoing && (
-                <div className="timer-next-check">
-                  {!showRhythmCheckAlert ? (
-                    <>
-                      <span className="timer-next-check-label">
-                        Next rhythm check: {formatProtocolElapsed(timer.secondsToNextCheck)}
-                      </span>
-                      <div
-                        className="rhythm-check-progress-track"
-                        role="progressbar"
-                        aria-label="Time until next rhythm check"
-                        aria-valuemin={0}
-                        aria-valuemax={timing.rhythmCheckInterval}
-                        aria-valuenow={timer.secondsToNextCheck}
-                      >
-                        <div
-                          className="rhythm-check-progress-fill"
-                          style={{
-                            width: `${getRhythmCheckRemainingFraction(timer.secondsToNextCheck, timing.rhythmCheckInterval) * 100}%`,
-                          }}
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    '\u00a0'
-                  )}
-                </div>
-              )}
               {(showInterventionsButton || (!postTorActive && !vodCompleteActive)) && (
                 <div
                   className={`timer-bar-secondary-group${
@@ -2079,6 +2099,23 @@ function App() {
                   )}
                 </div>
               )}
+            </div>
+          ) : (
+            <div className="timer-bar-top">
+              <div className="timer-bar-top-leading">
+                <div className="timer-bar-leading-primary">
+                  <div className="timer-display">
+                    <span className="timer-label">
+                      {postTorActive || vodCompleteActive
+                        ? 'Resuscitation ended'
+                        : timerView === 'rosc'
+                          ? (roscPhaseLabel ?? 'ROSC')
+                          : 'Elapsed'}
+                    </span>
+                    <span className="timer-value">{formatProtocolElapsed(displayTimerSeconds)}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
           {postTorActive && torEndedAtLabel && (
@@ -2294,16 +2331,18 @@ function App() {
         )}
 
         {step === 'initial-assessment' && (
-          <InitialAssessmentPanel
-            onCommenceResuscitation={commenceResuscitation}
-            onCompleteVod={finishInitialAssessmentVod}
-            onLogObservationCriteria={logVodCriteria}
-            formatCountdown={formatProtocolElapsed}
-          />
+          <div ref={belowFoldContentRef} className="below-fold-content-anchor">
+            <InitialAssessmentPanel
+              onCommenceResuscitation={commenceResuscitation}
+              onCompleteVod={finishInitialAssessmentVod}
+              onLogObservationCriteria={logVodCriteria}
+              formatCountdown={formatProtocolElapsed}
+            />
+          </div>
         )}
 
         {step === 'select-rhythm' && (
-          <section className="card">
+          <section ref={belowFoldContentRef} className="card below-fold-content-anchor">
             <ResuscitationQualityChecklist
               completedIds={completedQualityPromptIds}
               completedReversibleCauseIds={completedReversibleCauseIds}
@@ -2326,7 +2365,7 @@ function App() {
                 />
               )
             ) : (
-              <>
+              <div ref={belowFoldContentRef} className="below-fold-content-anchor">
                 <div className="card-badge">Path: {initialRhythm}</div>
                 <h2>{timerView === 'rosc' ? 'Post-ROSC care' : 'Continue resuscitation'}</h2>
                 {timerView === 'rosc' ? (
@@ -2382,7 +2421,7 @@ function App() {
                     ' Early transfer reminder after third rhythm check.'}
                   {timerView !== 'rosc' && ' Special review at 45 minutes.'}
                 </p>
-              </>
+              </div>
             )}
           </section>
         )}
@@ -2507,6 +2546,12 @@ function App() {
         )}
       </main>
 
+      <ScrollBelowFoldHint
+        visible={showBelowFoldHint}
+        label={belowFoldHintLabel}
+        targetRef={belowFoldContentRef}
+      />
+
       <footer className="footer">
         <p>Refer to guideline for details. This tool supports clinical decision-making — it does not replace local protocols or senior clinical judgement.</p>
         <p className="footer-actions">
@@ -2561,7 +2606,7 @@ function App() {
 
       {caseContinuationOffer && (
         <CaseContinuationModal
-          savedAt={caseContinuationOffer.savedAt}
+          lastEntryAt={getLastLogEntryAt(caseContinuationOffer.entries) ?? caseContinuationOffer.savedAt}
           eventCount={caseContinuationOffer.entries.length}
           onContinue={() => continueCaseFromAutosave(caseContinuationOffer)}
           onNewCase={() => void startNewCaseFromPrompt()}
@@ -2570,14 +2615,14 @@ function App() {
 
       {patientHandoverModalOpen && (
         <PatientHandoverConfirmModal
-          showTransferCase={hasLog && timerActive}
+          showTransferCase={showCaseTransfer && hasLog && timerActive}
           onCancel={dismissPatientHandoverModal}
           onConfirmHandover={confirmPatientHandedOver}
           onTransferCase={transferCaseFromPatientHandoverModal}
         />
       )}
 
-      {transferImminentWarnings && (
+      {showCaseTransfer && transferImminentWarnings && (
         <TransferCaseImminentWarningModal
           warnings={transferImminentWarnings}
           onStayOnCase={dismissTransferImminentWarning}
@@ -2585,7 +2630,7 @@ function App() {
         />
       )}
 
-      {transferHandoffPayload && (
+      {showCaseTransfer && transferHandoffPayload && (
         <TransferCaseModal
           payload={transferHandoffPayload}
           onResumeCase={resumeCaseAfterTransfer}
@@ -2593,7 +2638,7 @@ function App() {
         />
       )}
 
-      {pendingHandoff && (
+      {showCaseTransfer && pendingHandoff && (
         <AcceptCaseHandoffModal
           payload={pendingHandoff}
           replaceActiveCase={handoffReplaceActiveCase}

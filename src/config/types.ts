@@ -19,6 +19,8 @@ export interface MedicationOption {
 export interface ServiceFeatures {
   codeShock?: CodeShockFeature
   prolongedVfTorGate?: ProlongedVfTorFeature
+  /** QR case transfer between Resusci-Time devices (custom / trust builds). */
+  caseTransfer: boolean
   extraMedications: readonly MedicationOption[]
 }
 
@@ -38,8 +40,12 @@ export interface ServiceConfig {
 export type TrustOverrides = Pick<ServiceConfig, 'trustId' | 'trustLabel'> & {
   brandBackgroundAsset?: string
   features?: {
-    codeShock?: CodeShockFeature
-    prolongedVfTorGate?: ProlongedVfTorFeature
+    /** `true` uses default CODE SHOCK settings for the trust. */
+    codeShock?: true | CodeShockFeature
+    /** `true` enables the prolonged-VF TOR senior-discussion gate. */
+    prolongedVfTorGate?: true | ProlongedVfTorFeature
+    /** Omit on custom trusts to enable case transfer; set `false` to disable explicitly. */
+    caseTransfer?: true | false
     extraMedications?: readonly MedicationOption[]
   }
 }
