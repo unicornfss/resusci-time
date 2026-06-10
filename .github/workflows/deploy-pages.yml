@@ -37,9 +37,7 @@ jobs:
           cp preview-src/scripts/sync-preview-changelog.mjs live-src/scripts/sync-preview-changelog.mjs
           cp preview-src/scripts/trustPaths.mjs live-src/scripts/trustPaths.mjs
           cp preview-src/scripts/generate-icons.mjs live-src/scripts/generate-icons.mjs
-          cp preview-src/src/config/trust-manifest.json live-src/src/config/trust-manifest.json
-          cp preview-src/src/config/trustIds.ts live-src/src/config/trustIds.ts
-          cp preview-src/src/config/getServiceConfig.ts live-src/src/config/getServiceConfig.ts
+          cp -r preview-src/src/config live-src/src/config
           cp preview-src/vite.config.ts live-src/vite.config.ts
           cp -r preview-src/assets/icon-sources live-src/assets/
           cp -r preview-src/public/wmas-icons live-src/public/
