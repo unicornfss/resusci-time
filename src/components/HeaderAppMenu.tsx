@@ -9,6 +9,8 @@ interface HeaderAppMenuProps {
   onAcknowledgements: () => void
   onExportDebugReport?: () => void
   testControls?: ReactNode
+  /** Increment to force-close the menu (e.g. when a clinical alert appears). */
+  dismissNonce?: number
 }
 
 export function HeaderAppMenu({
@@ -18,6 +20,7 @@ export function HeaderAppMenu({
   onAcknowledgements,
   onExportDebugReport,
   testControls,
+  dismissNonce,
 }: HeaderAppMenuProps) {
   const [open, setOpen] = useState(false)
   const [installHelpOpen, setInstallHelpOpen] = useState(false)
@@ -46,6 +49,12 @@ export function HeaderAppMenu({
       closeMenu()
     }
   }
+
+  useEffect(() => {
+    if (dismissNonce === undefined) return
+    setOpen(false)
+    setInstallHelpOpen(false)
+  }, [dismissNonce])
 
   useEffect(() => {
     if (!open) return

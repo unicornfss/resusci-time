@@ -98,6 +98,7 @@ import { CaseContinuationModal } from './components/CaseContinuationModal'
 import { TransferCaseModal } from './components/TransferCaseModal'
 import { TransferCaseImminentWarningModal } from './components/TransferCaseImminentWarningModal'
 import { PatientHandoverConfirmModal } from './components/PatientHandoverConfirmModal'
+import { RoscConfirmModal } from './components/RoscConfirmModal'
 import { AcceptCaseHandoffModal } from './components/AcceptCaseHandoffModal'
 import { TimerVodCompleteStamp, TimerVodSection } from './components/TimerVodSection'
 import { VodTimestampsSummary } from './components/VodTimestampsSummary'
@@ -288,6 +289,7 @@ function App() {
   )
   const [transferImminentWarnings, setTransferImminentWarnings] = useState<string[] | null>(null)
   const [patientHandoverModalOpen, setPatientHandoverModalOpen] = useState(false)
+  const [roscConfirmOpen, setRoscConfirmOpen] = useState(false)
   const [caseHandedOff, setCaseHandedOff] = useState(isCaseHandedOffThisSession)
   const [sharedLog, setSharedLog] = useState<SharedLogPayload | null>(initialRouting.sharedLog)
   const preRhythmModalsRef = useRef<PreRhythmModalState | null>(null)
@@ -589,6 +591,9 @@ function App() {
   }
 
   function enterRoscMode(fromRhythmCheck = false) {
+    timer.recordRhythmEntry(timer.elapsedSeconds)
+    setShowRhythmCheckAlert(false)
+    closeShockForm()
     setTimerView('rosc')
     setRoscEverAchieved(true)
     setRoscElapsedSeconds(0)
@@ -605,14 +610,14 @@ function App() {
   }
 
   function handleRhythmCheckRosc() {
-    timer.recordRhythmEntry(timer.elapsedSeconds)
-    setShowRhythmCheckAlert(false)
-    closeShockForm()
     if (timerView === 'arrest') {
       clearPreRhythmModals()
       enterRoscMode(true)
       return
     }
+    timer.recordRhythmEntry(timer.elapsedSeconds)
+    setShowRhythmCheckAlert(false)
+    closeShockForm()
     pushLogEntry(getRoscRhythmCheckLogLabel())
   }
 
@@ -651,6 +656,7 @@ function App() {
     prolongedVfLoggedRef.current = false
     setShowFortyFiveAlert(false)
     setShowRhythmCheckAlert(false)
+    setRoscConfirmOpen(false)
     setRhythmChecks([])
     setLogEntries([])
     setShockFormContext(null)
@@ -1427,8 +1433,19 @@ function App() {
   }
 
   function handleTimerBarRosc() {
+    if (timerView === 'rosc' || !canModifyCase) return
+    recordPreviewDebugEvent('modal', 'rosc_confirm_opened')
+    setRoscConfirmOpen(true)
+  }
+
+  function dismissRoscConfirm() {
+    setRoscConfirmOpen(false)
+  }
+
+  function confirmTimerBarRosc() {
     if (timerView === 'rosc') return
-    recordPreviewDebugEvent('action', 'timer_bar_rosc')
+    recordPreviewDebugEvent('action', 'timer_bar_rosc_confirmed')
+    setRoscConfirmOpen(false)
     enterRoscMode(false)
   }
 
@@ -1713,6 +1730,23 @@ function App() {
   })
   const currentClinicalAlert = useClinicalAlertQueue(activeClinicalAlerts, clinicalAlertBump)
   const isClinicalAlert = (id: ClinicalAlertId) => currentClinicalAlert === id
+  const [headerMenuDismissNonce, setHeaderMenuDismissNonce] = useState(0)
+  const prevClinicalAlertForMenuRef = useRef<ClinicalAlertId | null>(null)
+
+  useEffect(() => {
+    if (!showRhythmCheckAlert) return
+    setHeaderMenuDismissNonce((n) => n + 1)
+  }, [showRhythmCheckAlert])
+
+  useEffect(() => {
+    if (!currentClinicalAlert) {
+      prevClinicalAlertForMenuRef.current = null
+      return
+    }
+    if (prevClinicalAlertForMenuRef.current === currentClinicalAlert) return
+    prevClinicalAlertForMenuRef.current = currentClinicalAlert
+    setHeaderMenuDismissNonce((n) => n + 1)
+  }, [currentClinicalAlert])
 
   usePreviewDebugInstrumentation({
     step,
@@ -1859,6 +1893,7 @@ function App() {
             onDocuments={() => setDocumentsOpen(true)}
             onSavedLogs={() => setSavedLogsOpen(true)}
             onAcknowledgements={() => setAcknowledgementsOpen(true)}
+            dismissNonce={headerMenuDismissNonce}
             onExportDebugReport={
               isPreviewDebugLogEnabled() ? exportPreviewDebugReportFromApp : undefined
             }
@@ -1984,7 +2019,11 @@ function App() {
           style={getTimerBarStyle()}
         >
           {showResuscitationTimerControls ? (
-            <div className="timer-bar-controls">
+            <div
+              className={`timer-bar-controls${
+                resuscitationOngoing ? ' timer-bar-controls--rhythm-priority' : ''
+              }`}
+            >
               <div className="timer-bar-elapsed">
                 <div className="timer-bar-leading-primary">
                   <div className="timer-display">
@@ -2003,9 +2042,12 @@ function App() {
                 <div className="timer-next-check">
                   {!showRhythmCheckAlert ? (
                     <>
-                      <span className="timer-next-check-label">
-                        Next rhythm check: {formatProtocolElapsed(timer.secondsToNextCheck)}
-                      </span>
+                      <div className="timer-next-check-main">
+                        <span className="timer-label">Next rhythm check</span>
+                        <span className="timer-next-check-value">
+                          {formatProtocolElapsed(timer.secondsToNextCheck)}
+                        </span>
+                      </div>
                       <div
                         className="rhythm-check-progress-track timer-bar-rhythm-progress"
                         role="progressbar"
@@ -2622,6 +2664,10 @@ function App() {
         />
       )}
 
+      {roscConfirmOpen && (
+        <RoscConfirmModal onCancel={dismissRoscConfirm} onConfirm={confirmTimerBarRosc} />
+      )}
+
       {showCaseTransfer && transferImminentWarnings && (
         <TransferCaseImminentWarningModal
           warnings={transferImminentWarnings}
@@ -2684,6 +2730,15 @@ function App() {
             <p>Select the current monitored rhythm.</p>
             {shockFormContext !== 'check' && (
               <div className="rhythm-grid alert-rhythm-grid">
+                {timerView === 'rosc' && (
+                  <button
+                    type="button"
+                    className="rhythm-btn rhythm-rosc"
+                    onClick={handleRhythmCheckRosc}
+                  >
+                    Continuing ROSC
+                  </button>
+                )}
                 {RHYTHM_OPTIONS.map((rhythm) => (
                   <button
                     key={rhythm}
@@ -2694,13 +2749,15 @@ function App() {
                     {rhythm}
                   </button>
                 ))}
-                <button
-                  type="button"
-                  className="rhythm-btn rhythm-rosc"
-                  onClick={handleRhythmCheckRosc}
-                >
-                  ROSC
-                </button>
+                {timerView !== 'rosc' && (
+                  <button
+                    type="button"
+                    className="rhythm-btn rhythm-rosc"
+                    onClick={handleRhythmCheckRosc}
+                  >
+                    ROSC
+                  </button>
+                )}
               </div>
             )}
             {shockFormContext === 'check' && (

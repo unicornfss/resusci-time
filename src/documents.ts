@@ -1,12 +1,15 @@
 import type { TrustId } from './config/types'
 
-export type ProtocolDocumentId = 'als-algorithm' | 'wmas-als-bag-tor-aide-memoire'
+export type ProtocolDocumentId =
+  | 'als-algorithm'
+  | 'wmas-als-bag-tor-aide-memoire'
+  | 'wmas-cardiac-arrest-checklist'
 
 export interface ProtocolDocument {
   id: ProtocolDocumentId
   title: string
   asset: string
-  type: 'image'
+  type: 'image' | 'pdf'
   /** When set, the document is only listed for these trusts. Omit to show in all builds. */
   trustIds?: readonly TrustId[]
 }
@@ -23,6 +26,13 @@ export const PROTOCOL_DOCUMENTS: readonly ProtocolDocument[] = [
     title: 'WMAS ToR criteria',
     asset: 'documents/wmas-als-bag-tor-aide-memoire-v1.jpg',
     type: 'image',
+    trustIds: ['wmas'],
+  },
+  {
+    id: 'wmas-cardiac-arrest-checklist',
+    title: 'Cardiac Arrest Checklist',
+    asset: 'documents/wmas-cardiac-arrest-checklist.pdf',
+    type: 'pdf',
     trustIds: ['wmas'],
   },
 ]

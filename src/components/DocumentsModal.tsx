@@ -53,6 +53,13 @@ export function DocumentsModal({ onClose }: DocumentsModalProps) {
                   alt={selected.title}
                 />
               )}
+              {selected.type === 'pdf' && (
+                <iframe
+                  className="document-viewer-pdf"
+                  src={publicAssetUrl(selected.asset)}
+                  title={selected.title}
+                />
+              )}
             </div>
           </>
         ) : (

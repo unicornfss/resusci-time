@@ -2,7 +2,32 @@
 
 Features below are on **preview URLs only** (DEMO icons, speed controls, startup warning). They are **not** on live field builds until merged to production. Published announcements appear on the [blog](/blog/) after release.
 
-**App version:** 1.2.7 (preview) · **Last updated:** 10 June 2026
+**App version:** 1.2.8 (preview) · **Last updated:** 21 July 2026
+
+---
+
+## Version 1.2.8 · 21 July 2026
+
+### Timer bar — rhythm check first
+
+- **Next rhythm check** (countdown and progress bar) sits at the **top** of the timer bar during resuscitation; **elapsed time** and **total shocks** move below in a smaller size.
+- The progress bar sits **under** the “Next rhythm check” label and countdown, spanning their combined width.
+- **Mobile / ROSC:** timer-bar action buttons stack full-width on phones so they no longer crush into half the screen during post-ROSC care.
+
+### ROSC
+
+- Tapping the green **ROSC** button asks for **confirmation** before switching to post-ROSC care.
+- Entering ROSC **resets the next rhythm check timer to 2 minutes** (instead of continuing the previous countdown).
+- During post-ROSC care, the rhythm assessment modal lists **Continuing ROSC** as the **top** option (cardiac arrest views still show **ROSC** at the bottom).
+
+### Menu and alerts
+
+- The header **Menu** panel appears **above** the sticky timer bar so all items stay tappable.
+- If a clinical alert (for example rhythm check) appears while the menu is open, the **menu closes** so the alert is not blocked.
+
+### WMAS documents
+
+- **WMAS only:** **Cardiac Arrest Checklist** added under **Menu → Documents** (PDF). Not shown on Standard.
 
 ---
 
