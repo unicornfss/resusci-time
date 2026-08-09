@@ -83,7 +83,6 @@ import { AcknowledgementsModal } from './components/AcknowledgementsModal'
 import { DocumentsModal } from './components/DocumentsModal'
 import { PreviewDevelopmentWarningModal } from './components/PreviewDevelopmentWarningModal'
 import { AppVersionInfo } from './components/AppVersionInfo'
-import { getBlogUrl } from './blogUrl'
 import { HeaderAppMenu } from './components/HeaderAppMenu'
 import { RoscChecklist } from './components/RoscChecklist'
 import { TimerRxSection } from './components/TimerRxSection'
@@ -2597,12 +2596,6 @@ function App() {
       <footer className="footer">
         <p>Refer to guideline for details. This tool supports clinical decision-making — it does not replace local protocols or senior clinical judgement.</p>
         <p className="footer-actions">
-          <a className="footer-link-btn" href={getBlogUrl(serviceConfig.trustId)}>
-            Blog — updates &amp; guides
-          </a>
-          <span className="footer-sep" aria-hidden="true">
-            ·
-          </span>
           <button type="button" className="footer-link-btn" onClick={() => setAboutOpen(true)}>
             About &amp; contact
           </button>

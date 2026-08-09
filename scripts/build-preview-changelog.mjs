@@ -33,9 +33,9 @@ export function buildPreviewChangelog(outputRoot) {
   const pageBody = `
       <article>
         <h1>Preview build changes</h1>
-        <p class="hint">Unreleased features on preview URLs — not yet announced on the live blog.</p>
+        <p class="hint">Unreleased features on preview URLs — not yet on a governance-approved release.</p>
         ${proseHtml}
-        <a class="back-link" href="../blog/">Published release notes (blog)</a>
+        <a class="back-link" href="../">← Home</a>
       </article>
     `
 
@@ -46,7 +46,7 @@ export function buildPreviewChangelog(outputRoot) {
       assetPrefix: '../',
       body: pageBody,
       wide: true,
-      includeBlog: true,
+      includeBlog: false,
     }),
   )
 

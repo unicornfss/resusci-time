@@ -7,7 +7,8 @@ export interface AccessAccount {
 
 /**
  * Client-side gate for preview builds on static hosting.
- * This deters casual access; it is not a substitute for server-side authentication.
+ * Deterrent only — prefer Cloudflare Access / cloudflare/preview-gate (docs/PREVIEW-ACCESS.md).
+ * Disable with VITE_CLIENT_ACCESS_GATE=0 once edge auth is live so these hashes are not needed.
  */
 export const ACCESS_ACCOUNTS: readonly AccessAccount[] = [
   {

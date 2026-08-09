@@ -1,0 +1,12 @@
+name = "resusci-time-preview-gate"
+main = "src/worker.js"
+compatibility_date = "2026-08-01"
+
+# GitHub Pages origin (NOT the custom domain — avoids an infinite Worker loop).
+# Example project Pages site:
+#   https://unicornfss.github.io/resusci-time/
+[vars]
+ORIGIN_BASE = "https://unicornfss.github.io/resusci-time/"
+SESSION_COOKIE = "rt_preview_session"
+SESSION_TTL_SECONDS = "43200"
+PROTECTED_PREFIX = "/w2ht9vrl"

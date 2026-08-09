@@ -53,7 +53,7 @@ jobs:
         working-directory: live-src
 
       - name: Build live site from main
-        run: BUILD_LIVE_ONLY=1 OUTPUT_DIR="${{ github.workspace }}/dist-pages" node scripts/build-pages.mjs
+        run: INCLUDE_BLOG=0 BUILD_LIVE_ONLY=1 OUTPUT_DIR="${{ github.workspace }}/dist-pages" node scripts/build-pages.mjs
         working-directory: live-src
 
       - name: Install dependencies (preview)

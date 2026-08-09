@@ -17,8 +17,13 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 
 ### Access control (preview)
 
-- Preview builds require **username and password** before use (session lasts until the browser tab is closed).
-- Intended for working-group simulation and internal review — not a substitute for full server-side authentication on static hosting.
+- **Cloudflare Access** (email one-time PIN to allow-listed addresses, typically `@wmas.nhs.uk`) protects `/w2ht9vrl*` before the app loads. Setup notes: `docs/PREVIEW-ACCESS.md`. Microsoft Entra (Trust SSO) is a possible later login method.
+- The old in-app username/password screen is **off** (`VITE_CLIENT_ACCESS_GATE=0`). Approved/live placeholders stay open.
+- Public **Request preview access** form at `/request-access/` emails Jon for allow-list review (does not grant access automatically).
+
+### Blog
+
+- Public **blog** is **not shown** (removed from home, nav, About, and footer). Preview changes remain via the in-app / preview-changelog path. Set `INCLUDE_BLOG=1` only if rebuilding the blog intentionally.
 
 ### Earlier preview work retained (from 1.2.8)
 

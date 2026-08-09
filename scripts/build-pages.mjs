@@ -6,13 +6,15 @@ import trustManifest from '../src/config/trust-manifest.json' with { type: 'json
 import { buildBlog } from './build-blog.mjs'
 import { previewOutputFolder, liveOutputFolder } from './trustPaths.mjs'
 import { renderSitePage } from './site-shell.mjs'
+import { PRODUCTION_SITE_BASE } from './trust-path-urls.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const buildLiveOnly = process.env.BUILD_LIVE_ONLY === '1'
 const buildPreviewOnly = process.env.BUILD_PREVIEW_ONLY === '1'
 const buildLandingOnly = process.env.BUILD_LANDING_ONLY === '1'
 const buildAll = !buildLiveOnly && !buildPreviewOnly && !buildLandingOnly
-const includeBlog = process.env.INCLUDE_BLOG !== '0'
+/** Blog is hidden by default (governance / preview-only posture). Set INCLUDE_BLOG=1 to rebuild it. */
+const includeBlog = process.env.INCLUDE_BLOG === '1'
 
 const outputRoot = process.env.OUTPUT_DIR
   ? resolve(process.env.OUTPUT_DIR)
@@ -20,6 +22,8 @@ const outputRoot = process.env.OUTPUT_DIR
 
 const packageJson = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 const wmasPreviewPath = `./${previewOutputFolder('wmas')}/`
+const ACCESS_REQUEST_EMAIL = 'jon.ostrowski@wmas.nhs.uk'
+const SITE_ORIGIN = PRODUCTION_SITE_BASE.replace(/\/$/, '')
 
 /** Live landing page label — use LIVE_PACKAGE_VERSION in CI when building landing from testing. */
 function getLiveDisplayVersion() {
@@ -41,12 +45,92 @@ function createLandingHtml() {
       <h1>Resusci-Time</h1>
       <p>Adult cardiac arrest protocol timer and checklist for <strong>West Midlands Ambulance Service</strong>.</p>
       <ul class="link-list">
-        <li><a href="${wmasPreviewPath}">Open preview (testing only)</a></li>${includeBlog ? '\n        <li><a href="./blog/">Blog - updates &amp; guides</a></li>' : ''}
+        <li><a href="${wmasPreviewPath}">Open preview (testing only)</a></li>
+        <li><a href="./request-access/">Request preview access</a></li>${includeBlog ? '\n        <li><a href="./blog/">Blog - updates &amp; guides</a></li>' : ''}
       </ul>
-      <p class="hint">The live / approved address is reserved for a future governance-approved build. Until then, use the preview for simulation and internal testing only — not for patient contact. Sign-in is required.</p>
+      <p class="hint">The live / approved address is reserved for a future governance-approved build. Until then, use the preview for simulation and internal testing only — not for patient contact. Sign-in with an approved work email is required for the preview.</p>
       <p class="version">${buildLabel}</p>
     `,
   })
+}
+
+function createRequestAccessHtml() {
+  const thanksUrl = `${SITE_ORIGIN}/request-access/thanks/`
+  return renderSitePage({
+    title: 'Request preview access · Resusci-Time',
+    assetPrefix: '../',
+    includeBlog: false,
+    body: `
+      <h1>Request preview access</h1>
+      <p>
+        The Resusci-Time preview is for simulation and internal testing only. It is signed-in
+        access for people on an approved email list (usually a WMAS work email).
+      </p>
+      <p class="hint">
+        Submit this form to ask to be added. Requests are reviewed before access is granted —
+        submitting does not open the preview automatically. You can also ask a working-group
+        member to pass your details to Jon Ostrowski.
+      </p>
+      <form class="site-form" action="https://formsubmit.co/${ACCESS_REQUEST_EMAIL}" method="POST">
+        <input type="hidden" name="_subject" value="Resusci-Time preview access request" />
+        <input type="hidden" name="_template" value="table" />
+        <input type="hidden" name="_next" value="${thanksUrl}" />
+        <input type="hidden" name="_captcha" value="false" />
+        <input type="text" name="_honey" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+        <label>
+          Full name
+          <input type="text" name="name" required autocomplete="name" />
+        </label>
+        <label>
+          Work email
+          <input type="email" name="email" required autocomplete="email" />
+        </label>
+        <label>
+          Role / team <span class="optional">(optional)</span>
+          <input type="text" name="role" autocomplete="organization-title" />
+        </label>
+        <label>
+          Why do you need access?
+          <textarea name="reason" required maxlength="2000" placeholder="e.g. working-group testing, clinical review"></textarea>
+        </label>
+        <label>
+          Working-group member who referred you <span class="optional">(optional)</span>
+          <input type="text" name="referred_by" />
+        </label>
+        <button type="submit">Send request</button>
+      </form>
+      <a class="back-link" href="../">← Home</a>
+    `,
+  })
+}
+
+function createRequestAccessThanksHtml() {
+  return renderSitePage({
+    title: 'Request sent · Resusci-Time',
+    assetPrefix: '../../',
+    includeBlog: false,
+    body: `
+      <h1>Request sent</h1>
+      <p>
+        Thank you. Your request has been submitted for review. If access is granted, you will be
+        able to sign in at the preview link using the email address you provided.
+      </p>
+      <ul class="link-list">
+        <li><a href="../../${previewOutputFolder('wmas')}/">Open preview</a></li>
+        <li><a href="../../">Home</a></li>
+      </ul>
+      <p class="hint">Allow time for the request to be checked. Check junk mail if you expected a reply and have not heard back.</p>
+    `,
+  })
+}
+
+function writeRequestAccessPages() {
+  const dir = join(outputRoot, 'request-access')
+  const thanksDir = join(dir, 'thanks')
+  mkdirSync(thanksDir, { recursive: true })
+  writeFileSync(join(dir, 'index.html'), createRequestAccessHtml())
+  writeFileSync(join(thanksDir, 'index.html'), createRequestAccessThanksHtml())
 }
 
 function createWorkInProgressHtml() {
@@ -59,6 +143,7 @@ function createWorkInProgressHtml() {
       <p>This page is not in use.</p>
       <ul class="link-list">
         <li><a href="../${previewOutputFolder('wmas')}/">Open Resusci-Time preview</a></li>
+        <li><a href="../request-access/">Request preview access</a></li>
         <li><a href="../">Home</a></li>
       </ul>
     `,
@@ -85,6 +170,7 @@ function createLivePlaceholderHtml() {
       </p>
       <ul class="link-list">
         <li><a href="${wmasPreviewFromLive}">Open preview (testing / simulation only)</a></li>
+        <li><a href="../request-access/">Request preview access</a></li>
         <li><a href="../">Back to home</a></li>
       </ul>
       <p class="hint">Do not use Resusci-Time for real patient contact until a governance-approved build is published at this address.</p>
@@ -108,6 +194,7 @@ function writeLivePlaceholders() {
 
 function copyStaticSiteAssets() {
   writeFileSync(join(outputRoot, 'index.html'), createLandingHtml())
+  writeRequestAccessPages()
 
   const backgroundsSrc = join(root, 'public', 'backgrounds')
   if (existsSync(backgroundsSrc)) {
@@ -116,6 +203,8 @@ function copyStaticSiteAssets() {
 
   if (includeBlog) {
     buildBlog(outputRoot)
+  } else {
+    rmSync(join(outputRoot, 'blog'), { recursive: true, force: true })
   }
 
   for (const cnamePath of [join(root, 'public', 'CNAME'), join(root, 'CNAME')]) {

@@ -6,7 +6,7 @@ import { printTrustUrls } from './trust-path-urls.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const port = process.env.PREVIEW_PORT ?? '4173'
-const includeBlog = process.env.INCLUDE_BLOG !== '0'
+const includeBlog = process.env.INCLUDE_BLOG === '1'
 
 function localLanHost() {
   const candidates = []

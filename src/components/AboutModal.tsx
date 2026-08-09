@@ -2,7 +2,6 @@ import { useState, type MouseEvent } from 'react'
 import { getAppVersionSummary } from '../appVersion'
 import { getAboutSections, SUPPORT_EMAIL } from '../aboutContent'
 import { serviceConfig } from '../config'
-import { getBlogUrl } from '../blogUrl'
 import { PreviewChangelogModal } from './PreviewChangelogModal'
 
 interface AboutModalProps {
@@ -11,8 +10,7 @@ interface AboutModalProps {
 }
 
 export function AboutModal({ onClose, onOpenAcknowledgements }: AboutModalProps) {
-  const { trustId, isPreview, features } = serviceConfig
-  const blogUrl = getBlogUrl(trustId)
+  const { isPreview, features } = serviceConfig
   const aboutSections = getAboutSections(features)
   const [previewChangelogOpen, setPreviewChangelogOpen] = useState(false)
 
@@ -47,7 +45,7 @@ export function AboutModal({ onClose, onOpenAcknowledgements }: AboutModalProps)
           ))}
 
           <section className="about-section">
-            <h3>Updates &amp; guides</h3>
+            <h3>Updates</h3>
             {isPreview ? (
               <p>
                 <button
@@ -60,14 +58,9 @@ export function AboutModal({ onClose, onOpenAcknowledgements }: AboutModalProps)
                 {' '}
                 — changes on this preview build that are not yet on a governance-approved release.
               </p>
-            ) : null}
-            <p>
-              <a className="about-email-link" href={blogUrl}>
-                Open the blog
-              </a>
-              {' '}
-              for published release notes and how-to guides.
-            </p>
+            ) : (
+              <p>Release notes will be shared through Trust channels when a governance-approved build is published.</p>
+            )}
           </section>
 
           <p className="about-contact">

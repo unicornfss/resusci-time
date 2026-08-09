@@ -9,7 +9,7 @@ export function formatTrustUrl(baseUrl, folder) {
   return `${root}/${folder}/`
 }
 
-export function printTrustUrls({ baseUrl, heading, includeHome = true, includeBlog = true }) {
+export function printTrustUrls({ baseUrl, heading, includeHome = true, includeBlog = false }) {
   if (heading) {
     console.log(heading)
   }

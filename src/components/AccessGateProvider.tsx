@@ -1,22 +1,29 @@
-import { useState, type ReactNode } from 'react'
+import { lazy, Suspense, type ReactNode } from 'react'
 import { serviceConfig } from '../config'
-import { readAccessSession } from '../accessControl'
-import { AccessGate } from './AccessGate'
 
 interface AccessGateProviderProps {
   children: ReactNode
 }
 
-/** Requires sign-in on preview builds. Live/approved builds skip the gate. */
+const LegacyClientAccessGate = lazy(() =>
+  import('./LegacyClientAccessGate').then((m) => ({ default: m.LegacyClientAccessGate })),
+)
+
+/**
+ * Optional in-app preview login. Disabled by default — Cloudflare Access
+ * protects /w2ht9vrl*. Set VITE_CLIENT_ACCESS_GATE=1 only if you need the
+ * old client-side form (e.g. local testing without Access).
+ * See docs/PREVIEW-ACCESS.md.
+ */
 export function AccessGateProvider({ children }: AccessGateProviderProps) {
-  const requiresAccess = serviceConfig.isPreview
-  const [username, setUsername] = useState<string | null>(() =>
-    requiresAccess ? readAccessSession() : 'live',
-  )
+  const clientGateEnabled = import.meta.env.VITE_CLIENT_ACCESS_GATE === '1'
+  const requiresAccess = serviceConfig.isPreview && clientGateEnabled
 
   if (!requiresAccess) return children
-  if (!username) {
-    return <AccessGate onAuthenticated={setUsername} />
-  }
-  return children
+
+  return (
+    <Suspense fallback={null}>
+      <LegacyClientAccessGate>{children}</LegacyClientAccessGate>
+    </Suspense>
+  )
 }

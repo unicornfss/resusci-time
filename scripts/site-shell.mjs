@@ -143,10 +143,63 @@ export function siteStyles(assetPrefix = './') {
         text-align: center;
       }
       .back-link { display: inline-block; margin-top: 1.5rem; font-weight: 600; color: var(--accent); }
+      .site-form { display: flex; flex-direction: column; gap: 0.85rem; margin: 1rem 0 0; }
+      .site-form label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .site-form input,
+      .site-form textarea,
+      .site-form select {
+        width: 100%;
+        min-height: 2.75rem;
+        padding: 0.65rem 0.75rem;
+        border-radius: 10px;
+        border: 2px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        font: inherit;
+      }
+      .site-form textarea { min-height: 6.5rem; resize: vertical; }
+      .site-form input:focus-visible,
+      .site-form textarea:focus-visible,
+      .site-form select:focus-visible {
+        outline: none;
+        border-color: var(--accent);
+      }
+      .site-form .optional { font-weight: 500; color: var(--text-muted); }
+      .site-form button[type="submit"] {
+        margin-top: 0.35rem;
+        min-height: 3rem;
+        border: none;
+        border-radius: 12px;
+        background: var(--accent);
+        color: #fff;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .site-form button[type="submit"]:hover,
+      .site-form button[type="submit"]:focus-visible {
+        filter: brightness(1.05);
+        outline: none;
+      }
+      .hp {
+        position: absolute;
+        left: -10000px;
+        top: auto;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+      }
 `
 }
 
-export function renderSitePage({ title, assetPrefix = './', body, wide = false, includeBlog = true }) {
+export function renderSitePage({ title, assetPrefix = './', body, wide = false, includeBlog = false }) {
   const homeHref = assetPrefix
   const blogHref = `${assetPrefix}blog/`
   const blogNav = includeBlog
