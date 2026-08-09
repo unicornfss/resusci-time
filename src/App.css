@@ -103,6 +103,72 @@ body::before {
   z-index: 1;
 }
 
+.access-gate {
+  justify-content: center;
+  max-width: 28rem;
+}
+
+.access-gate-card {
+  padding: 1.5rem 1.35rem;
+}
+
+.access-gate-card h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.55rem;
+  color: var(--green-800);
+  text-align: center;
+}
+
+.access-gate-lead,
+.access-gate-note {
+  margin: 0 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.access-gate-note {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+}
+
+.access-gate-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.access-gate-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.access-gate-field input {
+  min-height: var(--touch-min);
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.access-gate-field input:focus {
+  outline: none;
+  border-color: var(--green-700);
+}
+
+.access-gate-error {
+  margin: 0;
+  color: var(--red-700);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
 .header {
   text-align: center;
   padding: 1.5rem 0 1rem;

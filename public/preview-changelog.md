@@ -1,8 +1,28 @@
 # Preview build — what’s new
 
-Features below are on **preview URLs only** (DEMO icons, speed controls, startup warning). They are **not** on live field builds until merged to production. Published announcements appear on the [blog](/blog/) after release.
+Features below are on **preview URLs only** (DEMO icons, speed controls, startup warning, sign-in). They are **not** on live field builds until merged to production. Published announcements appear on the [blog](/blog/) after release.
 
-**App version:** 1.2.8 (preview) · **Last updated:** 21 July 2026
+**App version:** 1.3.0 (preview) · **Last updated:** 9 August 2026
+
+---
+
+## Version 1.3.0 · 9 August 2026
+
+### Governance posture (WMAS-only for now)
+
+- **Standard** and **custom / multi-organisation** supply are **closed** on the public site. Resusci-Time is treated as a **West Midlands Ambulance Service** tool while Trust governance and the medical-device route are decided.
+- This does **not** permanently rule out a Standard or other-trust build later if the WMAS path proves successful — it means they are **not actively considered** for the foreseeable future.
+- **Approved** URLs (`/standard/`, WMAS live slug) now show a **placeholder**: reserved for a future governance-approved release. The working app is the **preview** channel only.
+- Product chrome no longer says “WMAS version” in the page header/title (single product naming: **Resusci-Time** / **Resusci-Time (Preview)**).
+
+### Access control (preview)
+
+- Preview builds require **username and password** before use (session lasts until the browser tab is closed).
+- Intended for working-group simulation and internal review — not a substitute for full server-side authentication on static hosting.
+
+### Earlier preview work retained (from 1.2.8)
+
+- Timer bar: next rhythm check prominent; ROSC confirmation and 2-minute reset; Continuing ROSC option; menu above timer; mobile ROSC layout; Cardiac Arrest Checklist document.
 
 ---
 

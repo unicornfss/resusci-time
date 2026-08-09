@@ -19,6 +19,7 @@ const outputRoot = process.env.OUTPUT_DIR
   : join(root, 'dist-pages')
 
 const packageJson = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
+const wmasPreviewPath = `./${previewOutputFolder('wmas')}/`
 
 /** Live landing page label — use LIVE_PACKAGE_VERSION in CI when building landing from testing. */
 function getLiveDisplayVersion() {
@@ -38,12 +39,39 @@ function createLandingHtml() {
     includeBlog,
     body: `
       <h1>Resusci-Time</h1>
-      <p>Adult cardiac arrest protocol timer and checklist.</p>
+      <p>Adult cardiac arrest protocol timer and checklist for <strong>West Midlands Ambulance Service</strong>.</p>
       <ul class="link-list">
-        <li><a href="./standard/">Open Resusci-Time</a></li>${includeBlog ? '\n        <li><a href="./blog/">Blog - updates &amp; guides</a></li>' : ''}
+        <li><a href="${wmasPreviewPath}">Open preview (testing only)</a></li>${includeBlog ? '\n        <li><a href="./blog/">Blog - updates &amp; guides</a></li>' : ''}
       </ul>
-      <p class="hint">Custom versions for individual ambulance services and NHS trusts are provided by separate arrangement.</p>
+      <p class="hint">The live / approved address is reserved for a future governance-approved build. Until then, use the preview for simulation and internal testing only — not for patient contact. Sign-in is required.</p>
       <p class="version">${buildLabel}</p>
+    `,
+  })
+}
+
+function createLivePlaceholderHtml() {
+  const wmasPreviewFromLive = `../${previewOutputFolder('wmas')}/`
+  return renderSitePage({
+    title: 'Resusci-Time — approved build not yet available',
+    assetPrefix: '../',
+    includeBlog: false,
+    body: `
+      <h1>Approved build not yet available</h1>
+      <p>
+        This address is reserved for the <strong>governance-approved</strong> version of
+        Resusci-Time for West Midlands Ambulance Service — the build that has completed the Trust
+        clinical governance process.
+      </p>
+      <p>
+        That approved release is <strong>not ready yet</strong>. While the route and governance
+        work continue, the working application for simulation and internal testing is the
+        <strong>preview</strong> build, which may include unapproved changes and requires sign-in.
+      </p>
+      <ul class="link-list">
+        <li><a href="${wmasPreviewFromLive}">Open preview (testing / simulation only)</a></li>
+        <li><a href="../">Back to home</a></li>
+      </ul>
+      <p class="hint">Do not use Resusci-Time for real patient contact until a governance-approved build is published at this address.</p>
     `,
   })
 }
@@ -51,6 +79,14 @@ function createLandingHtml() {
 function buildTrustMode(mode, outputFolder) {
   execSync('npm run build:trust -- --mode ' + mode, { cwd: root, stdio: 'inherit' })
   cpSync(join(root, 'dist'), join(outputRoot, outputFolder), { recursive: true })
+}
+
+function writeLivePlaceholders() {
+  for (const { id } of trustManifest) {
+    const folder = join(outputRoot, liveOutputFolder(id))
+    mkdirSync(folder, { recursive: true })
+    writeFileSync(join(folder, 'index.html'), createLivePlaceholderHtml())
+  }
 }
 
 function copyStaticSiteAssets() {
@@ -74,9 +110,8 @@ function copyStaticSiteAssets() {
 }
 
 function buildLiveTrusts() {
-  for (const { id } of trustManifest) {
-    buildTrustMode(id, liveOutputFolder(id))
-  }
+  // Live / "approved" URLs stay as bookmarks but show a placeholder until governance signs off.
+  writeLivePlaceholders()
 }
 
 async function buildPreviewTrusts() {
@@ -108,13 +143,13 @@ async function main() {
     buildLiveTrusts()
     await buildPreviewTrusts()
     copyStaticSiteAssets()
-    console.log(`Built full dist-pages (live + preview${includeBlog ? ' + blog' : ''} + landing)`)
+    console.log(`Built full dist-pages (live placeholders + preview${includeBlog ? ' + blog' : ''} + landing)`)
   } else if (buildLiveOnly) {
     rmSync(outputRoot, { recursive: true, force: true })
     mkdirSync(outputRoot, { recursive: true })
     buildLiveTrusts()
     copyStaticSiteAssets()
-    console.log('Built live dist-pages (from current checkout)')
+    console.log('Built live dist-pages placeholders (from current checkout)')
   } else if (buildPreviewOnly) {
     mkdirSync(outputRoot, { recursive: true })
     await buildPreviewTrusts()
@@ -132,7 +167,7 @@ async function main() {
   }
   if (buildAll || buildLiveOnly) {
     const liveFolders = trustManifest.map(({ id }) => liveOutputFolder(id)).join(', ')
-    console.log(`Live folders: ${liveFolders}`)
+    console.log(`Live placeholder folders: ${liveFolders}`)
   }
   if (buildAll || buildPreviewOnly) {
     const previewIds = trustManifest.map(({ id }) => previewOutputFolder(id)).join(', ')

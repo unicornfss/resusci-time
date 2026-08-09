@@ -30,7 +30,7 @@ export const ABOUT_SECTIONS = [
   {
     heading: 'Development',
     body:
-      'Resusci-Time is developed and maintained by Jon Ostrowski (Paramedic / Clinical Team Mentor, WMAS). Custom builds can include service branding, protocol variations, offline installation for tablets and phones, and other features agreed with your organisation.',
+      'Resusci-Time is developed and maintained by Jon Ostrowski (Paramedic / Clinical Team Mentor, WMAS) for West Midlands Ambulance Service. The current public build is a preview for simulation and internal testing while Trust governance is completed.',
   },
   {
     heading: 'Privacy',
@@ -49,7 +49,7 @@ export const ABOUT_SECTIONS = [
   {
     heading: 'Contact',
     body:
-      'For support, to report errors, suggest improvements, or to discuss a custom version for your ambulance or NHS service, please get in touch.',
+      'For support, to report errors, or to suggest improvements, please get in touch.',
   },
 ]
 

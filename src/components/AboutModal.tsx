@@ -58,7 +58,7 @@ export function AboutModal({ onClose, onOpenAcknowledgements }: AboutModalProps)
                   What&apos;s new in this preview
                 </button>
                 {' '}
-                — unreleased changes on the preview build (not on live field URLs yet).
+                — changes on this preview build that are not yet on a governance-approved release.
               </p>
             ) : null}
             <p>

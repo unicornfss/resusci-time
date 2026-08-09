@@ -41,17 +41,19 @@ export { isTrustId } from './trustIds'
 export function getServiceConfig(trustId: TrustId, channel: BuildChannel = 'live'): ServiceConfig {
   const trust = TRUSTS[trustId]
   const isPreview = channel === 'preview'
-  const versionSuffix = isPreview ? ' version (Preview)' : ' version'
   const codeShock = resolveCodeShock(trust.features?.codeShock)
   const prolongedVfTorGate = resolveProlongedVfTorGate(trust.features?.prolongedVfTorGate)
+  // Sole public product is Resusci-Time (WMAS-backed). Do not show trust name in chrome.
+  const pageTitle = isPreview ? 'Resusci-Time (Preview)' : 'Resusci-Time'
+  const headerTitle = isPreview ? 'Resusci-Time (Preview)' : 'Resusci-Time'
 
   return {
     trustId: trust.trustId,
     trustLabel: trust.trustLabel,
     buildChannel: channel,
     isPreview,
-    pageTitle: `Resusci-Time - ${trust.trustLabel}${versionSuffix}`,
-    headerTitle: `Resusci-Time - ${trust.trustLabel}${versionSuffix}`,
+    pageTitle,
+    headerTitle,
     brandBackgroundAsset: trust.brandBackgroundAsset ?? defaultBrandBackgroundAsset,
     features: {
       ...(codeShock ? { codeShock } : {}),
@@ -73,9 +75,7 @@ export function buildWebManifest(config: ServiceConfig) {
 
   return {
     name: config.pageTitle,
-    short_name: config.isPreview
-      ? `Resusci-Time ${config.trustLabel} Preview`
-      : `Resusci-Time ${config.trustLabel}`,
+    short_name: config.isPreview ? 'Resusci-Time Preview' : 'Resusci-Time',
     description:
       'Guided adult cardiac arrest protocol timer and checklist for ambulance resources.',
     start_url: './',

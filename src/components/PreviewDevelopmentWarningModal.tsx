@@ -16,15 +16,14 @@ export function PreviewDevelopmentWarningModal({ onAcknowledge }: PreviewDevelop
         <h2 id="preview-warning-title">Not for clinical use</h2>
         <div id="preview-warning-body" className="preview-warning-body">
           <p>
-            This is the <strong>development (preview) version</strong> of Resusci-Time. It must{' '}
-            <strong>not</strong> be used in the field under any circumstances.
+            This is the <strong>preview</strong> of Resusci-Time. It is for{' '}
+            <strong>simulation and internal testing only</strong> and must{' '}
+            <strong>not</strong> be used for real patient contact.
           </p>
           <p>
-            This build may contain unapproved changes, experimental features, and errors. Use it
-            only for internal testing and training in a controlled environment.
-          </p>
-          <p>
-            The live, approved version should be used for any real patient contact.
+            This build may contain <strong>unapproved</strong> changes, experimental features, and
+            errors. The live / approved address is reserved for a future{' '}
+            <strong>governance-approved</strong> release — that build is not available yet.
           </p>
         </div>
         <button type="button" className="btn btn-primary btn-lg preview-warning-ack-btn" onClick={onAcknowledge}>

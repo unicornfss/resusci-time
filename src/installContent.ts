@@ -13,7 +13,7 @@ export const INSTALL_HELP: Record<
       'Scroll down and tap Add to Home Screen.',
       'Tap Add — the icon will appear on your home screen.',
     ],
-    note: 'Each trust version (WMAS / Standard) installs separately — bookmark the correct link before adding.',
+    note: 'Bookmark this preview link before adding to the home screen so you open the correct build.',
   },
   android: {
     intro: 'Install Resusci-Time on your Android device:',
@@ -23,7 +23,7 @@ export const INSTALL_HELP: Record<
       'Tap Install app or Add to Home screen.',
       'Confirm — the icon will appear on your home screen.',
     ],
-    note: 'Each trust version (WMAS / Standard) installs separately — use the link for your service.',
+    note: 'Bookmark this preview link before installing so you open the correct build.',
   },
   desktop: {
     intro: 'Install Resusci-Time as a desktop app (Windows, Mac, or Linux):',
@@ -40,10 +40,10 @@ export const INSTALL_HELP: Record<
     steps: [
       'Run: npm run build:all',
       'Then run: npm run preview:all',
-      'Open http://localhost:4173/standard-preview/ (preview) or /standard/ (live) — include the trailing slash.',
-      'The Install app button should appear in the header.',
+      'Open http://localhost:4173/w2ht9vrl/ (preview) — include the trailing slash.',
+      'Sign in with your preview credentials, then the Install app button should appear in the header.',
     ],
-    note: 'On the live site, the button works the same way in Chrome, Edge, and on Android.',
+    note: 'On the published preview URL, the button works the same way in Chrome, Edge, and on Android.',
   },
 }
 

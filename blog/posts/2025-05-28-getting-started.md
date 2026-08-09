@@ -3,7 +3,7 @@ title: Getting started with Resusci-Time
 date: 2025-05-28
 category: guide
 audience: all
-summary: Standard build capabilities and day-to-day use on shift.
+summary: Preview build — day-to-day use for simulation and internal testing.
 ---
 
 This guide covers the basics for crews using Resusci-Time on a phone or tablet.
@@ -12,15 +12,17 @@ This guide covers the basics for crews using Resusci-Time on a phone or tablet.
 
 Resusci-Time is based on the **Spring 2026 JRCALC / AACE adult resuscitation and verification of death guidelines**. It is **not intended to replace clinical knowledge and skill** — it is a support tool only. Mistakes may be present; any identified errors will be corrected as soon as possible.
 
-## 1. Open the Standard build
+**Current status:** the public site offers the **WMAS preview** for **simulation and internal testing only**. A governance-approved live build is not published yet — the approved URL shows a placeholder until Trust governance signs off.
 
-The **Standard** version is what we are publishing for general use. Open [Resusci-Time](../../standard/) from the [home page](../../) and bookmark the URL so you can open it quickly from the home screen.
+## 1. Open the WMAS preview
 
-**Custom versions** catering for individual ambulance services or NHS trusts can be provided on request — for example service crest or logo, trust-specific reminders, additional medication buttons, or other protocol-aligned options agreed with your clinical team. Contact the project maintainer if you would like to discuss a tailored build.
+Open [Resusci-Time (preview)](../../w2ht9vrl/) from the [home page](../../) and bookmark the URL so you can open it quickly from the home screen.
 
-## 2. What the Standard build includes
+Sign in with the credentials issued to you, then acknowledge the preview warning: this build may contain **unapproved** changes and must **not** be used for real patient contact.
 
-The Standard version provides the full core arrest workflow:
+## 2. What this build includes
+
+The WMAS preview provides the full core arrest workflow, plus WMAS-specific reminders where configured (for example CODE SHOCK and prolonged VF TOR gating).
 
 **Timer and protocol**
 
@@ -62,16 +64,17 @@ Saved “Other” entries reappear for quick re-use during the same case.
 - **Screen stays awake during a case** — while the timer is running, the app tries to prevent the display sleeping (works best in Chrome / Edge; allow if prompted)
 - Day / night theme
 - Works offline after first load
+- Preview-only: speed controls and DEMO icons for testing
 
 ## 3. Install on your device (optional)
 
-On **Chrome** or **Edge**, use **Install app** (or **Add to Home screen** on mobile). The timer then opens full-screen like a native app. You need **HTTPS** — the live site or a local preview build, not plain HTTP on a LAN address for some features.
+On **Chrome** or **Edge**, use **Install app** (or **Add to Home screen** on mobile). The timer then opens full-screen like a native app. You need **HTTPS** — the published preview URL or a local preview build.
 
 ## 4. Start a case
 
 1. Confirm **patient details** if prompted.
 2. Select the **initial rhythm** (VF/pVT, PEA, or Asystole).
-3. The **timer bar** shows elapsed time and upcoming actions (rhythm check, adrenaline, etc.).
+3. The **timer bar** shows next rhythm check, elapsed time, and upcoming actions.
 
 Tap buttons on the timer bar when you complete actions — they are logged with a timestamp.
 
@@ -94,8 +97,8 @@ When you are finished, tap **New case** to clear the timer and log. If entries e
 
 ## Tips
 
-- Run through a **training case** before first live use.
+- Run through a **training / simulation case** before relying on the tool in any operational discussion.
 - Keep screen brightness up and **Do Not Disturb** on if possible — the app also tries to keep the screen awake during an active case.
 - The app supports **day/night** theme from the header toggle.
 
-More guides will be added here as features grow. If you spot a bug, need a custom service build, or have a feature idea, contact your local clinical lead or the project maintainer.
+More guides will be added here as features grow. If you spot a bug or have a feature idea, contact your local clinical lead or the project maintainer.
