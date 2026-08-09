@@ -42,10 +42,10 @@ function createLandingHtml() {
       <h1>Resusci-Time</h1>
       <p>Adult cardiac arrest protocol timer and checklist for <strong>West Midlands Ambulance Service</strong>.</p>
       <ul class="link-list">
-        <li><a href="${wmasPreviewPath}">Open preview (testing only)</a></li>
+        <li><a href="${wmasPreviewPath}">Open preview (approved testers only)</a></li>
         <li><a href="./request-access/">Request preview access</a></li>${includeBlog ? '\n        <li><a href="./blog/">Blog - updates &amp; guides</a></li>' : ''}
       </ul>
-      <p class="hint">The live / approved address is reserved for a future governance-approved build. Until then, use the preview for simulation and internal testing only — not for patient contact. Sign-in with an approved work email is required for the preview.</p>
+      <p class="hint">The preview is for simulation and internal testing only — not for patient contact. It is limited to <strong>approved people</strong> on the access list. If you are not approved, sign-in will fail and you will not be able to open the app — use <a href="./request-access/">Request preview access</a> first. A governance-approved live build is not published yet.</p>
       <p class="version">${buildLabel}</p>
     `,
   })
@@ -147,11 +147,11 @@ function createLivePlaceholderHtml() {
         <strong>preview</strong> build, which may include unapproved changes and requires sign-in.
       </p>
       <ul class="link-list">
-        <li><a href="${wmasPreviewFromLive}">Open preview (testing / simulation only)</a></li>
+        <li><a href="${wmasPreviewFromLive}">Open preview (approved testers only)</a></li>
         <li><a href="../request-access/">Request preview access</a></li>
         <li><a href="../">Back to home</a></li>
       </ul>
-      <p class="hint">Do not use Resusci-Time for real patient contact until a governance-approved build is published at this address.</p>
+      <p class="hint">The preview is limited to approved people on the access list. If you are not approved, you will not be able to open it — request access first. Do not use Resusci-Time for real patient contact until a governance-approved build is published at this address.</p>
     `,
   })
 }
