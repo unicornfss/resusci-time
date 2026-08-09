@@ -24,6 +24,8 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
       const normalised = username.trim().toLowerCase()
       writeAccessSession(normalised)
       onAuthenticated(normalised)
+    } catch {
+      setError('Sign-in failed. Try again, or open the site over HTTPS / localhost.')
     } finally {
       setBusy(false)
     }

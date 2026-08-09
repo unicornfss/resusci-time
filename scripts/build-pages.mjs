@@ -49,6 +49,22 @@ function createLandingHtml() {
   })
 }
 
+function createWorkInProgressHtml() {
+  return renderSitePage({
+    title: 'Resusci-Time — work in progress',
+    assetPrefix: '../',
+    includeBlog: false,
+    body: `
+      <h1>Work in progress</h1>
+      <p>This page is not in use.</p>
+      <ul class="link-list">
+        <li><a href="../${previewOutputFolder('wmas')}/">Open Resusci-Time preview</a></li>
+        <li><a href="../">Home</a></li>
+      </ul>
+    `,
+  })
+}
+
 function createLivePlaceholderHtml() {
   const wmasPreviewFromLive = `../${previewOutputFolder('wmas')}/`
   return renderSitePage({
@@ -85,7 +101,8 @@ function writeLivePlaceholders() {
   for (const { id } of trustManifest) {
     const folder = join(outputRoot, liveOutputFolder(id))
     mkdirSync(folder, { recursive: true })
-    writeFileSync(join(folder, 'index.html'), createLivePlaceholderHtml())
+    const html = id === 'standard' ? createWorkInProgressHtml() : createLivePlaceholderHtml()
+    writeFileSync(join(folder, 'index.html'), html)
   }
 }
 
@@ -119,12 +136,19 @@ async function buildPreviewTrusts() {
   syncPreviewChangelogToPublic()
 
   for (const { id } of trustManifest) {
+    if (id === 'standard') {
+      const folder = join(outputRoot, previewOutputFolder(id))
+      mkdirSync(folder, { recursive: true })
+      writeFileSync(join(folder, 'index.html'), createWorkInProgressHtml())
+      continue
+    }
     buildTrustMode(`${id}-preview`, previewOutputFolder(id))
   }
 
   const changelogSrc = join(root, 'public', 'preview-changelog.md')
   if (existsSync(changelogSrc)) {
     for (const { id } of trustManifest) {
+      if (id === 'standard') continue
       const folder = join(outputRoot, previewOutputFolder(id))
       if (existsSync(folder)) {
         cpSync(changelogSrc, join(folder, 'preview-changelog.md'))
