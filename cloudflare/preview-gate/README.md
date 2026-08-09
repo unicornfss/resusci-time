@@ -28,8 +28,6 @@ npx wrangler deploy
 
 5. Test in a private window. You should see the Worker login, then the app.
 
-6. Turn off the in-app gate once this works (`VITE_CLIENT_ACCESS_GATE=0` on preview builds).
-
 ## Rotate users
 
 Update the `PREVIEW_USERS` secret and save. No app redeploy required. Existing sessions expire after `SESSION_TTL_SECONDS` (default 12 hours).

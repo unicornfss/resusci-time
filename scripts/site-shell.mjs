@@ -196,6 +196,20 @@ export function siteStyles(assetPrefix = './') {
         height: 1px;
         overflow: hidden;
       }
+      .form-embed {
+        margin: 1rem 0 1.25rem;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+        min-height: 28rem;
+      }
+      .form-embed iframe {
+        display: block;
+        width: 100%;
+        min-height: 32rem;
+        border: 0;
+      }
 `
 }
 

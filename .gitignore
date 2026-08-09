@@ -13,8 +13,6 @@ dist-ssr
 dist-pages
 LOCAL-DEV.md
 *.local
-ACCESS-CREDENTIALS*.md
-ACCESS-CREDENTIALS*.local.md
 
 # Editor directories and files
 .vscode/*

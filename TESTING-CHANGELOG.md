@@ -17,9 +17,8 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 
 ### Access control (preview)
 
-- **Cloudflare Access** (email one-time PIN to allow-listed addresses, typically `@wmas.nhs.uk`) protects `/w2ht9vrl*` before the app loads. Setup notes: `docs/PREVIEW-ACCESS.md`. Microsoft Entra (Trust SSO) is a possible later login method.
-- The old in-app username/password screen is **off** (`VITE_CLIENT_ACCESS_GATE=0`). Approved/live placeholders stay open.
-- Public **Request preview access** form at `/request-access/` emails Jon for allow-list review (does not grant access automatically).
+- **Cloudflare Access** (email one-time PIN to allow-listed addresses, typically `@wmas.nhs.uk`) protects `/w2ht9vrl*` before the app loads. Setup notes: `docs/PREVIEW-ACCESS.md`. There is no in-app login. Approved/live placeholders stay open.
+- Public **Request preview access** page at `/request-access/` embeds a Microsoft Form (does not grant access automatically).
 
 ### Blog
 

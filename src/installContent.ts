@@ -41,7 +41,7 @@ export const INSTALL_HELP: Record<
       'Run: npm run build:all',
       'Then run: npm run preview:all',
       'Open http://localhost:4173/w2ht9vrl/ (preview) — include the trailing slash.',
-      'Sign in with your preview credentials, then the Install app button should appear in the header.',
+      'Complete Cloudflare Access sign-in if prompted, then the Install app button should appear in the header.',
     ],
     note: 'On the published preview URL, the button works the same way in Chrome, Edge, and on Android.',
   },

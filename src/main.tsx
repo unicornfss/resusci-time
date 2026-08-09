@@ -6,7 +6,6 @@ import { publicAssetUrl } from './publicAssetUrl'
 import { registerServiceWorker } from './registerServiceWorker'
 import './index.css'
 import { TimingConfigProvider } from './context/TimingConfigContext'
-import { AccessGateProvider } from './components/AccessGateProvider'
 import App from './App.tsx'
 
 document.title = serviceConfig.pageTitle
@@ -22,9 +21,7 @@ document.documentElement.style.setProperty(
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <TimingConfigProvider>
-      <AccessGateProvider>
-        <App />
-      </AccessGateProvider>
+      <App />
     </TimingConfigProvider>
   </StrictMode>,
 )

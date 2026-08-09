@@ -6,7 +6,6 @@ import trustManifest from '../src/config/trust-manifest.json' with { type: 'json
 import { buildBlog } from './build-blog.mjs'
 import { previewOutputFolder, liveOutputFolder } from './trustPaths.mjs'
 import { renderSitePage } from './site-shell.mjs'
-import { PRODUCTION_SITE_BASE } from './trust-path-urls.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const buildLiveOnly = process.env.BUILD_LIVE_ONLY === '1'
@@ -22,8 +21,6 @@ const outputRoot = process.env.OUTPUT_DIR
 
 const packageJson = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 const wmasPreviewPath = `./${previewOutputFolder('wmas')}/`
-const ACCESS_REQUEST_EMAIL = 'jon.ostrowski@wmas.nhs.uk'
-const SITE_ORIGIN = PRODUCTION_SITE_BASE.replace(/\/$/, '')
 
 /** Live landing page label — use LIVE_PACKAGE_VERSION in CI when building landing from testing. */
 function getLiveDisplayVersion() {
@@ -55,7 +52,8 @@ function createLandingHtml() {
 }
 
 function createRequestAccessHtml() {
-  const thanksUrl = `${SITE_ORIGIN}/request-access/thanks/`
+  const formUrl = 'https://forms.cloud.microsoft/e/R54hJjwT9m'
+
   return renderSitePage({
     title: 'Request preview access · Resusci-Time',
     assetPrefix: '../',
@@ -63,43 +61,27 @@ function createRequestAccessHtml() {
     body: `
       <h1>Request preview access</h1>
       <p>
-        The Resusci-Time preview is for simulation and internal testing only. It is signed-in
-        access for people on an approved email list (usually a WMAS work email).
+        The Resusci-Time preview is for simulation and internal testing only. Access is limited to
+        an approved list. Approval normally requires a
+        <strong>WMAS work email ending in @wmas.nhs.uk</strong>.
       </p>
+      <p>
+        Use the Microsoft Form below to request access. Submissions are reviewed before anyone is
+        added — sending a request does not grant access automatically.
+      </p>
+      <div class="form-embed">
+        <iframe
+          title="Resusci-Time preview access request"
+          src="${formUrl}"
+          loading="lazy"
+          allowfullscreen
+        ></iframe>
+      </div>
       <p class="hint">
-        Submit this form to ask to be added. Requests are reviewed before access is granted —
-        submitting does not open the preview automatically. You can also ask a working-group
-        member to pass your details to Jon Ostrowski.
+        If the form does not load, open it in a new tab:
+        <a href="${formUrl}" target="_blank" rel="noopener noreferrer">Request preview access (Microsoft Form)</a>.
+        You can also ask a working-group member to pass your details on for you.
       </p>
-      <form class="site-form" action="https://formsubmit.co/${ACCESS_REQUEST_EMAIL}" method="POST">
-        <input type="hidden" name="_subject" value="Resusci-Time preview access request" />
-        <input type="hidden" name="_template" value="table" />
-        <input type="hidden" name="_next" value="${thanksUrl}" />
-        <input type="hidden" name="_captcha" value="false" />
-        <input type="text" name="_honey" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
-
-        <label>
-          Full name
-          <input type="text" name="name" required autocomplete="name" />
-        </label>
-        <label>
-          Work email
-          <input type="email" name="email" required autocomplete="email" />
-        </label>
-        <label>
-          Role / team <span class="optional">(optional)</span>
-          <input type="text" name="role" autocomplete="organization-title" />
-        </label>
-        <label>
-          Why do you need access?
-          <textarea name="reason" required maxlength="2000" placeholder="e.g. working-group testing, clinical review"></textarea>
-        </label>
-        <label>
-          Working-group member who referred you <span class="optional">(optional)</span>
-          <input type="text" name="referred_by" />
-        </label>
-        <button type="submit">Send request</button>
-      </form>
       <a class="back-link" href="../">← Home</a>
     `,
   })
@@ -107,20 +89,16 @@ function createRequestAccessHtml() {
 
 function createRequestAccessThanksHtml() {
   return renderSitePage({
-    title: 'Request sent · Resusci-Time',
+    title: 'Request preview access · Resusci-Time',
     assetPrefix: '../../',
     includeBlog: false,
     body: `
-      <h1>Request sent</h1>
-      <p>
-        Thank you. Your request has been submitted for review. If access is granted, you will be
-        able to sign in at the preview link using the email address you provided.
-      </p>
+      <h1>Request preview access</h1>
+      <p>Use the request page to open the access form.</p>
       <ul class="link-list">
-        <li><a href="../../${previewOutputFolder('wmas')}/">Open preview</a></li>
+        <li><a href="../">Request preview access</a></li>
         <li><a href="../../">Home</a></li>
       </ul>
-      <p class="hint">Allow time for the request to be checked. Check junk mail if you expected a reply and have not heard back.</p>
     `,
   })
 }

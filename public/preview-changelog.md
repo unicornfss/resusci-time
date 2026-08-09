@@ -17,8 +17,8 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 
 ### Access control (preview)
 
-- Preview builds require **username and password** before use (session lasts until the browser tab is closed).
-- Intended for working-group simulation and internal review — not a substitute for full server-side authentication on static hosting.
+- Preview is protected by **Cloudflare Access** (email one-time PIN to an approved allow-list) before the app loads. There is no in-app username/password screen.
+- Intended for working-group simulation and internal review.
 
 ### Earlier preview work retained (from 1.2.8)
 

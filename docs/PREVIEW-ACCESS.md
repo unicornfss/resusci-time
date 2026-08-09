@@ -2,7 +2,7 @@
 
 Approved / live URLs stay lightly gated (placeholder pages). **Preview** (`/w2ht9vrl/`) must not ship the app JS to the public internet without real authentication.
 
-The old in-app username/password form was only a deterrent: usernames and password hashes are inside the downloaded JavaScript and can be bypassed. **Do not rely on it.**
+There is **no** in-app username/password gate. Preview protection is edge-only (Cloudflare Access before HTML/JS is served).
 
 ## Recommended: Cloudflare Access (Zero Trust)
 
@@ -31,15 +31,16 @@ Do **not** put Access on `/`, `/standard/`, `/7kpm3xnq/`, or other non-preview p
 
 ### Requesting preview access
 
-A public form is on the site at `/request-access/`. It emails `jon.ostrowski@wmas.nhs.uk` (via FormSubmit). Requests are reviewed before anyone is added to Cloudflare Access — the form does not grant access automatically.
+Use `/request-access/` on the site. It embeds the Microsoft Form
+[https://forms.cloud.microsoft/e/R54hJjwT9m](https://forms.cloud.microsoft/e/R54hJjwT9m)
+(with a link fallback). Requests are reviewed before anyone is added to Cloudflare Access.
 
-**First use:** FormSubmit sends an activation email to that address. Confirm it once, then further requests arrive as normal. Check junk if the activation mail is missing.
+Built-in Forms email alerts are usually only a short “new response” notice with a link — not the full answers. To get the whole submission in email, use **Power Automate** (When a new response is submitted → Get response details → Send an email with the fields in the body).
 
 ### After Access is live
 
-1. Open https://resusci-time.adminforge.co.uk/w2ht9vrl/ in a private window — you should hit Cloudflare’s login, not the old in-app form.
-2. Tell the group they will get an email code (or IdP login), not the old `ACCESS-CREDENTIALS.local.md` passwords.
-3. Once confirmed, turn off the temporary client-side gate if it is still enabled (`VITE_CLIENT_ACCESS_GATE=0`) and redeploy `testing`.
+1. Open https://resusci-time.adminforge.co.uk/w2ht9vrl/ in a private window — you should hit Cloudflare’s login.
+2. Tell the group they will get an email code (or IdP login). They do not need a Cloudflare account.
 
 ### Optional: protect only a subdomain
 
@@ -64,14 +65,6 @@ Then attach a **Worker route** in the Cloudflare dashboard:
 `resusci-time.adminforge.co.uk/w2ht9vrl*` → this Worker  
 
 Set `ORIGIN_BASE` to your GitHub Pages origin (see `wrangler.toml`) so the Worker does not loop on the custom domain.
-
----
-
-## Optional client-side gate (off by default)
-
-With Cloudflare Access live, preview builds set `VITE_CLIENT_ACCESS_GATE=0` so there is **only** the Cloudflare login.
-
-To force the old in-app form (e.g. local Vite without Access), set `VITE_CLIENT_ACCESS_GATE=1`. That mode still ships password hashes in JS — use only as a temporary deterrent. Credentials file: `ACCESS-CREDENTIALS.local.md` (gitignored).
 
 ---
 
