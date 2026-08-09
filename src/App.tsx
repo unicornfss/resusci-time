@@ -31,6 +31,7 @@ import { TimerActionButton } from './components/TimerActionButton'
 import { useMetronome } from './hooks/useMetronome'
 import { useWakeLock } from './hooks/useWakeLock'
 import { useBelowFoldHint } from './hooks/useBelowFoldHint'
+import { useLandscapeRotateHint } from './hooks/useLandscapeRotateHint'
 import { useScrollWhenShown } from './hooks/useScrollWhenShown'
 import {
   createDisplayLogEntry,
@@ -80,6 +81,7 @@ import { InitialAssessmentPanel } from './components/InitialAssessmentPanel'
 import { ReversibleCausesModal } from './components/ReversibleCausesModal'
 import { AboutModal } from './components/AboutModal'
 import { AcknowledgementsModal } from './components/AcknowledgementsModal'
+import { SHOW_ACKNOWLEDGEMENTS } from './acknowledgementsContent'
 import { DocumentsModal } from './components/DocumentsModal'
 import { PreviewDevelopmentWarningModal } from './components/PreviewDevelopmentWarningModal'
 import { AppVersionInfo } from './components/AppVersionInfo'
@@ -91,6 +93,7 @@ import { ClinicalDiscussionTimerSection } from './components/ClinicalDiscussionT
 import { EventLogPanel } from './components/EventLogPanel'
 import { SharedLogViewer } from './components/SharedLogViewer'
 import { ScrollBelowFoldHint } from './components/ScrollBelowFoldHint'
+import { LandscapeRotateHint } from './components/LandscapeRotateHint'
 import { SavedLogsModal } from './components/SavedLogsModal'
 import { SavedLogDetailModal } from './components/SavedLogDetailModal'
 import { CaseContinuationModal } from './components/CaseContinuationModal'
@@ -1686,6 +1689,8 @@ function App() {
     step === 'select-rhythm' ||
     (step === 'active-resuscitation' && initialRhythm != null && !patientHandedOver)
   const showBelowFoldHint = useBelowFoldHint(belowFoldContentRef, belowFoldHintEnabled)
+  const { visible: showLandscapeRotateHint, dismiss: dismissLandscapeRotateHint } =
+    useLandscapeRotateHint()
   const belowFoldHintLabel =
     step === 'initial-assessment'
       ? 'Scroll for assessment'
@@ -1891,7 +1896,9 @@ function App() {
             onAbout={() => setAboutOpen(true)}
             onDocuments={() => setDocumentsOpen(true)}
             onSavedLogs={() => setSavedLogsOpen(true)}
-            onAcknowledgements={() => setAcknowledgementsOpen(true)}
+            onAcknowledgements={
+              SHOW_ACKNOWLEDGEMENTS ? () => setAcknowledgementsOpen(true) : undefined
+            }
             dismissNonce={headerMenuDismissNonce}
             onExportDebugReport={
               isPreviewDebugLogEnabled() ? exportPreviewDebugReportFromApp : undefined
@@ -2587,6 +2594,11 @@ function App() {
         )}
       </main>
 
+      <LandscapeRotateHint
+        visible={showLandscapeRotateHint}
+        onDismiss={dismissLandscapeRotateHint}
+      />
+
       <ScrollBelowFoldHint
         visible={showBelowFoldHint}
         label={belowFoldHintLabel}
@@ -2599,16 +2611,20 @@ function App() {
           <button type="button" className="footer-link-btn" onClick={() => setAboutOpen(true)}>
             About &amp; contact
           </button>
-          <span className="footer-sep" aria-hidden="true">
-            ·
-          </span>
-          <button
-            type="button"
-            className="footer-link-btn"
-            onClick={() => setAcknowledgementsOpen(true)}
-          >
-            Acknowledgements
-          </button>
+          {SHOW_ACKNOWLEDGEMENTS && (
+            <>
+              <span className="footer-sep" aria-hidden="true">
+                ·
+              </span>
+              <button
+                type="button"
+                className="footer-link-btn"
+                onClick={() => setAcknowledgementsOpen(true)}
+              >
+                Acknowledgements
+              </button>
+            </>
+          )}
         </p>
         <AppVersionInfo />
       </footer>
@@ -2620,11 +2636,13 @@ function App() {
       {aboutOpen && (
         <AboutModal
           onClose={() => setAboutOpen(false)}
-          onOpenAcknowledgements={() => setAcknowledgementsOpen(true)}
+          onOpenAcknowledgements={
+            SHOW_ACKNOWLEDGEMENTS ? () => setAcknowledgementsOpen(true) : undefined
+          }
         />
       )}
 
-      {acknowledgementsOpen && (
+      {SHOW_ACKNOWLEDGEMENTS && acknowledgementsOpen && (
         <AcknowledgementsModal
           onClose={() => setAcknowledgementsOpen(false)}
           onOpenAbout={() => setAboutOpen(true)}

@@ -6,7 +6,7 @@ interface HeaderAppMenuProps {
   onAbout: () => void
   onDocuments: () => void
   onSavedLogs: () => void
-  onAcknowledgements: () => void
+  onAcknowledgements?: () => void
   onExportDebugReport?: () => void
   testControls?: ReactNode
   /** Increment to force-close the menu (e.g. when a clinical alert appears). */
@@ -110,14 +110,16 @@ export function HeaderAppMenu({
           >
             Saved logs
           </button>
-          <button
-            type="button"
-            className="header-menu-item"
-            role="menuitem"
-            onClick={() => runAction(onAcknowledgements)}
-          >
-            Acknowledgements
-          </button>
+          {onAcknowledgements && (
+            <button
+              type="button"
+              className="header-menu-item"
+              role="menuitem"
+              onClick={() => runAction(onAcknowledgements)}
+            >
+              Acknowledgements
+            </button>
+          )}
           {installVisible && (
             <button
               type="button"

@@ -1,5 +1,8 @@
 import type { TrustId } from './config/types'
 
+/** Set true when acknowledgements are approved for public display again. */
+export const SHOW_ACKNOWLEDGEMENTS = false
+
 export interface AcknowledgementSection {
   heading: string
   paragraphs?: readonly string[]
@@ -15,6 +18,7 @@ const REVIEW_AND_TESTING_SECTION: AcknowledgementSection = {
     'Steve Jeffries — Consultant Paramedic (WMAS)',
     'Rich Price — Paramedic / Clinical Team Mentor (WMAS)',
     'Kerri Richards — Paramedic (WMAS)',
+    'Laurence Arc — Paramedic / Clinical Team Mentor (WMAS)',
     'Sam Simpson — Paramedic / Clinical Team Mentor (WMMAS)',
     'Chris Stevens — Paramedic / Clinical Team Mentor (WMAS)',
     'Chris Andrews - Tech to Para (WMAS)',
@@ -26,8 +30,8 @@ const SHARED_SECTIONS: readonly AcknowledgementSection[] = [
   {
     heading: 'Clinical sources',
     paragraphs: [
-      'Thank you to Resuscitation Council UK, the Joint Royal Colleges Ambulance Liaison Committee (JRCALC), and the Association of Ambulance Chief Executives (AACE). The core clinical information, timing, and prompts in Resusci-Time are based on their published UK guidance.',
-      'Resusci-Time is an independent application developed by Ostroforge. It is not affiliated with, endorsed by, or approved by RCUK, JRCALC, or AACE.',
+      'The core clinical information, timing, and prompts in Resusci-Time are heavily based on published UK guidance from Resuscitation Council UK (RCUK), the Joint Royal Colleges Ambulance Liaison Committee (JRCALC), and the Association of Ambulance Chief Executives (AACE).',
+      'Resusci-Time is an independent application. It is not affiliated with, endorsed by, or approved by RCUK, JRCALC, or AACE.',
     ],
     items: [
       'The Advanced Life Support (ALS) algorithm available under Documents originates from Resuscitation Council UK materials.',

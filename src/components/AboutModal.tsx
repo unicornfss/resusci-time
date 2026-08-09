@@ -11,7 +11,7 @@ interface AboutModalProps {
 
 export function AboutModal({ onClose, onOpenAcknowledgements }: AboutModalProps) {
   const { isPreview, features } = serviceConfig
-  const aboutSections = getAboutSections(features)
+  const aboutSections = getAboutSections(features, isPreview)
   const [previewChangelogOpen, setPreviewChangelogOpen] = useState(false)
 
   function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
@@ -56,7 +56,8 @@ export function AboutModal({ onClose, onOpenAcknowledgements }: AboutModalProps)
                   What&apos;s new in this preview
                 </button>
                 {' '}
-                — changes on this preview build that are not yet on a governance-approved release.
+                — changes on this WMAS preview that are not yet on a governance-approved release.
+                Other trusts / a Standard channel are not under active consideration.
               </p>
             ) : (
               <p>Release notes will be shared through Trust channels when a governance-approved build is published.</p>

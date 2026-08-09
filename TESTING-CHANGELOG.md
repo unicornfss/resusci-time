@@ -1,6 +1,8 @@
 # Preview build — what’s new
 
-Features below are on **preview URLs only** (DEMO icons, speed controls, startup warning, sign-in). They are **not** on live field builds until merged to production. Published announcements appear on the [blog](/blog/) after release.
+Features below are on the **WMAS preview** (DEMO icons, speed controls, startup warning, signed-in access). They are **not** on a governance-approved staff release. A public blog is not published; use this list and **About → What’s new in this preview**.
+
+**Focus:** Resusci-Time is being developed for **West Midlands Ambulance Service** only at this time. Builds or configuration for other trusts, and a public Standard channel, are **not under active consideration**.
 
 **App version:** 1.3.0 (preview) · **Last updated:** 9 August 2026
 
@@ -8,25 +10,27 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 
 ## Version 1.3.0 · 9 August 2026
 
-### Governance posture (WMAS-only for now)
+### Governance posture (WMAS)
 
-- **Standard** and **custom / multi-organisation** supply are **closed** on the public site. Resusci-Time is treated as a **West Midlands Ambulance Service** tool while Trust governance and the medical-device route are decided.
-- This does **not** permanently rule out a Standard or other-trust build later if the WMAS path proves successful — it means they are **not actively considered** for the foreseeable future.
-- **Approved** URLs (`/standard/`, WMAS live slug) now show a **placeholder**: reserved for a future governance-approved release. The working app is the **preview** channel only.
-- Product chrome no longer says “WMAS version” in the page header/title (single product naming: **Resusci-Time** / **Resusci-Time (Preview)**).
+- Public site is **WMAS-focused**. The only working app is the **WMAS preview** (simulation / internal testing).
+- Addresses reserved for an **approved** live build show a **placeholder** only — they do not run a clinical app yet.
+- Product chrome uses **Resusci-Time** / **Resusci-Time (Preview)** (no separate “WMAS version” label in the header).
 
 ### Access control (preview)
 
-- **Cloudflare Access** (email one-time PIN to allow-listed addresses, typically `@wmas.nhs.uk`) protects `/w2ht9vrl*` before the app loads. Setup notes: `docs/PREVIEW-ACCESS.md`. There is no in-app login. Approved/live placeholders stay open.
+- **Cloudflare Access** (email one-time PIN to allow-listed addresses, typically `@wmas.nhs.uk`) protects `/w2ht9vrl*` before the app loads. There is no in-app login. Setup notes: `docs/PREVIEW-ACCESS.md`.
 - Public **Request preview access** page at `/request-access/` embeds a Microsoft Form (does not grant access automatically).
+- Contact email in About: **jon.ostrowski@wmas.nhs.uk**.
+- **Acknowledgements** page is prepared but **hidden** from the site until approved (flip `SHOW_ACKNOWLEDGEMENTS` in `src/acknowledgementsContent.ts`).
 
 ### Blog
 
-- Public **blog** is **not shown** (removed from home, nav, About, and footer). Preview changes remain via the in-app / preview-changelog path. Set `INCLUDE_BLOG=1` only if rebuilding the blog intentionally.
+- Public **blog** is **not shown**. Preview changes are listed here and in-app under About.
 
 ### Earlier preview work retained (from 1.2.8)
 
 - Timer bar: next rhythm check prominent; ROSC confirmation and 2-minute reset; Continuing ROSC option; menu above timer; mobile ROSC layout; Cardiac Arrest Checklist document.
+- Touch phones/tablets in landscape show a **rotate to portrait** hint (dismissible; hides when upright).
 
 ---
 
@@ -49,9 +53,9 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 - The header **Menu** panel appears **above** the sticky timer bar so all items stay tappable.
 - If a clinical alert (for example rhythm check) appears while the menu is open, the **menu closes** so the alert is not blocked.
 
-### WMAS documents
+### Documents
 
-- **WMAS only:** **Cardiac Arrest Checklist** added under **Menu → Documents** (PDF). Not shown on Standard.
+- **Cardiac Arrest Checklist** added under **Menu → Documents** (PDF).
 
 ---
 
@@ -67,20 +71,18 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 - Continue-case prompt only if the **last log entry** was within **10 protocol minutes** (preview speed is taken into account).
 - No continuation offer after **patient handed over**; start-screen and modal text refer to last log entry time, not autosave time.
 
-### Trust builds
+### Configuration
 
-- **Standard** patient handover modal no longer mentions Resusci-Time transfer (that note remains on custom builds with case transfer).
-- WMAS trust config simplified (`codeShock: true`, `prolongedVfTorGate: true`); case transfer enabled for non-Standard builds by default.
+- WMAS features include CODE SHOCK and prolonged VF at TOR; **Transfer case** (QR handoff) is available in this preview.
 
 ---
 
 ## Version 1.2.6 · 9 June 2026
 
-### Trust builds — case transfer
+### Case transfer
 
-- **Transfer case** (header button, QR handoff to another Resusci-Time device, receive-via-scan) is **enabled on WMAS** and other custom trust builds only.
-- **Standard** build keeps **Patient handed over** on the timer bar; it no longer offers QR case transfer between devices.
-- Custom trust builds get case transfer by default; set `caseTransfer: false` in trust config to disable.
+- **Transfer case** (header button, QR handoff to another Resusci-Time device, receive-via-scan) is available in this WMAS preview.
+- **Patient handed over** remains on the timer bar for handover when the receiving crew is **not** continuing on Resusci-Time.
 
 ---
 
@@ -94,7 +96,7 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 
 ### Build / deploy
 
-- **What’s new** changelog is synced before preview builds (fixes stale 1.2.4 text when the app footer already shows a newer version).
+- **What’s new** changelog is synced before preview builds.
 - Public home page version label uses the **live (`main`) version** when deploying from `testing` — preview can be ahead without changing the landing-page number.
 
 ---
@@ -134,19 +136,15 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 ### About & acknowledgements
 
 - **About** — developer credit, clinical basis, and contact details refined.
-- **Acknowledgements** (menu and footer) — thanks to clinical reviewers and to RCUK, JRCALC, and AACE as published guidance sources (independent app; not endorsed by those bodies).
+- **Acknowledgements** (menu and footer) — clinical reviewers named; clinical content based on published RCUK / JRCALC / AACE guidance (independent app; not endorsed by those bodies).
 
 ---
 
 ## Version 1.2.2 · 4 June 2026
 
-### WMAS — CODE SHOCK (WMAS guidance)
+### CODE SHOCK (WMAS guidance)
 
 - Reminder rules updated to match **WMAS** guidance: after the **first shock**, only when **initial rhythm was VF / pVT** (the reminder will now **not** appear when a shock is delivered where the initial rhythm **was not** VF / pVT).
-
-### Bug fixes
-
-- **WMAS:** CODE SHOCK blog banner — subtitle lines centred with the “CODE SHOCK” headline.
 
 ---
 
@@ -201,8 +199,7 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 
 ### Icons
 
-- Preview builds use **DEMO** favicon and PWA icons (distinct from live field builds).
-- WMAS live builds use trust-specific icons when deployed to production; WMAS preview still uses DEMO icons.
+- Preview builds use **DEMO** favicon and PWA icons (distinct from any future approved build).
 
 ### Preview startup warning
 
@@ -216,7 +213,7 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 
 - **Documents** button in the header (replaces the old ALS link under the subtitle).
 - Opens protocol reference images in a modal. Rhythm-check alerts still appear **above** an open document.
-- All trusts: **Advanced Life Support (ALS) algorithm**.
+- Includes **Advanced Life Support (ALS) algorithm** and **WMAS ToR criteria** (ALS bag aide memoire).
 
 ### Termination of resuscitation (TOR)
 
@@ -235,24 +232,14 @@ Features below are on **preview URLs only** (DEMO icons, speed controls, startup
 - **First adrenaline dose** prompts vascular access if IV/IO not logged.
 - **Needle decompression** under Interventions → Breathing.
 
-### WMAS preview only
+### CODE SHOCK — after first shock (VF / pVT initial rhythm)
 
-#### CODE SHOCK — after first shock (VF / pVT initial rhythm)
-
-- Reminder appears after the **first logged shock** when **initial rhythm was VF / pVT** (was third shock on older live builds; see **1.2.2** for the initial-rhythm rule).
+- Reminder appears after the **first logged shock** when **initial rhythm was VF / pVT** (was third shock on older builds; see **1.2.2** for the initial-rhythm rule).
 - Message: **CODE SHOCK notified to EOC** — acknowledge to log.
 
-#### Prolonged VF at TOR
+### Prolonged VF at TOR
 
 - If prolonged VF was logged, TOR shows **senior clinical discussion** first (skips special-circumstances / rhythm / PEA until senior advice flow completed).
-
-#### Documents — WMAS ToR criteria
-
-- Extra document in **Documents**: **WMAS ToR criteria** (ALS bag aide memoire).
-
-### Standard preview only
-
-- Shared changes above only — no CODE SHOCK, no WMAS ToR document.
 
 ---
 

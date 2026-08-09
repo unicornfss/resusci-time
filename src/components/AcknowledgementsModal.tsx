@@ -37,8 +37,8 @@ export function AcknowledgementsModal({ onClose, onOpenAbout }: Acknowledgements
 
         <div className="about-body">
           <p className="about-intro">
-            Thanks to the organisations and colleagues whose published guidance and feedback helped
-            shape this app.
+            Thanks to the clinicians who reviewed and tested this app. Clinical content is based on
+            published UK guidance — see Clinical sources below.
           </p>
 
           {sections.map((section) => (
